@@ -1,0 +1,37 @@
+################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+node_modules
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+.vscode/*
+.vscode/settings.json
+.vscode/tasks.json
+!.vscode/launch.json
+.vscode/extensions.json
+.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+.vs/
+
+# User-specific stuff
+.idea
+.VSCodeCounter/

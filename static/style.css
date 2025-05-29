@@ -1,0 +1,104 @@
+.nav-item{
+    font-size: 120%;
+    color: white;
+}
+
+.toasts{
+    z-index: 3;
+}
+
+.toast-container {
+    position: fixed;
+    top: 5%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1060; 
+    pointer-events: none; 
+}
+
+.toast {
+    pointer-events: auto; 
+}
+
+.loading-overlay{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 1050; 
+    display: none; 
+}
+
+body.busy .loading-overlay {
+    display: flex;
+    pointer-events: auto;
+}
+
+body:not(.busy) .loading-overlay {
+    display: none !important;
+}
+
+h1{
+    margin-left: 15px;
+    color: white;
+    text-align: center;
+}
+
+h2, h3, h4, p {
+    margin-left: 15px;
+    color: white;
+}
+
+.nav-item{
+    font-size: 120%;
+}
+
+body{
+    display: inline;
+    font-family: "Lexend", sans-serif;
+    font-optical-sizing: auto;
+    font-weight:  400;
+    font-style: normal;
+    background-color: #2C2F33;
+    color: white;
+}
+
+:root{
+    color: #d5e0e7;
+}
+
+.icon-link, .popover-link, .undecorated-link{
+    text-decoration: none;
+}
+
+#user-info-container {
+    display: flex;
+    align-items: center;
+}
+
+#edit-content-btn {
+    z-index: 10;
+}
+
+.big-edit-body{
+    height: 30vh !important;
+    overflow-y: scroll !important;
+    resize: none !important;
+}
+
+.pdf-frame{
+    border: none;
+    width: 95vw;
+    height: 85vh;
+}
+
+.solo-pic{
+    height: 80vh;
+}
+
+.solo-pic img{
+    max-width: 90vw;
+    max-height: 70vh;
+}

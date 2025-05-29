@@ -1,0 +1,46 @@
+{% extends "template.html" %} {% block body %}
+
+{% if current_user.is_admin and content%}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+{% endif %}
+
+<div class="container m-2 position-relative">
+    {% if content %}
+    {{ content.html_content | safe}}
+    {% endif %}
+
+    {% if pdf_url %}
+    <iframe src="{{pdf_url}}" class="pdf-frame">
+        This browser does not support PDFs. Please download the PDF to view it:
+        <a href="{{pdf_url}}">Download PDF</a>
+    </iframe>
+    {% endif %}
+
+    {% if current_user.is_admin and content%}
+     <button type="button" id="edit-content-btn" data-bs-toggle="modal" data-bs-target="#content-edit-form" class="btn btn-link position-absolute top-0 end-0 m-2 p-0" title="Edit Content">
+        <i class="fa fa-pencil"></i>
+    </button>
+    {% endif %}
+</div>
+
+{% if current_user.is_admin and content %}
+<custom-modal title="Edit Content" custom-id="content-edit-form">
+    <div class="container">
+        <div class="row mb-2">
+            <div class="col">
+                <textarea id="content-body" value="" spellcheck="true" class="form-control big-edit-body" required>{{content.content | safe}}</textarea>
+            </div>
+        </div>
+
+        <div class="row mb-2">
+            <div class="col mb-3">
+                <button type="button" class="btn btn-primary float-end" id="content-submit-button"
+                    data-bs-dismiss="modal" data-key="{{content.key}}">Submit</button>
+            </div>
+        </div>
+    </div>
+</custom-modal>
+{% endif %}
+
+{% endblock %}

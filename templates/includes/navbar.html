@@ -1,0 +1,46 @@
+<nav class="navbar bg-dark navbar-expand-lg p-2" data-bs-theme="dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">Resolute</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="\">Home</a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Server Content</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for("resolute.house_rules") }}">House Rules</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for ("resolute.content_rulings") }}">Content Rulings</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for("resolute.errata") }}">Server Errata</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Powers
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Tech Powers</a></li>
+                        <li><a class="dropdown-item" href="#">Force Powers</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    {% if current_user.is_authenticated %}
+    <div class="d-flex ms-auto align-items-center" id="user-info-container"></div>
+        <a class="navbar-brand ms-auto" href="#" id="user-badge">
+            <p class="text-muted d-inline">{{current_user.username}}</p>
+            {% if current_user.avatar_url %}
+            <img src="{{current_user.avatar_url}}" class="rounded-circle" width="35" height="auto">
+            {% endif %}
+        </a>
+    </div>  
+    {% endif %}
+</nav>
