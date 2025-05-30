@@ -79,6 +79,7 @@ def terms():
 def privacy():
     return render_template("G0T0/privacy.html")
 
+
 @G0T0_blueprint.route("/api/logs/<int:guild_id>", methods=["GET"])
 @is_admin
 def get_logs(guild_id: int):
@@ -188,4 +189,3 @@ def sort_logs(guild_id: int):
     }
 
     return jsonify(response)
-

@@ -27,5 +27,6 @@ class NotFound(Exception):
         self.message = message
         super().__init__(self.message)
 
+
 class UnderConstruction(Exception):
     pass

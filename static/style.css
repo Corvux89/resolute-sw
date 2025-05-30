@@ -102,3 +102,7 @@ body{
     max-width: 90vw;
     max-height: 70vh;
 }
+
+.dropdown-row p{
+    color: black;
+}

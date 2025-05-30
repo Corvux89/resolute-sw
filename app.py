@@ -62,17 +62,16 @@ app.config["DB"] = db = SQLAlchemy(app)
 app.config["login"] = login = LoginManager(app)
 app.discord = DiscordBot(app)
 
+
 @app.before_request
 def require_login():
     # Allow unauthenticated access to login, static files, and OAuth callback
-    allowed_routes = [
-        'auth.login', 'auth.callback', 'static'
-    ]
+    allowed_routes = ["auth.login", "auth.callback", "static"]
 
     if request.endpoint is None or request.endpoint in allowed_routes:
         return
     elif not current_user.is_authenticated:
-        return redirect(url_for('auth.login', provider="discord", next=request.path))
+        return redirect(url_for("auth.login", provider="discord", next=request.path))
     elif not current_user.is_admin:
         raise UnderConstruction()
 
@@ -81,16 +80,20 @@ def require_login():
 def homepage():
     return render_template("home.html")
 
+
 @login.user_loader
 def load_user(_):
     print(request.headers)
     return app.discord.fetch_user()
 
+
 @login.request_loader
 def load_user_from_request(_):
     if "Authorization" in request.headers:
-        session["OAUTH2_TOKEN"] = request.headers.get('Authorization').replace("Bearer ", "")
-        user =  User.fetch_user('discord')
+        session["OAUTH2_TOKEN"] = request.headers.get("Authorization").replace(
+            "Bearer ", ""
+        )
+        user = User.fetch_user("discord")
         return user
 
 

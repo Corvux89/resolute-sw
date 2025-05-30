@@ -30,11 +30,11 @@ def get_csp():
             "https://maxcdn.bootstrapcdn.com/",
         ],
         "font-src": [
-            "'self'", 
+            "'self'",
             "https://use.fontawesome.com",
             "https://fonts.gstatic.com/",
             "https://maxcdn.bootstrapcdn.com/",
-            ],
+        ],
     }
 
     return csp

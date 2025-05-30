@@ -10,7 +10,9 @@ def is_admin(f=None):
         @wraps(func)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
-                return redirect(url_for("auth.login", next=request.endpoint, provider="discord"))
+                return redirect(
+                    url_for("auth.login", next=request.endpoint, provider="discord")
+                )
             elif not current_user.is_admin:
                 raise AdminAccessError("Admin access is required")
             return func(*args, **kwargs)

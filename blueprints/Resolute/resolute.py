@@ -8,28 +8,43 @@ from models.general import Content
 resolute_blueprint = Blueprint("resolute", __name__)
 
 
-@resolute_blueprint.route('/house_rules', methods=["GET"])
+@resolute_blueprint.route("/house_rules", methods=["GET"])
 def house_rules():
     db: SQLAlchemy = current_app.config.get("DB")
-    content: Content = db.session.query(Content).filter(Content.key == "house-rules").first()
+    content: Content = (
+        db.session.query(Content).filter(Content.key == "house-rules").first()
+    )
     return render_template("shell.html", content=content)
 
-@resolute_blueprint.route('/content_rulings', methods=["GET"])
+
+@resolute_blueprint.route("/content_rulings", methods=["GET"])
 def content_rulings():
     content = Content(key="content-rulings", content="Coming Soon")
     return render_template("shell.html", content=content)
 
-@resolute_blueprint.route('/errata', methods=["GET"])
+
+@resolute_blueprint.route("/errata", methods=["GET"])
 def errata():
     pdf_url = url_for("resolute.pdf_link", key="errata")
     return render_template("shell.html", pdf_url=pdf_url)
 
-@resolute_blueprint.route('/pdf/<key>')
+
+@resolute_blueprint.route("/pdf/<key>")
 def pdf_link(key):
-    if key=="errata":
+    if key == "errata":
         return send_from_directory(
-            os.path.join('blueprints', 'Resolute'),
-            "Resolute Errata Document - The Homebrewery.pdf"
-            )
-    
+            os.path.join("blueprints", "Resolute"),
+            "Resolute Errata Document - The Homebrewery.pdf",
+        )
+
     raise NotFound()
+
+
+@resolute_blueprint.route("/tech_powers", methods=["GET"])
+def tech_powers():
+    return render_template("powers.html")
+
+
+@resolute_blueprint.route("/force_powers", methods=["GET"])
+def force_powers():
+    return render_template("powers.html", force=True)

@@ -57,6 +57,7 @@ class DiscordUser(BaseModel, IntAttributeMixin):
     def id(self, value):
         self.set_int_attribute("_id", value)
 
+
 class DiscordChannel(BaseModel, IntAttributeMixin):
     _id: int = None
     name: str = None
@@ -79,6 +80,7 @@ class DiscordChannel(BaseModel, IntAttributeMixin):
     def parent_id(self, value):
         self.set_int_attribute("_parent_id", value)
 
+
 class DiscordRole(BaseModel, IntAttributeMixin):
     _id: int = None
     name: str = None
@@ -95,15 +97,9 @@ class DiscordRole(BaseModel, IntAttributeMixin):
 class DiscordBot(ABC):
     base_url = "https://discordapp.com/api"
 
-    _channels = {
-        "channels": None,
-        "timestamp": 0
-    }
+    _channels = {"channels": None, "timestamp": 0}
 
-    _roles = {
-        "roles": None,
-        "timestamp": 0
-    }
+    _roles = {"roles": None, "timestamp": 0}
 
     def __init__(self, app: Flask):
         self.client_id = app.config["DISCORD_CLIENT_ID"]
@@ -162,34 +158,45 @@ class DiscordBot(ABC):
         if not (user := current_app.discord.user_cache.get(session.get("USER_ID"))):
             user = User.fetch_user("discord")
             current_app.discord.user_cache.update({user.id: user})
-        
+
         return user
-    
-    def fetch_channels(self, channel_id: str = None) -> typing.Union[DiscordChannel, list[DiscordChannel]]:
+
+    def fetch_channels(
+        self, channel_id: str = None
+    ) -> typing.Union[DiscordChannel, list[DiscordChannel]]:
         current_time = time.time()
 
-        if not self._channels.get('channels') or (current_time - self._channels.get('timestamp', 0) > CACHE_TIMEOUT):
+        if not self._channels.get("channels") or (
+            current_time - self._channels.get("timestamp", 0) > CACHE_TIMEOUT
+        ):
             channels = self.request(f"/guilds/{DISCORD_GUILD_ID}/channels")
             self._channels["channels"] = [DiscordChannel(**c) for c in channels]
             self._channels["timestamp"] = current_time
 
         if channel_id:
-            return next((c for c in self._channels.get('channels') if c.id == channel_id), None)
-        
-        return self._channels.get('channels')
-    
-    def fetch_roles(self, role_id: str = None) -> typing.Union[DiscordRole, list[DiscordRole]]:
+            return next(
+                (c for c in self._channels.get("channels") if c.id == channel_id), None
+            )
+
+        return self._channels.get("channels")
+
+    def fetch_roles(
+        self, role_id: str = None
+    ) -> typing.Union[DiscordRole, list[DiscordRole]]:
         current_time = time.time()
 
-        if not self._roles.get('roles') or (current_time - self._roles.get('timestamp', 0) > CACHE_TIMEOUT):
+        if not self._roles.get("roles") or (
+            current_time - self._roles.get("timestamp", 0) > CACHE_TIMEOUT
+        ):
             roles = current_app.discord.request(f"/guilds/{DISCORD_GUILD_ID}/roles")
             self._roles["roles"] = [DiscordRole(**r) for r in roles]
             self._roles["timestamp"] = current_time
 
         if role_id:
-            return next((r for r in self._roles.get('roles') if r.id == role_id), None)
-        
-        return self._roles.get('roles')
+            return next((r for r in self._roles.get("roles") if r.id == role_id), None)
+
+        return self._roles.get("roles")
+
 
 class DiscordMember:
     nick: str = None
@@ -228,6 +235,7 @@ class DiscordMember:
             or self.user.username
             or "Player not found"
         )
+
 
 class DiscordEntitlement(BaseModel, MemberAttributeMixin):
     id: str = None

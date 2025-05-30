@@ -6,8 +6,8 @@ from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 import markdown
 import requests
-from sqlalchemy import inspect
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey, inspect
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.orm.decl_api import registry
 from constants import DISCORD_ADMINS
 from models.exceptions import UnauthorizedAccessError
@@ -141,3 +141,63 @@ class Content(db.Model):
     @property
     def html_content(self):
         return markdown.markdown(self.content, extensions=["tables", "sane_lists"])
+
+
+class PowerType(db.Model, BaseModel):
+    __tablename__ = "c_power_type"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
+
+class PowerAlignment(db.Model, BaseModel):
+    __tablename__ = "c_power_alignment"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
+
+class ContentSource(db.Model, BaseModel):
+    __tablename__ = "c_content_source"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    abbreviation: Mapped[str]
+
+
+class Power(db.Model, BaseModel):
+    __tablename__ = "powers"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    pre_requisite: Mapped[str] = mapped_column("pre-requisite")
+    _type: Mapped[int] = mapped_column(
+        "type", ForeignKey("c_power_type.id"), nullable=True
+    )
+    casttime: Mapped[str]
+    range: Mapped[str]
+    _source: Mapped[int] = mapped_column(
+        "source", ForeignKey("c_content_source.id"), nullable=True
+    )
+    description: Mapped[str]
+    concentration: Mapped[bool]
+    _alignment: Mapped[int] = mapped_column(
+        "alignment", ForeignKey("c_power_alignment.id"), nullable=True
+    )
+    level: Mapped[int]
+
+    _type_record = relationship("PowerType")
+    _source_record = relationship("ContentSource")
+    _alignment_record = relationship("PowerAlignment")
+
+    @property
+    def type(self):
+        return self._type_record
+
+    @property
+    def source(self):
+        return self._source_record
+
+    @property
+    def alignment(self):
+        return self._alignment_record
+
+    @property
+    def html_desc(self):
+        return markdown.markdown(self.description)

@@ -30,6 +30,7 @@ def bad_request(error):
 def general_error(error):
     return render_template("error.html", error=f"{error}")
 
+
 def under_construction(error):
     return render_template("/exceptions/temp.html")
 

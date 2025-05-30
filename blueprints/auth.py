@@ -18,7 +18,7 @@ def login(provider):
     provider_data = current_app.config["OAUTH2_PROVIDERS"].get(provider)
 
     if provider_data is None:
-        raise NotFound 
+        raise NotFound
 
     data = {"redirect": request.args.get("next", "homepage")}
 
@@ -87,5 +87,3 @@ def callback(provider):
 def logout():
     logout_user()
     return redirect(url_for("homepage"))
-
-
