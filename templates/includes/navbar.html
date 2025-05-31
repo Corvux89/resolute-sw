@@ -11,6 +11,7 @@
                     <a class="nav-link active" aria-current="page" href="\">Home</a>
                 </li>
 
+                <!-- Server Content-->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Server Content</a>
                     <ul class="dropdown-menu">
@@ -19,7 +20,45 @@
                         <li><a class="dropdown-item" href="{{ url_for("resolute.errata") }}">Server Errata</a></li>
                     </ul>
                 </li>
+                
+                <!-- Market -->
+                 <li class="nav-item">
+                    <a class="nav-link" href="#">Market</a>
+                 </li>
 
+                <!-- Items -->
+                  <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Items</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Mundane Items</a></li>
+                        <li><a class="dropdown-item" href="#">Enhanced Items</a></li>
+                    </ul>
+                  </li>
+
+                <!-- Characters -->
+                 <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Characters</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Species</a></li>
+                        <li><a class="dropdown-item" href="#">Classes</a></li>
+                        <li><a class="dropdown-item" href="#">Archetypes</a></li>
+                        <li><a class="dropdown-item" href="#">Backgrounds</a></li>
+                        <li><a class="dropdown-item" href="#">Features</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#">Maneuvers</a></li>
+                        <li><a class="dropdown-item" href="#">Fighting Styles</a></li>
+                        <li><a class="dropdown-item" href="#">Fighting Masteries</a></li>
+                        <li><a class="dropdown-item" href="#">Lightsaber Forms</a></li>
+                        <li><a class="dropdown-item" href="#">Weapon Focuses</a></li>
+                        <li><a class="dropdown-item" href="#">Weapon Supremacies</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#">Class Improvements</a></li>
+                        <li><a class="dropdown-item" href="#">Multiclass Improvements</a></li>
+                        <li><a class="dropdown-item" href="#">Splashclass Improvements</a></li>
+                    </ul>
+                  </li>
+
+                <!-- Powers -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Powers
@@ -30,6 +69,20 @@
                     </ul>
                 </li>
             </ul>
+
+             <!-- Resources -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Resources</a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">5e/SW5E Equivalents</a></li>
+                    <li><a class="dropdown-item" href="#">Factions</a></li>
+                    <li><a class="dropdown-item" href="#">Character Sheet</a></li>
+                    <li><a class="dropdown-item" href="#">Galaxy Map</a></li>
+                    <li><a class="dropdown-item" href="#">Rules</a></li>
+                </ul>
+            </li>
+
+            <!-- Search -->
             <form class="d-flex" action="{{ url_for("resolute.search") }}" method="get">
                 <input class="form-control me-2" type="search" name="q" placeholder="Search" aria-label="Search">
                 <button class="btn btn-outline-success" type="submit">Search</button>

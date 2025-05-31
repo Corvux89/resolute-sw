@@ -1,4 +1,3 @@
-import { param } from "jquery";
 import { Power } from "./types.js";
 
 export function ToastError(message: string): void{
