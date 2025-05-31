@@ -1,3 +1,4 @@
+import { param } from "jquery";
 import { Power } from "./types.js";
 
 export function ToastError(message: string): void{
@@ -25,7 +26,7 @@ function populateSelectOption(selector, options, selectedValues, defaultOption) 
     });
 }
 
-if ($("#content-edit-form").length > 0){
+if ($("#content-edit-form").length){
     //@ts-expect-error This is pulled in from a parent and no import needed
     const easyMDE = new EasyMDE(
         {
@@ -78,7 +79,8 @@ if ($("#content-edit-form").length > 0){
     })
 }
 
-if ($("#power-table").length > 0){
+if ($("#power-table").length){
+     const params = new URLSearchParams(window.location.search);
     const tableName = "#power-table"
     const columns = [
             {
@@ -125,19 +127,21 @@ if ($("#power-table").length > 0){
             url: '/api/powers',
             dataSrc: '',
             data: function(d) {
-                // Parse current URL params and add them to the AJAX data object
-                const params = new URLSearchParams(window.location.search);
                 d["type"] =  window.location.pathname.includes("tech_powers") ? "tech" : "force"
-                params.forEach((value, key) => {
-                    d[key] = value;
-                });
             }
         },
         pageLength: 25,
         columns: columns,
         order: [[0,'asc']],
         dom: 'lrtip',
+        //@ts-expect-error idk why this errors but it does
+        responsive: true,
     })
+
+      if (params.has('name')){
+        $("#filter-name").val(params.get('name'))
+        table.column(0).search(params.get('name') || '').draw();
+    }
 
     table.on("xhr", function(){
         const data = <Power[]> table.ajax.json()
@@ -148,7 +152,7 @@ if ($("#power-table").length > 0){
 
         populateSelectOption("#filter-level", levels, [], "All Levels")
 
-        if ($("#filter-alignment").length > 0){
+        if ($("#filter-alignment").length){
             const alignmentMap = new Map();
             data.forEach(row => {
                 if (row.alignment && !alignmentMap.has(row.alignment.id)) {

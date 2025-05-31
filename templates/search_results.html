@@ -1,0 +1,12 @@
+{% extends "template.html" %} {% block body %}
+
+<h2>Search Results for "{{ query }}"</h2>
+<ul>
+    {% for result in results %}
+    <li><a href="{{ result.url }}">{{ result.title }}</a></li>
+    {% else %}
+    <li>No results found.</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

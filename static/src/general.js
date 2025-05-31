@@ -19,7 +19,7 @@ function populateSelectOption(selector, options, selectedValues, defaultOption) 
         select.append(`<option value="${option.id}" ${selectedValues.indexOf(option.id) > -1 ? 'selected' : ''}>${option.name}</option>`);
     });
 }
-if ($("#content-edit-form").length > 0) {
+if ($("#content-edit-form").length) {
     //@ts-expect-error This is pulled in from a parent and no import needed
     const easyMDE = new EasyMDE({
         element: document.getElementById('content-body'),
@@ -67,7 +67,8 @@ if ($("#content-edit-form").length > 0) {
         });
     });
 }
-if ($("#power-table").length > 0) {
+if ($("#power-table").length) {
+    const params = new URLSearchParams(window.location.search);
     const tableName = "#power-table";
     const columns = [
         {
@@ -110,26 +111,27 @@ if ($("#power-table").length > 0) {
             url: '/api/powers',
             dataSrc: '',
             data: function (d) {
-                // Parse current URL params and add them to the AJAX data object
-                const params = new URLSearchParams(window.location.search);
                 d["type"] = window.location.pathname.includes("tech_powers") ? "tech" : "force";
-                params.forEach((value, key) => {
-                    d[key] = value;
-                });
             }
         },
         pageLength: 25,
         columns: columns,
         order: [[0, 'asc']],
         dom: 'lrtip',
+        //@ts-expect-error idk why this errors but it does
+        responsive: true,
     });
+    if (params.has('name')) {
+        $("#filter-name").val(params.get('name'));
+        table.column(0).search(params.get('name') || '').draw();
+    }
     table.on("xhr", function () {
         const data = table.ajax.json();
         const levels = Array.from(new Set(data.map(row => row.level)))
             .sort((a, b) => a - b)
             .map(id => ({ id: id == 0 ? "At-Will" : id, name: id == 0 ? "At-Will" : id }));
         populateSelectOption("#filter-level", levels, [], "All Levels");
-        if ($("#filter-alignment").length > 0) {
+        if ($("#filter-alignment").length) {
             const alignmentMap = new Map();
             data.forEach(row => {
                 if (row.alignment && !alignmentMap.has(row.alignment.id)) {

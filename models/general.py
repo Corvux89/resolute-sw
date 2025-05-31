@@ -14,7 +14,6 @@ from models.exceptions import UnauthorizedAccessError
 
 db = SQLAlchemy()
 
-
 class User(UserMixin):
     id: str
     username: str
@@ -137,6 +136,7 @@ class Content(db.Model):
     __tablename__ = "web_content"
     key: Mapped[str] = mapped_column(primary_key=True)
     content: Mapped[str]
+    title: Mapped[str]
 
     @property
     def html_content(self):
@@ -187,17 +187,25 @@ class Power(db.Model, BaseModel):
     _alignment_record = relationship("PowerAlignment")
 
     @property
-    def type(self):
+    def type(self) -> PowerType:
         return self._type_record
 
     @property
-    def source(self):
+    def source(self) -> ContentSource:
         return self._source_record
 
     @property
-    def alignment(self):
+    def alignment(self) -> PowerAlignment:
         return self._alignment_record
 
     @property
     def html_desc(self):
         return markdown.markdown(self.description)
+
+class SearchResult(BaseModel):
+    url: str
+    title: str
+
+    def __init__(self, title, url):
+        self.title = title
+        self.url = url
