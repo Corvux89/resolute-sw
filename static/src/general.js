@@ -81,10 +81,6 @@ if ($("#power-table").length) {
             render: function (data) { return data == 0 ? "At-Will" : data; }
         },
         {
-            title: "Pre-Requisite?",
-            data: "pre_requisite"
-        },
-        {
             title: "Cast Time",
             data: "casttime"
         },
@@ -100,6 +96,9 @@ if ($("#power-table").length) {
     ];
     if (window.location.pathname.includes("force_powers")) {
         columns.splice(3, 0, {
+            title: "Pre-Requisite?",
+            data: "pre_requisite"
+        }, {
             title: "Alignment",
             data: "alignment",
             render: function (data) { return data.value; }
@@ -114,10 +113,12 @@ if ($("#power-table").length) {
                 d["type"] = window.location.pathname.includes("tech_powers") ? "tech" : "force";
             }
         },
-        pageLength: 25,
+        pageLength: 500,
         columns: columns,
         order: [[0, 'asc']],
-        dom: 'lrtip',
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
         //@ts-expect-error idk why this errors but it does
         responsive: true,
     });
