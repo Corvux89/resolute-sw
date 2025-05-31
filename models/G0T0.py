@@ -1,6 +1,7 @@
 import json
 import datetime
 
+from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import BigInteger, ForeignKey, DateTime, String
@@ -8,9 +9,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.dialects.postgresql import ARRAY
 
 from constants import DISCORD_GUILD_ID
-from helpers.general_helpers import get_channels_from_cache
-from models.discord import MemberAttributeMixin
-from models.general import BaseModel, IntAttributeMixin
+from models.discord import MemberAttributeMixin, BaseModel, IntAttributeMixin
 
 db = SQLAlchemy()
 
@@ -418,10 +417,8 @@ class RefMessage(db.Model, BaseModel, IntAttributeMixin):
 
     @property
     def channel_name(self):
-        channels = get_channels_from_cache()
-        return next(
-            (c.get("name") for c in channels if c.get("id") == self.channel_id), None
-        )
+        channel = current_app.discord.fetch_channels(self.channel_id) 
+        return channel.name
 
     @property
     def guild_id(self):

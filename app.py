@@ -72,7 +72,7 @@ def require_login():
         return
     elif not current_user.is_authenticated:
         return redirect(url_for("auth.login", provider="discord", next=request.path))
-    elif not current_user.is_admin:
+    elif not current_user.is_beta_tester:
         raise UnderConstruction()
 
 

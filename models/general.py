@@ -9,7 +9,7 @@ import requests
 from sqlalchemy import ForeignKey, inspect
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.orm.decl_api import registry
-from constants import DISCORD_ADMINS
+from constants import DISCORD_ADMINS, DISCORD_GUILD_ID
 from models.exceptions import UnauthorizedAccessError
 
 db = SQLAlchemy()
@@ -32,7 +32,24 @@ class User(UserMixin):
 
     @property
     def is_admin(self):
-        return str(self.id) in set(str(admin) for admin in DISCORD_ADMINS)
+        from models.G0T0 import G0T0Guild
+        from models.discord import DiscordMember
+        db: SQLAlchemy = current_app.config.get("DB")
+        guild = db.session.query(G0T0Guild).filter(G0T0Guild._id == DISCORD_GUILD_ID).first()
+        member: DiscordMember = current_app.discord.fetch_members(self.id)
+        admin_role = current_app.discord.fetch_roles(guild.admin_role)        
+
+        return str(self.id) in set(str(admin) for admin in DISCORD_ADMINS) or admin_role.id in member.roles
+    
+    @property
+    def is_beta_tester(self):
+        from models.discord import DiscordMember
+        member: DiscordMember = current_app.discord.fetch_members(self.id)
+        
+        if beta_role := current_app.discord.fetch_roles(name="Beta Testing"):   
+            return beta_role.id in member.roles or self.is_admin
+        return False
+        
 
     @property
     def avatar_url(self):

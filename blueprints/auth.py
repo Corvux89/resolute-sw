@@ -69,12 +69,14 @@ def callback(provider):
         session["OAUTH2_TOKEN"] = access_token
         user = current_app.discord.fetch_user()
 
-        login_user(user)
-        data = jwt.decode(
-            session.get("OAUTH2_STATE"),
-            current_app.config["SECRET_KEY"],
-            algorithms=["HS256"],
-        )
+        
+        if member := current_app.discord.fetch_members(user.id):
+            login_user(user)
+            data = jwt.decode(
+                session.get("OAUTH2_STATE"),
+                current_app.config["SECRET_KEY"],
+                algorithms=["HS256"],
+            )
 
     except Exception as e:
         print(f"Issue with callback: {e}")
