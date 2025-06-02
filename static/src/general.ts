@@ -148,7 +148,7 @@ if ($("#power-table").length){
         responsive: true,
     })
 
-      if (params.has('name')){
+    if (params.has('name')){
         $("#filter-search").val(params.get('name'))
         table.column(0).search(params.get('name') || '').draw();
     }

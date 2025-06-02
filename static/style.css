@@ -133,3 +133,20 @@ body{
 .dropdown-menu > li:hover > .dropdown-submenu {
     display: block;
 }
+
+.dt-scroll-headInner {
+    box-sizing: content-box !important;
+    padding-right: 0px !important; /* Typical scrollbar width, adjust if needed */
+    width: 100% !important;
+    background-color: white !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3) !important;
+    border-style: solid !important;
+    box-sizing: border-box !important;
+    box-shadow: inset 0 0 0 9999px var(
+        --bs-table-bg-state, var(
+            --bs-table-bg-typoe, var(
+                --bs-table-accent-bg
+            )
+        )
+    ) !important;
+}
