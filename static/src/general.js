@@ -89,6 +89,10 @@ if ($("#power-table").length) {
             render: function (data) { return data == 0 ? "At-Will" : data; }
         },
         {
+            title: "Pre-Requisite?",
+            data: "pre_requisite"
+        },
+        {
             title: "Cast Time",
             data: "casttime"
         },
@@ -104,9 +108,6 @@ if ($("#power-table").length) {
     ];
     if (window.location.pathname.includes("force_powers")) {
         columns.splice(3, 0, {
-            title: "Pre-Requisite?",
-            data: "pre_requisite"
-        }, {
             title: "Alignment",
             data: "alignment",
             render: function (data) { return data.value; }
@@ -140,7 +141,7 @@ if ($("#power-table").length) {
         const $filterMenu = $("#power-filter");
         $filterMenu.empty();
         columns.forEach((col, colIdx) => {
-            if (!col.data || colIdx === 0)
+            if (!col.data || colIdx === 0 || colIdx == 2)
                 return;
             const values = Array.from(new Set(data.map(row => {
                 const raw = row[col.data.toString()];
@@ -180,8 +181,6 @@ $(document).on('click', '.filter-option', function (e) {
     const activeValues = $(`#submenu-${colIdx} .filter-option.active`).map(function () {
         return $.fn.dataTable.util.escapeRegex(String($(this).data('value')));
     }).get();
-    console.log("ADD FILTERS");
-    console.log(activeValues);
     // Build regex for OR search if multiple, or clear if none
     if (activeValues.length > 0) {
         table.column(colIdx).search(activeValues.join('|'), true, false).draw();
@@ -221,8 +220,6 @@ $(document).on('click', '[data-dismiss="badge"]', function () {
     const activeValues = $(`#submenu-${colIdx} .filter-option.active`).map(function () {
         return $.fn.dataTable.util.escapeRegex(String($(this).data('value')));
     }).get();
-    console.log("REMOVE FILTERS");
-    console.log(activeValues);
     const table = $("#power-table").DataTable();
     if (activeValues.length > 0) {
         table.column(colIdx).search(activeValues.join('|'), true, false).draw();
