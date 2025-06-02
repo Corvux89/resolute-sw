@@ -217,7 +217,7 @@ class Power(db.Model, BaseModel):
 
     @property
     def html_desc(self):
-        return markdown.markdown(self.description)
+        return markdown.markdown(self.description, extensions=["tables", "sane_lists"])
 
 class SearchResult(BaseModel):
     url: str

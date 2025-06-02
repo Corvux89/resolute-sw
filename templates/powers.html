@@ -3,10 +3,7 @@
 <div class="container m-2">
     <div class="row mb-2">
         <div class="col-auto w-50">
-            <text-input label-text="Name" custom-id="filter-name"></text-input>
-        </div>
-        <div class="col-auto">
-            <text-input label-text="Pre-Requisite" custom-id="filter-prereq"></text-input>
+            <text-input label-text="Search" custom-id="filter-search"></text-input>
         </div>
         {% if force %}
         <div class="col-auto">
@@ -17,7 +14,19 @@
 
     <div class="row mb-2">
         <div class="col-auto">
-            <select-tab custom-label="Level" custom-id="filter-level" multiple size="5"></select-tab>
+            <button class="btn rounded-3 dropdown-toggle text-white" type="button" id="filterButton" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                <i class="fa-solid fa-filter"></i>
+                <span>Filter</span>
+            </button>
+
+            <ul class="dropdown-menu" aria-labelledby="filterButton" id="power-filter">
+            </ul>
+        </div>
+        <div class="col-auto">
+            <div id="active-power-filters"></div>
+        </div>
+        <div class="col-auto ms-auto">
+            <button id="clear-all-filters" class="btn btn-sm btn-outline-secondary ms-2 d-none">Clear All Filters</button>
         </div>
     </div>
     <table id="power-table" class="table table-striped"></table>
