@@ -277,6 +277,7 @@ $(document).on('click', '#clear-all-filters', function() {
     $('#active-power-filters').empty();
     const table = $("#power-table").DataTable();
     table.columns().search('').draw();
+    updateClearAllFiltersButton()
 });
 
 $(document).on('click', "#power-table tbody tr", function() {
