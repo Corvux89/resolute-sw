@@ -25,12 +25,12 @@ def errata():
 
 @resolute_blueprint.route("/tech_powers", methods=["GET"])
 def tech_powers():
-    return render_template("powers.html")
+    return render_template("powers.html", title="Tech Powers")
 
 
 @resolute_blueprint.route("/force_powers", methods=["GET"])
 def force_powers():
-    return render_template("powers.html", force=True)
+    return render_template("powers.html", title="Force Powers")
 
 @resolute_blueprint.route("/search", methods=["GET"])
 def search():

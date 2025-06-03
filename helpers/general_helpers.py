@@ -16,7 +16,6 @@ def perform_search(query: str):
     # Powers
     powers = db.session.query(Power).filter(or_(
         Power.name.ilike(f"%{query.lower()}%"),
-        Power.description.contains(f"{query.lower()}"),
         Power.pre_requisite.ilike(f"{query.lower()}")
     )).all()
 

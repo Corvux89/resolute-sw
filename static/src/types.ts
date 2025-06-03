@@ -20,6 +20,7 @@ export interface Power {
     description?: string
     concentration: boolean
     alignment?: GenericCategory,
-    level?: number
+    level?: number,
+    duration?: string,
     html_desc?: string
 }

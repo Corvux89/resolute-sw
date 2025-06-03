@@ -198,6 +198,7 @@ class Power(db.Model, BaseModel):
         "alignment", ForeignKey("c_power_alignment.id"), nullable=True
     )
     level: Mapped[int]
+    duration: Mapped[str]
 
     _type_record = relationship("PowerType")
     _source_record = relationship("ContentSource")

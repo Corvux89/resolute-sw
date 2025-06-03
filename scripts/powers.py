@@ -16,6 +16,7 @@ output = [
         "concentration",
         "alignment",
         "level",
+        "duration",
     ]
 ]
 
@@ -35,6 +36,7 @@ for power in data:
         power.get("concentration"),
         power.get("forceAlignmentEnum"),
         power.get("level"),
+        power.get('duration')
     ]
     output.append(line)
 
