@@ -36,7 +36,7 @@ for power in data:
         power.get("concentration"),
         power.get("forceAlignmentEnum"),
         power.get("level"),
-        power.get('duration')
+        power.get('duration', "Instantaneous")
     ]
     output.append(line)
 

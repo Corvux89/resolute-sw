@@ -1,5 +1,6 @@
 import datetime
 import json
+import uuid
 from flask import current_app, session
 from flask.json.provider import JSONProvider
 from flask_login import UserMixin
@@ -92,6 +93,8 @@ class AlchemyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
             return obj.isoformat()
+        elif isinstance(obj, uuid.UUID):
+            return obj.hex
         elif hasattr(obj, "to_dict"):
             return obj.to_dict()
         elif hasattr(obj, "to_json"):
@@ -181,7 +184,7 @@ class ContentSource(db.Model, BaseModel):
 
 class Power(db.Model, BaseModel):
     __tablename__ = "powers"
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str]
     pre_requisite: Mapped[str] = mapped_column("pre-requisite")
     _type: Mapped[int] = mapped_column(
@@ -203,6 +206,22 @@ class Power(db.Model, BaseModel):
     _type_record = relationship("PowerType")
     _source_record = relationship("ContentSource")
     _alignment_record = relationship("PowerAlignment")
+
+    @classmethod
+    def from_json(cls, json):
+        return cls (
+            name = json.get('name'),
+            pre_requisite=json.get('pre_requisite'),
+            _type=json.get('type', {}).get('id'),
+            casttime=json.get('casttime'),
+            range=json.get('range'),
+            _source=json.get('source', {}).get('id'),
+            description=json.get('description'),
+            concentration=json.get('concentration'),
+            _alignment=json.get('alignment', {}).get('id'),
+            level=json.get('level'),
+            duration=json.get('duration')
+        )
 
     @property
     def type(self) -> PowerType:

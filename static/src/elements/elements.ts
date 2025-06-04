@@ -51,7 +51,7 @@ class CustomModal extends HTMLElement{
           <div class="modal-header text-center">
             <h4 class="modal-title w-100 font-weight-bold text-black">${this._title}</h4>
             <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
+              <span>&times;</span>
             </button>
           </div>
           <div class="modal-body">
@@ -146,7 +146,96 @@ class TextInput extends HTMLElement {
   }
 }
 
-class SelectTab extends HTMLElement {
+class NumberInput extends HTMLElement {
+  private label: string = '';
+  private _id: string = ''; 
+  private value: number;
+  private required: boolean = false
+  private disabled: boolean = false
+  private step: number;
+
+  constructor() {
+      super();
+  }
+
+  // Observe changes to 'label-text' and 'custom-id' attributes
+  static get observedAttributes() {
+      return ['label-text', 'custom-id', 'value', 'required', 'disabled', 'step'];
+  }
+
+  // Called when the element is connected to the DOM
+  connectedCallback() {
+      // Initialize values when the element is connected to the DOM
+      this.updateFromAttributes();
+      this.render();
+  }
+
+  // Called when one of the observed attributes changes
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+      // Update internal properties based on the changed attribute
+      if (name === 'label-text') {
+          this.label = newValue || ''; 
+      }
+      if (name === 'custom-id') {
+          this._id = newValue || ''; 
+      }
+
+      if (name == 'step'){
+        this.step = Number(newValue)
+      }
+
+      if (name === 'value'){
+        this.value = Number(newValue);
+      }
+
+      this.required = this.hasAttribute('required')
+      this.disabled = this.hasAttribute('disabled')
+
+      this.render(); // Re-render when attributes change
+  }
+
+  // Initialize the properties from the attributes if available
+  private updateFromAttributes() {
+      const labelText = this.getAttribute('label-text');
+      const customId = this.getAttribute('custom-id');
+      const value = this.getAttribute('value')
+      const step = this.getAttribute('step')
+      
+      if (labelText) {
+          this.label = labelText;
+      }
+      if (customId) {
+          this._id = customId;
+      }
+
+      if (this.step){
+        this.step = Number(step)
+      }
+
+      if (value){
+        this.value = Number(value)  
+      }
+
+      this.required = this.hasAttribute('required')
+      this.disabled = this.hasAttribute('disabled')
+  }
+
+  // Method to render the input field with floating label
+  render() {
+    this.innerHTML = `
+      <div class="form-floating">
+        <input type="number" class="form-control" id="${this._id}" value="${this.value ?? ''}" 
+        step="${this.step ?? 1}"
+        ${this.required ? 'required' : ''}
+        ${this.disabled ? 'disabled': ''}
+        />
+        <label for="${this._id}">${this.label}</label>
+      </div>
+    `
+  }
+}
+
+export class SelectInput extends HTMLElement {
   private _id: string = '';
   private label: string = '';
   private options: { value: string; label: string }[] = [];
@@ -193,7 +282,7 @@ class SelectTab extends HTMLElement {
     this.render();
   }
 
-  private updateFromAttributes() {
+  public updateFromAttributes() {
     const id = this.getAttribute('custom-id');
     const label = this.getAttribute('custom-label');
     const options = this.getAttribute('options');
@@ -258,10 +347,10 @@ class SelectTab extends HTMLElement {
         </div>
       `;
     }
-
   }
 }
 
 customElements.define('custom-modal', CustomModal)
 customElements.define("text-input", TextInput)
-customElements.define("select-tab", SelectTab)
+customElements.define("number-input", NumberInput)
+customElements.define("select-input", SelectInput)

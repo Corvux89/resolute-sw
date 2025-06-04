@@ -1,4 +1,4 @@
-import { destroyTable, getActiveFilters, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
+import { defaultPowerModal, destroyTable, fetchPowerInputs, getActiveFilters, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
 if ($("#content-edit-form").length) {
     //@ts-expect-error This is pulled in from a parent and no import needed
     const easyMDE = new EasyMDE({
@@ -9,7 +9,7 @@ if ($("#content-edit-form").length) {
         maxHeight: "80vh",
         toolbar: ["undo", "redo",
             {
-                "name": "save",
+                name: "save",
                 className: "fa-solid fa-floppy-disk",
                 action: (editor) => {
                     const key = $("#content-submit-button").data('key');
@@ -211,9 +211,68 @@ $(document).on('click', '#power-table .edit-button', function () {
     const power = table.rows().data().toArray().find((row) => row.id == powerId);
     if (!power)
         ToastError("Power not found");
-    $("#power-name").val(power.name);
-    console.log(power);
+    defaultPowerModal(power);
 });
 $(document).on('click', '#new-power-btn', function () {
-    $("#power-name").val("");
+    let power = fetchPowerInputs();
+    if (power.id !== undefined) {
+        power = {};
+        const source_option = $("#power-source").find(`option:contains('Resolute Homebrew')`);
+        power.type = window.location.pathname.includes("tech_powers") ? { id: 2, value: "Tech" } : { id: 1, value: "Force" };
+        power.source = {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        };
+    }
+    defaultPowerModal(power);
+});
+$(document).on('click', '#power-submit', function () {
+    const power = fetchPowerInputs();
+    if (!power.id) {
+        $.ajax({
+            url: `api/powers`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(power),
+            success: function () {
+                ToastSuccess("Power Added");
+                $("#power-table").DataTable().ajax.reload();
+            },
+            error: function (e) {
+                ToastError(`Failed: ${e.responseText}`);
+            }
+        });
+    }
+    else {
+        $.ajax({
+            url: `api/powers`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(power),
+            success: function () {
+                ToastSuccess("Power Updated");
+                $("#power-table").DataTable().ajax.reload();
+            },
+            error: function (e) {
+                ToastError(`Failed: ${e.responseText}`);
+            }
+        });
+    }
+});
+$(document).on('click', '#power-delete-confirmed', function () {
+    const power = fetchPowerInputs();
+    if (!power.id)
+        return;
+    $.ajax({
+        url: `/api/powers/${power.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function () {
+            ToastError("Power Deleted");
+            $("#power-table").DataTable().ajax.reload();
+        },
+        error: function (e) {
+            ToastError(`Failed: ${e.responseText}`);
+        }
+    });
 });

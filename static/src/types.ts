@@ -10,15 +10,15 @@ interface ContentSource {
 }
 
 export interface Power {
-    id: number
-    name: string
-    type: GenericCategory
+    id?: string
+    name?: string
+    type?: GenericCategory
     pre_requisite?: string
     casttime?: string
     range?: string
     source?: ContentSource
     description?: string
-    concentration: boolean
+    concentration?: boolean,
     alignment?: GenericCategory,
     level?: number,
     duration?: string,

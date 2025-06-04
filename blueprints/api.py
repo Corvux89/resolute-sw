@@ -441,6 +441,71 @@ def powers(type: str = None):
 
     return jsonify(powers)
 
+@api_blueprint.route("/powers", methods=["POST"])
+@is_admin
+def new_power():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+    try:
+        power: Power = Power.from_json(data)
+        db.session.add(power)
+        db.session.commit()
+    except:
+        raise BadRequest()
+
+    return jsonify(200)
+
+@api_blueprint.route('/powers', methods=["PATCH"])
+@is_admin
+def update_power():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+    try:
+        # 1. Require an ID in the payload
+        power_id = data.get("id")
+        if not power_id:
+            raise BadRequest("Missing power id for update.")
+
+        # 2. Fetch the existing Power
+        power: Power = db.session.query(Power).filter(Power.id == power_id).first()
+        if not power:
+            raise NotFound("Power not found.")
+
+        # 3. Update fields (handle nested objects for FKs)
+        for field in [
+            "name", "pre_requisite", "casttime", "range", "description",
+            "concentration", "level", "duration"
+        ]:
+            if field in data:
+                setattr(power, field, data[field])
+
+        # Foreign keys (handle nested objects)
+        if "type" in data and data["type"]:
+            power._type = data["type"].get("id")
+        if "source" in data and data["source"]:
+            power._source = data["source"].get("id")
+        if "alignment" in data and data["alignment"]:
+            power._alignment = data["alignment"].get("id")
+
+        db.session.commit()
+    except:
+        raise BadRequest()
+    return jsonify(200)
+
+@api_blueprint.route('/powers/<power_id>', methods=["DELETE"])
+@is_admin
+def delete_power(power_id):
+    db: SQLAlchemy = current_app.config.get("DB")
+    power: Power = db.session.query(Power).filter(Power.id == power_id).first()
+
+    if not power:
+        raise NotFound()
+    
+    db.session.delete(power)
+    db.session.commit()
+
+    return jsonify()
+
 
 # --------------------------- #
 # Private Methods

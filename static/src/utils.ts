@@ -1,3 +1,5 @@
+import { Power } from "./types.js";
+
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
     $("#error-toast").toast("show")
@@ -66,13 +68,10 @@ export function setupTableFilters(table_name: string, exceptions?: number[]) {
     })
 }
 
-export function populateSelectOption(selector, options, selectedValues, defaultOption) {
-    const select = $(selector)
-        .html("")
-        .append(`<option value="">${defaultOption}</option>`);
-    options.forEach(option => {
-        select.append(`<option value="${option.id}" ${selectedValues.indexOf(option.id) > -1 ? 'selected' : ''}>${option.name}</option>`);
-    });
+export function setSelectInputValue(select_id: string, value: string): void{
+    const elm = $(select_id)
+    if (!elm) return
+    elm.val(value)
 }
 
 export function getActiveFilters(colIdx: number): string[]{
@@ -93,4 +92,81 @@ export function updateFilters(colIdx: number): void{
     } else {
         table.column(colIdx).search('').draw();
     }
+}
+
+export function defaultPowerModal(power: Power): void{
+    if (!power.id){
+        $("#power-edit-form").removeData("id")
+        $("#power-delete").addClass("d-none")
+    } else{
+        $("#power-edit-form").data("id", power.id)     
+        $("#power-delete").removeClass("d-none")
+    }
+    $("#power-name").val(power.name)
+    $("#power-prereq").val(power.pre_requisite)
+    $("#power-casttime").val(power.casttime)
+    $("#power-range").val(power.range)
+    setSelectInputValue("#power-source", power.source?.id?.toString() ?? "")
+    $("#power-conc").prop('checked', power.concentration ?? false)
+    
+    if (power.type.value == "Tech") {
+        $('#align-col').addClass('d-none');
+    } else {
+        $('#align-col').removeClass('d-none');
+    }
+    $("#power-level").val(power.level)
+    $("#power-duration").val(power.duration)
+
+    // @ts-expect-error It exists
+    if (window.powerMDE){
+        // @ts-expect-error It exists
+        window.powerMDE.toTextArea();
+    }
+
+    $("#power-desc").val(power.description)
+
+    //@ts-expect-error It exists
+    window.powerMDE = new EasyMDE(
+        {
+            element: document.getElementById('power-desc'),
+            autofocus: true,
+            sideBySideFullscreen: false,
+            autoRefresh: { delay: 300},
+            maxHeight: "20vh",
+            toolbar: ["undo","redo","|","bold","italic","heading","|","code","quote","unordered-list","ordered-list","|","link"] 
+        }
+    )
+}
+
+export function fetchPowerInputs(): Power{
+    const power: Power = {}
+    power.id = $("#power-edit-form").data("id")
+    power.name = $("#power-name").val().toString()
+    power.type = window.location.pathname.includes("tech_powers") ? {id: 2, value: "Tech"} : {id: 1, value: "Force"}
+    power.pre_requisite = $("#power-prereq").val().toString()
+    power.casttime = $("#power-casttime").val().toString()
+    power.range = $("#power-range").val().toString()
+    const source_option = $("#power-source").find(':selected')
+    power.source = {
+        id: Number(source_option.val()),
+        name: source_option.html(),
+    }
+    //@ts-expect-error It exists
+    if (window.powerMDE){
+        //@ts-expect-error It exists
+        power.description = window.powerMDE.value()
+    }
+    power.concentration = $("#power-conc").prop('checked')
+    if ($("#power-alignment").length){
+        const align_option = $("#power-alignment").find(':selected')
+        if (align_option){
+            power.alignment = {
+                id: Number(align_option.val()),
+                value: align_option.html()
+            }
+        }
+    }
+    power.level = Number($("#power-level").val())
+    power.duration = $("#power-duration").val().toString() 
+    return power 
 }
