@@ -532,17 +532,6 @@ def get_species():
 
         query = query.filter(Species._source == source.id)
 
-    if request.args.get('stat'):
-      query = query.filter(
-        db.session.query(SpeciesASI)
-        .filter(
-            SpeciesASI._species == Species.id,
-            SpeciesASI.ability.ilike(f"%{request.args.get('stat').lower()}%")
-        )
-        .exists()
-    )
-
-
     filter_map = {
         "name": Species.value,
         "size": Species.size,
@@ -569,7 +558,7 @@ def new_species():
         species: Species = Species.from_json(data)
         db.session.add(species)
         db.session.commit()
-    except:
+    except Exception as e:
         raise BadRequest()
     
     return jsonify(200)
@@ -585,21 +574,23 @@ def update_species():
         if not species_id:
             raise BadRequest("Missing Species id for update")
         
-        species: Species = db.sesion.query(Species).filter(Species.id == species_id).first()
+        species: Species = db.session.query(Species).filter(Species.id == species_id).first()
 
         if not species:
             raise NotFound("Species not found")
         
-        for field in ["name","skin_options", "hair_options", "eye_options", "distinctions", "height_average", "height_mod", 
+        for field in ["value","skin_options", "hair_options", "eye_options", "distinctions", "height_average", "height_mod", 
                       "weight_average", "weight_mod", "homeworld", "flavortext", "language", "image_url", "size", "traits"]:
             if field in data:
-                setattr(species, field if field != "name" else "value", data[field])
+                setattr(species, field, data[field])
 
         if "source" in data and data["source"]:
             species._source = data["source"].get("id")
 
         db.session.commit()
-    except:
+    except NotFound:
+        raise NotFound()
+    except Exception as e:
         raise BadRequest()
     
     return jsonify(200)
@@ -614,7 +605,7 @@ def delete_species(species_id):
         raise NotFound()
     
     db.session.delete(species)
-    db.sesison.commit()
+    db.session.commit()
 
     return jsonify(200)
 

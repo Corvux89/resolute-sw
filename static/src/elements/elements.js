@@ -5,6 +5,14 @@ class CustomModal extends HTMLElement {
         this._title = '';
         this.bodyContent = '';
     }
+    getExtraAttributes() {
+        // Collect all attributes except those handled by the component
+        const exclude = ['custom-id', 'title'];
+        return Array.from(this.attributes)
+            .filter(attr => !exclude.includes(attr.name))
+            .map(attr => `${attr.name}="${attr.value}"`)
+            .join(' ');
+    }
     static get observedAttributes() {
         return ['custom-id', 'title'];
     }
@@ -33,8 +41,9 @@ class CustomModal extends HTMLElement {
     }
     render() {
         this.bodyContent = this.innerHTML;
+        const extraAttrs = this.getExtraAttributes();
         this.innerHTML = `
-    <div class="modal fade" id="${this._id}" tabindex="-1" role="dialog" aria-labelledby="${this._id}">
+    <div class="modal fade" id="${this._id}" tabindex="-1" role="dialog" aria-labelledby="${this._id}" ${extraAttrs}>
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header text-center">
@@ -261,7 +270,7 @@ export class SelectInput extends HTMLElement {
     }
     renderOptions() {
         return this.options
-            .map((option) => `<option value="${option.value}" ${option.value === this.selectedValue ? 'selected' : ''}>${option.label}</option>`)
+            .map((option) => `<option value="${option.value}" ${option.value == this.selectedValue ? 'selected' : ''}>${option.label}</option>`)
             .join('');
     }
     render() {

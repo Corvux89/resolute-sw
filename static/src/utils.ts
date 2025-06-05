@@ -1,4 +1,4 @@
-import { Power } from "./types.js";
+import { Power, Species } from "./types.js";
 
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
@@ -14,6 +14,34 @@ export function destroyTable(table: string): void{
     if ($.fn.DataTable.isDataTable(table)){
         $(table).DataTable().destroy();
     }
+}
+
+export function setupMDE(element: string, default_text?: string): void{
+    const textarea = document.getElementById(element);
+    if (!textarea) return;
+
+    if (window[element] && typeof window[element].toTextArea === "function"){
+        window[element].toTextArea()
+    }
+
+    if (default_text) $(`#${element}`).val(default_text)
+    
+    //@ts-expect-error This is pulled in from a parent and no import needed
+    window[element] = new EasyMDE(
+        {
+            element: document.getElementById(element),
+            autofocus: true,
+            sideBySideFullscreen: false,
+            autoRefresh: {delay: 300},
+            maxHeight: "20vh",
+            toolbar: ["undo","redo","|","bold","italic","heading","|","code","quote","unordered-list","ordered-list","|","link"] 
+        }
+    )
+}
+
+export function getMDEValue(element: string): string{
+    if (window[element] && typeof window[element].value === "function") return window[element].value()
+    return ""
 }
 
 export function updateClearAllFiltersButton(): void {
@@ -123,25 +151,7 @@ export function defaultPowerModal(power: Power): void{
     $("#power-level").val(power.level)
     $("#power-duration").val(power.duration)
 
-    // @ts-expect-error It exists
-    if (window.powerMDE){
-        // @ts-expect-error It exists
-        window.powerMDE.toTextArea();
-    }
-
-    $("#power-desc").val(power.description)
-
-    //@ts-expect-error It exists
-    window.powerMDE = new EasyMDE(
-        {
-            element: document.getElementById('power-desc'),
-            autofocus: true,
-            sideBySideFullscreen: false,
-            autoRefresh: { delay: 300},
-            maxHeight: "20vh",
-            toolbar: ["undo","redo","|","bold","italic","heading","|","code","quote","unordered-list","ordered-list","|","link"] 
-        }
-    )
+    setupMDE("power-desc", power.description)
 }
 
 export function fetchPowerInputs(): Power{
@@ -157,11 +167,7 @@ export function fetchPowerInputs(): Power{
         id: Number(source_option.val()),
         name: source_option.html(),
     }
-    //@ts-expect-error It exists
-    if (window.powerMDE){
-        //@ts-expect-error It exists
-        power.description = window.powerMDE.value()
-    }
+    power.description = getMDEValue("power-desc")
     power.concentration = $("#power-conc").prop('checked')
     if ($("#power-alignment").length){
         const align_option = $("#power-alignment").find(':selected')
@@ -175,4 +181,34 @@ export function fetchPowerInputs(): Power{
     power.level = Number($("#power-level").val())
     power.duration = $("#power-duration").val().toString() 
     return power 
+}
+
+export function fetchSpeciesInputs(): Species{
+    const source_option = $("#species-source").find(':selected')
+    const size_option = $("#species-size").find(':selected')
+
+    const species: Species = {
+        id: $("#species-edit-form").data('id'),
+        value: $("#species-name").val().toString(),
+        source: {
+            id: Number(source_option.val()), 
+            name: source_option.html()
+        },
+        distinctions: $("#species-distinctions").val().toString(),
+        size: size_option.val().toString(),
+        image_url: $("#species-image").val().toString(),
+        skin_options: $("#species-skin").val().toString(),
+        hair_options: $("#species-hair").val().toString(),
+        eye_options: $("#species-eye").val().toString(),
+        height_average: $("#species-havg").val().toString(),
+        height_mod: $("#species-hmod").val().toString(),
+        weight_average: $("#species-wavg").val().toString(),
+        weight_mod: $("#species-wmod").val().toString(),
+        homeworld: $("#species-world").val().toString(),
+        language: $("#species-language").val().toString(),
+        traits: getMDEValue("species-traits"),
+        flavortext: getMDEValue("species-flavortext"),
+    }
+
+    return species
 }

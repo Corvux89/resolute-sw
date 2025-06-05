@@ -1,0 +1,86 @@
+<custom-modal title="Species" custom-id="species-edit-form" {% if species %}data-id="{{ species.id }}"{% endif %}>
+    <div class="container">
+        <div class="row mb-2">
+            <div class="col-4 mb-2">
+                <text-input label-text="Name" custom-id="species-name" required value="{{ species.value if species else '' }}"></text-input>
+            </div>
+            <div class="col-8 mb-2">
+                <text-input label-text="Distinctions" custom-id="species-distinctions" value="{{ species.distinctions if species else '' }}"></text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input label-text="Image URL" custom-id="species-image" value="{{ species.image_url if species else '' }}"></text-input>
+            </div>
+            <div class="col-6 mb-2">
+                <select-input custom-id="species-source" custom-label="Content Source" options='{{ options['content-source']|tojson }}' selected="{{ species.source.id if species else '6' }}"></select-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-3 mb-2">
+                <select-input custom-id="species-size" custom-label="Size" options='{{ options['sizes']|tojson }}' selected="{{ species.size if species else 'Medium' }}"></select-input>
+            </div>
+            <div class="col-3 mb-2">
+                <text-input label-text="Skin Color" custom-id="species-skin" value="{{ species.skin_options if species else '' }}"></text-input>
+            </div>
+            <div class="col-3 mb-2">
+                <text-input label-text="Hair Color" custom-id="species-hair" value="{{ species.hair_options if species else '' }}"></text-input>
+            </div>
+            <div class="col-3 mb-2">
+                <text-input label-text="Eye Color" custom-id="species-eye" value="{{ species.eye_options if species else '' }}"></text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-3 mb-2">
+                <text-input label-text="Height Average" custom-id="species-havg" value="{{ species.height_average if species else '' }}"></text-input>
+            </div>
+            <div class="col-3 mb-2">
+                <text-input label-text="Height Mod" custom-id="species-hmod" value="{{ species.height_mod if species else '' }}"></text-input>
+            </div>
+            <div class="col-3 mb-2">
+                <text-input label-text="Weight Average" custom-id="species-wavg" value="{{ species.weight_average if species else '' }}"></text-input>
+            </div>
+            <div class="col-3 mb-2">
+                <text-input label-text="Weight Mod" custom-id="species-wmod" value="{{ species.weight_mod if species else '' }}"></text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input label-text="Homeworld" custom-id="species-world" value="{{ species.homeworld if species else '' }}"></text-input>
+            </div>
+            <div class="col-6 mb-2">
+                <text-input label-text="Language(s)" custom-id="species-language" value="{{ species.language if species else '' }}"></text-input>
+            </div>
+        </div>
+        <div clas="row mb-2">
+             <label for="species-flavortext" class="form-label">Flavortext</label>
+            <textarea id="species-flavortext" value="" spellcheck="true" class="form-control big-edit-body">{{ species.flavortext if species else ''}}</textarea>
+        </div>
+        <div clas="row mb-2">
+             <label for="species-traits" class="form-label">Traits</label>
+            <textarea id="species-traits" value="" spellcheck="true" class="form-control big-edit-body"> {{ species.traits if species else '' }}</textarea>
+        </div>
+        <div class="row mb-2">
+            <div class="col mb-3">
+                <button type="button" class="btn btn-primary float-end m-3" id="species-submit" data-bs-dismiss="modal">
+                    Submit
+                </button>
+                <button type="button" class="btn btn-danger float-end m-3" id="species-delete" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#delete-confirm-modal">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</custom-modal>
+
+<custom-modal title="Confirm Delete" custom-id="delete-confirm-modal">
+    <div class="container">
+        <div class="row mb-2">
+            Are you sure you want to delete this species?
+        </div>
+        <div class="row-mb-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-id="" id="species-delete-confirmed">Delete</button>
+        </div>
+    </div>
+</custom-modal>

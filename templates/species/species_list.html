@@ -9,7 +9,7 @@
 
 <div class="container m-2 position-relative">
     {% if current_user.is_admin %}
-     <button type="button" id="new-species-btn" data-bs-toggle="modal" data-bs-target="#species-new-form" class="btn btn-link position-absolute top-0 end-0 m-2 p-0" title="New Species">
+     <button type="button" id="new-species-btn" data-bs-toggle="modal" data-bs-target="#species-edit-form" class="btn btn-link position-absolute top-0 end-0 m-2 p-0" title="New Species">
         <i class="fa fa-plus"></i>
     </button>
     {% endif %}
@@ -39,32 +39,9 @@
     </div>
     <table id="species-table" class="table table-striped"></table>
 </div>
+
 {% if current_user.is_admin %}
-<custom-modal title="Species" custom-id="species-new-form">
-    <div class="container">
-        <div class="row mb-2">
-            <div class="col-4 mb-2">
-                <text-input label-text="Name" custom-id="species-name" required></text-input>
-            </div>
-            <div class="col-4 mb-2">
-                <text-input label-text="Pre-Requisite?" custom-id="power-prereq"></text-input>
-            </div>
-            <div class="col-4 mb-2">
-                <text-input label-text="Cast Time" custom-id="power-casttime"></text-input>
-            </div>
-        </div>
-        <div class="row mb-2">
-            <textarea id="species-desc" value="" spellcheck="true" class="form-control big-edit-body" required></textarea>
-        </div>
-        <div class="row mb-2">
-            <div class="col mb-3">
-                <button type="button" class="btn btn-primary float-end m-3" id="species-new-submit" data-bs-dismiss="modal">
-                    Submit
-                </button>
-            </div>
-        </div>
-    </div>
-</custom-modal>
+{% include '/species/species_modal.html' %}
 {% endif %}
 
 {% endblock %}

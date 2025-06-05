@@ -32,7 +32,8 @@ export interface Species {
     eye_options?: string
     flavortext?: string
     hair_options?: string
-    height_averag?: string
+    height_average?: string
+    height_mod?: string
     homeworld?: string
     html_flavortext?: string
     image_url?: string

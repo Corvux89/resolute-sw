@@ -1,9 +1,25 @@
-{% extends "template.html" %}
-{% block body %}
+{% extends "template.html" %}{% block body %}
+{% if current_user.is_admin %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+{% endif %}
+
 <div class="container species-detail-page">
     <div class="row">
         <div class="col-12 mb-3">
-            <h4 class="text-primary species-detail-title">&#9654; {{ species.value|upper }}</h4>
+            <h4 class="text-primary species-detail-title">&#9654; {{ species.value|upper }}
+                {% if current_user.is_admin %}
+                <button type="button"
+                id="edit-species-btn-{{ species.id }}"
+                class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
+                data-species-id="{{ species.id }}"
+                title="Edit Species"
+                data-bs-toggle="modal"
+                data-bs-target="#species-edit-form">
+                    <i class="fa fa-pencil"></i>
+                </button>
+                {% endif %}
+            </h4>
         </div>
     </div>
     <div class="row">
@@ -14,9 +30,15 @@
                 <div class="card-body p-2">
                     <div class="mb-2">
                         <div class="fw-bold">VISUAL CHARACTERISTICS</div>
+                        {% if species.skin_options %}
                         <div><b>Skin Color:</b> {{ species.skin_options }}</div>
+                        {% endif %}
+                        {% if species.hair_options %}
                         <div><b>Hair Color:</b> {{ species.hair_options }}</div>
+                        {% endif %}
+                        {% if species.eye_options %}
                         <div><b>Eye Color:</b> {{ species.eye_options }}</div>
+                        {% endif %}
                         <div><b>Distinctions:</b> {{ species.distinctions }}</div>
                     </div>
                     <div class="mb-2">
@@ -26,7 +48,9 @@
                     </div>
                     <div>
                         <div class="fw-bold">SOCIOCULTURAL CHARACTERISTICS</div>
+                        {% if species.homeworld %}
                         <div><b>Homeworld:</b> {{ species.homeworld }}</div>
+                        {% endif %}
                         <div><b>Language:</b> {{ species.language }}</div>
                     </div>
                 </div>
@@ -50,4 +74,9 @@
         </div>
     </div>
 </div>
+
+{% if current_user.is_admin %}
+{% include '/species/species_modal.html' %}
+{% endif %}
+
 {% endblock %}

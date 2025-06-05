@@ -124,6 +124,27 @@ class Species(db.Model, BaseModel):
 
     _source_record = relationship(ContentSource)
 
+    @classmethod
+    def from_json(cls, json):
+        return cls (
+            value = json.get('value'), 
+            skin_options = json.get('skin_options', ''),
+            hair_options = json.get('hair_options', ''),
+            eye_options = json.get('eye_options', ''),
+            distinctions = json.get('distinctions', ''),
+            height_average = json.get('height_average', ''),
+            height_mod = json.get('height_mod', ''),
+            weight_average = json.get('weight_average', ''),
+            weight_mod = json.get('weight_mod', ''),
+            homeworld = json.get('homeworld', ''),
+            flavortext = json.get('flavortext', ''),
+            traits = json.get('traits', ''),
+            language = json.get('language', ''),
+            image_url = json.get('image_url', ''),
+            size = json.get('size', ''),
+            _source = json.get('source', {}).get('id')
+        )
+
     @property
     def html_flavortext(self):
         return render_markdown(self.flavortext)
@@ -135,31 +156,6 @@ class Species(db.Model, BaseModel):
     @property
     def source(self) -> ContentSource:
         return self._source_record
-
-    @classmethod
-    def from_json(cls, json):
-        return cls(
-            value=json.get('name'),  # Accepts either 'value' or 'name'
-            skin_options=json.get('skin_options', ''),
-            hair_options=json.get('hair_options', ''),
-            eye_options=json.get('eye_options', ''),
-            distinctions=json.get('distinctions', ''),
-            height_average=json.get('height_average', ''),
-            height_mod=json.get('height_mod', ''),
-            weight_average=json.get('weight_average', ''),
-            weight_mod=json.get('weight_mod', ''),
-            homeworld=json.get('homeworld', ''),
-            flavortext=json.get('flavortext', ''),
-            language=json.get('language', ''),
-            image_url=json.get('image_url', ''),
-            size=json.get('size', ''),
-            _source=json.get('source', {}).get('id')
-        )
-
-    def __init__(self, **kwargs):
-        self.id = kwargs.get("id")
-        self.value = kwargs.get("value")
-
 
 class Store(db.Model, BaseModel, IntAttributeMixin):
     __tablename__ = "store"

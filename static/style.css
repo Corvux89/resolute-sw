@@ -103,7 +103,7 @@ body{
     max-height: 70vh;
 }
 
-.dropdown-row p{
+.dropdown-row p, .dropdown-row h1, .dropdown-row h2, .dropdown-row h3, .dropdown-row h4, .dropdown-row h5, .dropdown-row h6{
     color: black;
 }
 
@@ -180,10 +180,6 @@ body{
 .species-detail-title {
     letter-spacing: 2px;
 }
-
-/* .species-info-card {
-    background: #b3e5fc;
-} */
 
 .species-info-card-header {
     font-size: 1.2rem;

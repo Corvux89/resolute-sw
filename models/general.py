@@ -18,7 +18,7 @@ db = SQLAlchemy()
 def render_markdown(text: str) -> str:
     if not text:
         return ""
-    return markdown.markdown(text, extensions=["tables", "sane_lists"])
+    return markdown.markdown(text, extensions=["tables", "sane_lists", "toc"])
 
 class User(UserMixin):
     id: str

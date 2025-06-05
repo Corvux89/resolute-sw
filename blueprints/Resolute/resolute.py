@@ -1,4 +1,5 @@
 import json
+from urllib.parse import unquote
 
 from flask import Blueprint, current_app, render_template, request
 from flask_sqlalchemy import SQLAlchemy
@@ -46,17 +47,17 @@ def search():
 
 @resolute_blueprint.route("/species", methods=["GET"])
 def species():
-    return render_template("/species/species_list.html")
+    return render_template("/species/species_list.html", options=_get_options())
 
 @resolute_blueprint.route("/species/<species>", methods=["GET"])
 def species_details(species):
     db: SQLAlchemy = current_app.config.get("DB")
-    species: Species = db.session.query(Species).filter(func.lower(Species.value) == species.lower()).first()
+    species: Species = db.session.query(Species).filter(func.lower(Species.value) == unquote(species).lower()).first()
 
     if not species:
         raise NotFound()
 
-    return render_template("/species/species.html", species=species)
+    return render_template("/species/species.html", species=species, options=_get_options())
 
 
 # --------------------------- #
@@ -81,9 +82,11 @@ def _get_options():
     power_type = db.session.query(PowerType).all()
     sources = db.session.query(ContentSource).all()
     alignments = db.session.query(PowerAlignment).all()
+    sizes = [{"value": v, "label": v} for v in ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]]
 
     options["power-type"] = [{"value": p.id, "label": p.value} for p in power_type]
     options["content-source"] = [{"value": s.id, "label": s.name} for s in sources]
     options["alignment"] = [{"value": a.id, "label": a.value} for a in alignments]
+    options["sizes"] = sizes
 
     return options

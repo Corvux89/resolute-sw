@@ -1,5 +1,5 @@
 import { Power } from "./types.js";
-import { defaultPowerModal, destroyTable, fetchPowerInputs, getActiveFilters, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
+import { defaultPowerModal, destroyTable, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
 
 // Generic Content
 if ($("#content-edit-form").length){
@@ -15,6 +15,7 @@ if ($("#content-edit-form").length){
             toolbar: ["undo","redo",
                 {
                     name: "save",
+                    title: "Save",
                     className: "fa-solid fa-floppy-disk",
                     action: (editor) => {
                         const key = $("#content-submit-button").data('key')
@@ -229,7 +230,7 @@ $(document).on('click', "#power-table tbody tr", function() {
             <td colspan="${table.columns().count()}">
                 ${editButton}
                 <div class="p-3">
-                    ${power.html_desc}
+                    ${power.html_desc} 
                 </div>
             </td>
         </tr>
@@ -337,10 +338,9 @@ if ($("#species-table").length){
             {
                 data: "image_url",
                 render: function(data){
-                    if (!data) return ""
                     return `
                     <div class="species-preview-container">
-                        <img src="${data}" alt="species image" class="species-preview"/>
+                        <img src="${data ? data : 'static/images/placeholder-trooper.jpg'}" alt="species image" class="species-preview"/>
                     </div>
                     `
                 }
@@ -373,6 +373,76 @@ $(document).on('click', '#species-table tbody tr', function() {
     const table = $("#species-table").DataTable();
     const rowData = table.row(this).data();
     if (rowData && rowData.id) {
-        window.location.href = `/species/${rowData.value.toString().toLowerCase()}`;
+        window.location.href = `/species/${encodeURIComponent(rowData.value.toString().toLowerCase())}`;
     }
 });
+
+$('#species-edit-form').on('shown.bs.modal', function(){
+    setupMDE("species-flavortext")
+    setupMDE("species-traits")
+
+    const species = fetchSpeciesInputs()
+
+    if (!species.id){
+        $("#species-delete").addClass("d-none")
+    } else {
+        $("#species-delete").removeClass("d-none")
+    }
+
+
+    console.log(species)
+})
+
+$(document).on('click', "#species-submit", function(){
+    const species = fetchSpeciesInputs()
+    console.log(species)
+
+   if (!species.id){
+        $.ajax({
+            url: `api/species`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(species),
+            success: function() {
+                ToastSuccess("Species Added")
+                $("#species-table").DataTable().ajax.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    } else {
+        $.ajax({
+            url: `${window.location.origin}/api/species`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(species),
+            success: function() {
+                window.location.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    }
+})
+
+$(document).on('click', '#species-delete-confirmed', function(){
+    const species = fetchSpeciesInputs()
+
+    if (!species.id) return
+
+    $.ajax({
+        url: `${window.location.origin}/api/species/${species.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function(){
+            ToastError("Species Deleted")
+            window.location.href = `/species`;
+        },
+        error: function(e){
+            ToastError(`Failed: ${e.responseText}`)
+        }
+        
+    })
+})
