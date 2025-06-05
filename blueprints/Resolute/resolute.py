@@ -51,7 +51,7 @@ def species():
 @resolute_blueprint.route("/species/<species>", methods=["GET"])
 def species_details(species):
     db: SQLAlchemy = current_app.config.get("DB")
-    species: Species = db.session.query(Species).filter(func.lower(Species.value) == species).first()
+    species: Species = db.session.query(Species).filter(func.lower(Species.value) == species.lower()).first()
 
     if not species:
         raise NotFound()

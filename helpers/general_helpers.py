@@ -29,7 +29,7 @@ def perform_search(query: str):
     )).all()
 
     for s in species:
-        results.append(SearchResult(f"Species - {s.value}", "#"))
+        results.append(SearchResult(f"Species - {s.value}", f"{url_for('resolute.species_details', species=s.value.lower())}"))
 
     return results
 
