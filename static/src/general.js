@@ -290,21 +290,29 @@ if ($("#species-table").length) {
         columns: [
             {
                 data: "image_url",
-                render: function (data) {
+                render: function (data, type, row) {
                     return `
-                    <div class="species-preview-container">
-                        <img src="${data ? data : 'static/images/placeholder-trooper.jpg'}" alt="species image" class="species-preview"/>
-                    </div>
+                    <a href="/species/${encodeURIComponent(row.value.toString().toLowerCase())}">
+                        <div class="species-preview-container">
+                            <img src="${data ? data : 'static/images/placeholder-trooper.jpg'}" alt="species image" class="species-preview"/>
+                        </div>
+                    </a>
                     `;
                 }
             },
             {
                 title: "Name",
-                data: "value"
+                data: "value",
+                render: function (data) {
+                    return `<a href="/species/${encodeURIComponent(data.toString().toLowerCase())}" class="species-link undecorated-link text-black">${data}</a>`;
+                }
             },
             {
                 title: "Size",
-                data: "size"
+                data: "size",
+                render: function (data, type, row) {
+                    return `<a href="/species/${encodeURIComponent(row.value.toString().toLowerCase())}" class="species-link undecorated-link text-black">${data}</a>`;
+                }
             }
         ],
         order: [[1, 'asc']],
@@ -320,13 +328,6 @@ if ($("#species-table").length) {
     }
     setupTableFilters(tableName, [0, 1]);
 }
-$(document).on('click', '#species-table tbody tr', function () {
-    const table = $("#species-table").DataTable();
-    const rowData = table.row(this).data();
-    if (rowData && rowData.id) {
-        window.location.href = `/species/${encodeURIComponent(rowData.value.toString().toLowerCase())}`;
-    }
-});
 $('#species-edit-form').on('shown.bs.modal', function () {
     setupMDE("species-flavortext");
     setupMDE("species-traits");

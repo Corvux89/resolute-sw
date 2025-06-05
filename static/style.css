@@ -120,10 +120,6 @@ body{
     cursor: pointer;
 }
 
-#species-table tbody tr{
-    cursor: pointer;
-}
-
 .dropdown-menu .dropdown-submenu {
     display: none;
     position: absolute;
