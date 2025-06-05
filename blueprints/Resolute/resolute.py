@@ -2,10 +2,12 @@ import json
 
 from flask import Blueprint, current_app, render_template, request
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 
 from helpers.general_helpers import perform_search
+from models.G0T0 import ContentSource, PowerAlignment, PowerType, Species
 from models.exceptions import NotFound
-from models.general import Content, ContentSource, PowerAlignment, PowerType
+from models.general import Content
 
 resolute_blueprint = Blueprint("resolute", __name__)
 
@@ -41,7 +43,20 @@ def search():
     results = perform_search(query)
 
     return render_template("search_results.html", query=query, results=results)
-    pass
+
+@resolute_blueprint.route("/species", methods=["GET"])
+def species():
+    return render_template("/species/species_list.html")
+
+@resolute_blueprint.route("/species/<species>", methods=["GET"])
+def species_details(species):
+    db: SQLAlchemy = current_app.config.get("DB")
+    species: Species = db.session.query(Species).filter(func.lower(Species.value) == species).first()
+
+    if not species:
+        raise NotFound()
+
+    return render_template("/species/species.html", species=species)
 
 
 # --------------------------- #

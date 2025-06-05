@@ -1,4 +1,5 @@
 import requests
+import csv
 
 request = requests.get("https://sw5eapi.azurewebsites.net/api/species")
 
@@ -149,11 +150,35 @@ species_map = {
     142:"Custom Lineage*"
 }
 
-output = []
+output = [
+    [
+        "id",
+        "value",
+        "skin_options",
+        "hair_options",
+        "eye_options",
+        "distinctions",
+        "height_average",
+        "height_mod",
+        "weight_average",
+        "weight_mod",
+        "homeworld",
+        "flavortext",
+        "language",
+        "image_url",
+        "size",
+        "source",
+        "traits"
+    ]
+]
 
 
 
 for species in data:
+    abilities = []
+    trait_text = []
+    image = None
+
     def get_value(key: str):
         val = species.get(key)
 
@@ -162,22 +187,40 @@ for species in data:
         return val
 
     species_id = next((k for k, v in species_map.items() if v == species.get('name')), None)
+    species_value = next((v for k, v in species_map.items() if v == species.get('name')), None)
 
     if not species_id:
         print(f"Secies: {species.get('name')} not found")
         continue
 
-    output.append(
-        f'''UPDATE public.c_character_species SET skin_options={get_value('skinColorOptions')}, hair_options={get_value('hairColorOptions')}, eye_options={get_value('eyeColorOptions')}, distinctions={get_value('distinctions')}, height_averag={get_value('heightAverage')}, height_mod={get_value('heightRollMod')}, weight_average={get_value('weightAverage')}, weight_mod={get_value('weightRollMod')}, homeworld={get_value('homeworld')}, flavortext={get_value('flavorText')}, "language"={get_value('language')} '''
-    )
-
     for trait in species.get('traits', []):
+        trait_text.append(f'''**{trait.get('name')}.** {trait.get('description')}''')
+        
+    if get_value('imageUrls'):
+        image = get_value('imageUrls')[0]
 
+    line = [
+        species_id,
+        species.get('name'),
+        species.get('skinColorOptions'),
+        species.get('hairColorOptions'),
+        species.get('eyeColorOptions'),
+        species.get('distinctions'),
+        species.get('heightAverage'),
+        species.get('heightRollMod'),
+        species.get('weightAverage'),
+        species.get('weightRollMod'),
+        species.get('homeworld'),
+        species.get('flavorText'),
+        species.get('language'),
+        image,
+        species.get('size'),
+        species.get('contentSourceEnum'),
+        "\n\n".join(trait_text)
+    ]
 
-spec_str = '''UPDATE public.c_character_species SET , skin_options='', hair_options='', eye_options='', distinctions='', height_average='', heigh_mod='', weight_average='', weight_mod='', homeworld='', flavortext='', "language"='', abilities_increased='', image_url='', "size"='', "source"='' WHERE id=nextval('c_character_species_id_seq'::regclass); '''
+    output.append(line)     
 
-trait_str = '''INSERT INTO public.species_traits ("name", description, species) VALUES('', '', 0);'''
-
-
-with open("update.txt", "w", newline="", encoding="utf-8") as file:
-    pass
+with open("data.csv", "w", newline="", encoding="utf-8") as file:
+    writer = csv.writer(file)
+    writer.writerows(output)

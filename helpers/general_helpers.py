@@ -1,7 +1,8 @@
 from flask import current_app, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
-from models.general import Content, Power, SearchResult
+from models.G0T0 import Power, Species
+from models.general import Content, SearchResult
 
 def perform_search(query: str):
     db: SQLAlchemy = current_app.config.get("DB")
@@ -22,5 +23,14 @@ def perform_search(query: str):
     for p in powers:
         results.append(SearchResult(f"{p.type.value} Power - {p.name}", f"{url_for(f'resolute.{p.type.value.lower()}_powers', name=p.name)}"))
 
+    # Species
+    species = db.session.query(Species).filter(or_(
+        Species.value.ilike(f"%{query.lower()}%")
+    )).all()
+
+    for s in species:
+        results.append(SearchResult(f"Species - {s.value}", "#"))
+
     return results
+
 

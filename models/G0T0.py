@@ -1,17 +1,26 @@
 import json
 import datetime
+import uuid
 
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
+from models.discord import MemberAttributeMixin, BaseModel, IntAttributeMixin
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import BigInteger, ForeignKey, DateTime, String
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.dialects.postgresql import ARRAY
 
 from constants import DISCORD_GUILD_ID
-from models.discord import MemberAttributeMixin, BaseModel, IntAttributeMixin
+from models.general import BaseModel, db, render_markdown
+
 
 db = SQLAlchemy()
+
+class ContentSource(db.Model, BaseModel):
+    __tablename__ = "c_content_source"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    abbreviation: Mapped[str]
 
 
 class Activity(db.Model, BaseModel):
@@ -93,11 +102,59 @@ class Archetype(db.Model, BaseModel):
         self.value = kwargs.get("value")
         self.parent = kwargs.get("parent")
 
-
 class Species(db.Model, BaseModel):
     __tablename__ = "c_character_species"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
+    skin_options: Mapped[str]
+    hair_options: Mapped[str]
+    eye_options: Mapped[str]
+    distinctions: Mapped[str]
+    height_average: Mapped[str]
+    height_mod: Mapped[str]
+    weight_average: Mapped[str]
+    weight_mod: Mapped[str]
+    homeworld: Mapped[str]
+    flavortext: Mapped[str]
+    traits: Mapped[str]
+    language: Mapped[str]
+    image_url: Mapped[str]
+    size: Mapped[str]
+    _source: Mapped[int] = mapped_column("source", ForeignKey("c_content_source.id"), nullable=True)
+
+    _source_record = relationship(ContentSource)
+
+    @property
+    def html_flavortext(self):
+        return render_markdown(self.flavortext)
+    
+    @property
+    def html_traits(self):
+        return render_markdown(self.traits)
+    
+    @property
+    def source(self) -> ContentSource:
+        return self._source_record
+
+    @classmethod
+    def from_json(cls, json):
+        return cls(
+            value=json.get('name'),  # Accepts either 'value' or 'name'
+            skin_options=json.get('skin_options', ''),
+            hair_options=json.get('hair_options', ''),
+            eye_options=json.get('eye_options', ''),
+            distinctions=json.get('distinctions', ''),
+            height_average=json.get('height_average', ''),
+            height_mod=json.get('height_mod', ''),
+            weight_average=json.get('weight_average', ''),
+            weight_mod=json.get('weight_mod', ''),
+            homeworld=json.get('homeworld', ''),
+            flavortext=json.get('flavortext', ''),
+            language=json.get('language', ''),
+            image_url=json.get('image_url', ''),
+            size=json.get('size', ''),
+            _source=json.get('source', {}).get('id')
+        )
 
     def __init__(self, **kwargs):
         self.id = kwargs.get("id")
@@ -120,22 +177,6 @@ class Store(db.Model, BaseModel, IntAttributeMixin):
     @sku.setter
     def sku(self, value):
         self.set_int_attribute("sku", value)
-
-
-class Financial(db.Model, BaseModel):
-    __tablename__ = "financial"
-    monthly_goal: Mapped[float] = mapped_column(primary_key=True)
-    monthly_total: Mapped[float] = mapped_column(primary_key=True)
-    reserve: Mapped[float] = mapped_column(primary_key=True)
-    month_count: Mapped[int] = mapped_column(primary_key=True)
-    last_reset: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
-
-    def __init__(self, **kwargs):
-        self.monthly_goal = kwargs.get("monthly_goal", 0)
-        self.monthly_total = kwargs.get("monthly_total", 0)
-        self.reserve = kwargs.get("reserve", 0)
-        self.month_count = kwargs.get("month_count", 0)
-        self.last_reset = kwargs.get("last_reset")
 
 
 class G0T0Guild(db.Model, BaseModel, IntAttributeMixin):
@@ -681,3 +722,73 @@ class BotMessage(BaseModel):
         self.title = title
         self.pin = kwargs.get("pin", False)
         self.error = kwargs.get("error", "")
+
+
+class PowerType(db.Model, BaseModel):
+    __tablename__ = "c_power_type"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
+
+class PowerAlignment(db.Model, BaseModel):
+    __tablename__ = "c_power_alignment"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
+
+class Power(db.Model, BaseModel):
+    __tablename__ = "powers"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    name: Mapped[str]
+    pre_requisite: Mapped[str] = mapped_column("pre-requisite")
+    _type: Mapped[int] = mapped_column(
+        "type", ForeignKey("c_power_type.id"), nullable=True
+    )
+    casttime: Mapped[str]
+    range: Mapped[str]
+    _source: Mapped[int] = mapped_column(
+        "source", ForeignKey("c_content_source.id"), nullable=True
+    )
+    description: Mapped[str]
+    concentration: Mapped[bool]
+    _alignment: Mapped[int] = mapped_column(
+        "alignment", ForeignKey("c_power_alignment.id"), nullable=True
+    )
+    level: Mapped[int]
+    duration: Mapped[str]
+
+    _type_record = relationship("PowerType")
+    _source_record = relationship("ContentSource")
+    _alignment_record = relationship("PowerAlignment")
+
+    @classmethod
+    def from_json(cls, json):
+        return cls (
+            name = json.get('name'),
+            pre_requisite=json.get('pre_requisite'),
+            _type=json.get('type', {}).get('id'),
+            casttime=json.get('casttime'),
+            range=json.get('range'),
+            _source=json.get('source', {}).get('id'),
+            description=json.get('description'),
+            concentration=json.get('concentration'),
+            _alignment=json.get('alignment', {}).get('id'),
+            level=json.get('level'),
+            duration=json.get('duration')
+        )
+
+    @property
+    def type(self) -> PowerType:
+        return self._type_record
+
+    @property
+    def source(self) -> ContentSource:
+        return self._source_record
+
+    @property
+    def alignment(self) -> PowerAlignment:
+        return self._alignment_record
+
+    @property
+    def html_desc(self):
+        return render_markdown(self.description)

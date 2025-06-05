@@ -1,19 +1,24 @@
 import datetime
 import json
 import uuid
+import markdown
 from flask import current_app, session
 from flask.json.provider import JSONProvider
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
-import markdown
 import requests
-from sqlalchemy import ForeignKey, inspect
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import inspect
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm.decl_api import registry
 from constants import DISCORD_ADMINS, DISCORD_GUILD_ID
 from models.exceptions import UnauthorizedAccessError
 
 db = SQLAlchemy()
+
+def render_markdown(text: str) -> str:
+    if not text:
+        return ""
+    return markdown.markdown(text, extensions=["tables", "sane_lists"])
 
 class User(UserMixin):
     id: str
@@ -151,7 +156,6 @@ class IntAttributeMixin:
         except (ValueError, TypeError):
             setattr(self, attr_name, None)
 
-
 class Content(db.Model):
     __tablename__ = "web_content"
     key: Mapped[str] = mapped_column(primary_key=True)
@@ -160,84 +164,7 @@ class Content(db.Model):
 
     @property
     def html_content(self):
-        return markdown.markdown(self.content, extensions=["tables", "sane_lists"])
-
-
-class PowerType(db.Model, BaseModel):
-    __tablename__ = "c_power_type"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    value: Mapped[str]
-
-
-class PowerAlignment(db.Model, BaseModel):
-    __tablename__ = "c_power_alignment"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    value: Mapped[str]
-
-
-class ContentSource(db.Model, BaseModel):
-    __tablename__ = "c_content_source"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str]
-    abbreviation: Mapped[str]
-
-
-class Power(db.Model, BaseModel):
-    __tablename__ = "powers"
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    name: Mapped[str]
-    pre_requisite: Mapped[str] = mapped_column("pre-requisite")
-    _type: Mapped[int] = mapped_column(
-        "type", ForeignKey("c_power_type.id"), nullable=True
-    )
-    casttime: Mapped[str]
-    range: Mapped[str]
-    _source: Mapped[int] = mapped_column(
-        "source", ForeignKey("c_content_source.id"), nullable=True
-    )
-    description: Mapped[str]
-    concentration: Mapped[bool]
-    _alignment: Mapped[int] = mapped_column(
-        "alignment", ForeignKey("c_power_alignment.id"), nullable=True
-    )
-    level: Mapped[int]
-    duration: Mapped[str]
-
-    _type_record = relationship("PowerType")
-    _source_record = relationship("ContentSource")
-    _alignment_record = relationship("PowerAlignment")
-
-    @classmethod
-    def from_json(cls, json):
-        return cls (
-            name = json.get('name'),
-            pre_requisite=json.get('pre_requisite'),
-            _type=json.get('type', {}).get('id'),
-            casttime=json.get('casttime'),
-            range=json.get('range'),
-            _source=json.get('source', {}).get('id'),
-            description=json.get('description'),
-            concentration=json.get('concentration'),
-            _alignment=json.get('alignment', {}).get('id'),
-            level=json.get('level'),
-            duration=json.get('duration')
-        )
-
-    @property
-    def type(self) -> PowerType:
-        return self._type_record
-
-    @property
-    def source(self) -> ContentSource:
-        return self._source_record
-
-    @property
-    def alignment(self) -> PowerAlignment:
-        return self._alignment_record
-
-    @property
-    def html_desc(self):
-        return markdown.markdown(self.description, extensions=["tables", "sane_lists"])
+        return render_markdown(self.content)
 
 class SearchResult(BaseModel):
     url: str

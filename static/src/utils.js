@@ -55,6 +55,11 @@ export function setupTableFilters(table_name, exceptions) {
             $filterMenu.append(subMenu);
         });
     });
+    if ($("#filter-search").length) {
+        $('#filter-search').on('input', function () {
+            table.search(this.value).draw();
+        });
+    }
 }
 export function setSelectInputValue(select_id, value) {
     const elm = $(select_id);

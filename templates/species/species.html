@@ -1,0 +1,53 @@
+{% extends "template.html" %}
+{% block body %}
+<div class="container species-detail-page">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <h4 class="text-primary species-detail-title">&#9654; {{ species.value|upper }}</h4>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Left: Info Card -->
+        <div class="col-md-5">
+            <div class="card mb-3 species-info-card">
+                <div class="card-header species-info-card-header">{{ species.value|upper }}</div>
+                <div class="card-body p-2">
+                    <div class="mb-2">
+                        <div class="fw-bold">VISUAL CHARACTERISTICS</div>
+                        <div><b>Skin Color:</b> {{ species.skin_options }}</div>
+                        <div><b>Hair Color:</b> {{ species.hair_options }}</div>
+                        <div><b>Eye Color:</b> {{ species.eye_options }}</div>
+                        <div><b>Distinctions:</b> {{ species.distinctions }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="fw-bold">PHYSICAL CHARACTERISTICS</div>
+                        <div><b>Height:</b> {{ species.height_average }}' <span class="text-muted">{{ species.height_mod }}</span></div>
+                        <div><b>Weight:</b> {{ species.weight_average }} lbs <span class="text-muted">{{ species.weight_mod }}</span></div>
+                    </div>
+                    <div>
+                        <div class="fw-bold">SOCIOCULTURAL CHARACTERISTICS</div>
+                        <div><b>Homeworld:</b> {{ species.homeworld }}</div>
+                        <div><b>Language:</b> {{ species.language }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Right: Image -->
+        <div class="col-md-4 offset-md-3 species-image-container">
+            {% if species.image_url %}
+            <img src="{{ species.image_url }}" alt="{{ species.value }} image" class="species-image"/>
+            {% endif %}
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12">
+            <h6 class="species-section-title">BIOLOGY AND APPEARANCE</h6>
+            <div class="mb-3">{{ species.html_flavortext|safe }}</div>
+        </div>
+        <div class="col-12">
+            <h6 class="species-section-title">{{ species.value|upper }} TRAITS</h6>
+            <div class="mb-3">{{ species.html_traits|safe }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

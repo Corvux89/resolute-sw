@@ -24,3 +24,24 @@ export interface Power {
     duration?: string,
     html_desc?: string
 }
+
+export interface Species {
+    id?: number
+    value: string
+    distinctions?: string
+    eye_options?: string
+    flavortext?: string
+    hair_options?: string
+    height_averag?: string
+    homeworld?: string
+    html_flavortext?: string
+    image_url?: string
+    language?: string
+    size?: string
+    skin_options?: string
+    source: ContentSource
+    traits?: string
+    html_traits?: string
+    weight_average?: string
+    weight_mod?: string
+}

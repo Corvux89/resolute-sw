@@ -66,6 +66,12 @@ export function setupTableFilters(table_name: string, exceptions?: number[]) {
             $filterMenu.append(subMenu)
         })
     })
+
+    if ($("#filter-search").length){
+        $('#filter-search').on('input', function() {
+            table.search((this as HTMLInputElement).value).draw();
+        });
+    }
 }
 
 export function setSelectInputValue(select_id: string, value: string): void{

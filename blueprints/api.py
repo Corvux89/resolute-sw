@@ -6,22 +6,25 @@ from sqlalchemy import and_, asc, func, or_
 from constants import DISCORD_GUILD_ID
 from helpers.G0T0 import trigger_compendium_reload, trigger_guild_reload
 from helpers.auth_helper import is_admin
+from models.general import Content
+from models.discord import DiscordChannel
 from models.G0T0 import (
     Activity,
     ActivityPoints,
     BotMessage,
     Character,
     CodeConversion,
+    ContentSource,
     G0T0Guild,
     LevelCost,
     Player,
+    Power,
+    PowerType,
     RefMessage,
+    Species,
 )
-from models.discord import DiscordChannel
 from models.exceptions import BadRequest, NotFound
 from sqlalchemy.orm import joinedload
-
-from models.general import Content, ContentSource, Power, PowerType
 
 
 api_blueprint = Blueprint("api", __name__)
@@ -504,7 +507,116 @@ def delete_power(power_id):
     db.session.delete(power)
     db.session.commit()
 
-    return jsonify()
+    return jsonify(200)
+
+@api_blueprint.route('/species', methods=["GET"])
+def get_species():
+    db: SQLAlchemy = current_app.config.get("DB")
+
+    query = db.session.query(Species)
+
+    if request.args.get("source"):
+        source: ContentSource = (
+            db.session.query(ContentSource)
+            .filter(
+                or_(
+                    func.lower(ContentSource.abbreviation)
+                    == request.args.get("source").lower(),
+                    ContentSource.name.ilike(f"%{request.args.get('source').lower()}%"),
+                )
+            )
+            .first()
+        )
+        if not source:
+            raise NotFound("Content source not found")
+
+        query = query.filter(Species._source == source.id)
+
+    if request.args.get('stat'):
+      query = query.filter(
+        db.session.query(SpeciesASI)
+        .filter(
+            SpeciesASI._species == Species.id,
+            SpeciesASI.ability.ilike(f"%{request.args.get('stat').lower()}%")
+        )
+        .exists()
+    )
+
+
+    filter_map = {
+        "name": Species.value,
+        "size": Species.size,
+    }
+
+    for arg, column in filter_map.items():
+        if value := request.args.get(arg):
+            query = query.filter(column.ilike(f"%{value.lower()}%"))
+
+    species = query.all()
+
+    if not species:
+        raise NotFound("No species found")
+    
+    return jsonify(species)
+
+@api_blueprint.route('/species', methods=["POST"])
+@is_admin
+def new_species():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+
+    try:
+        species: Species = Species.from_json(data)
+        db.session.add(species)
+        db.session.commit()
+    except:
+        raise BadRequest()
+    
+    return jsonify(200)
+
+@api_blueprint.route('/species', methods=["PATCH"])
+@is_admin
+def update_species():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+
+    try:
+        species_id = data.get('id')
+        if not species_id:
+            raise BadRequest("Missing Species id for update")
+        
+        species: Species = db.sesion.query(Species).filter(Species.id == species_id).first()
+
+        if not species:
+            raise NotFound("Species not found")
+        
+        for field in ["name","skin_options", "hair_options", "eye_options", "distinctions", "height_average", "height_mod", 
+                      "weight_average", "weight_mod", "homeworld", "flavortext", "language", "image_url", "size", "traits"]:
+            if field in data:
+                setattr(species, field if field != "name" else "value", data[field])
+
+        if "source" in data and data["source"]:
+            species._source = data["source"].get("id")
+
+        db.session.commit()
+    except:
+        raise BadRequest()
+    
+    return jsonify(200)
+
+@api_blueprint.route('/species/<species_id>', methods=["DELETE"])
+@is_admin
+def delete_species(species_id):
+    db: SQLAlchemy = current_app.config.get("DB")
+    species: Species = db.session.query(Species).filter(Species.id == species_id).first()
+
+    if not species:
+        raise NotFound()
+    
+    db.session.delete(species)
+    db.sesison.commit()
+
+    return jsonify(200)
 
 
 # --------------------------- #

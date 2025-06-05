@@ -1,4 +1,5 @@
 import { defaultPowerModal, destroyTable, fetchPowerInputs, getActiveFilters, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
+// Generic Content
 if ($("#content-edit-form").length) {
     //@ts-expect-error This is pulled in from a parent and no import needed
     const easyMDE = new EasyMDE({
@@ -47,6 +48,7 @@ if ($("#content-edit-form").length) {
         });
     });
 }
+// Powers
 if ($("#power-table").length) {
     const params = new URLSearchParams(window.location.search);
     const tableName = "#power-table";
@@ -112,9 +114,6 @@ if ($("#power-table").length) {
         table.column(0).search(params.get('name') || '').draw();
     }
     setupTableFilters(tableName, [0, 2]);
-    $('#filter-search').on('input', function () {
-        table.search(this.value).draw();
-    });
 }
 $(document).on('click', '.filter-option', function (e) {
     e.preventDefault();
@@ -275,4 +274,57 @@ $(document).on('click', '#power-delete-confirmed', function () {
             ToastError(`Failed: ${e.responseText}`);
         }
     });
+});
+// Species List
+if ($("#species-table").length) {
+    const params = new URLSearchParams(window.location.search);
+    const tableName = "#species-table";
+    destroyTable(tableName);
+    const table = $(tableName).DataTable({
+        ajax: {
+            url: '/api/species',
+            dataSrc: ''
+        },
+        pageLength: 500,
+        columns: [
+            {
+                data: "image_url",
+                render: function (data) {
+                    if (!data)
+                        return "";
+                    return `
+                    <div class="species-preview-container">
+                        <img src="${data}" alt="species image" class="species-preview"/>
+                    </div>
+                    `;
+                }
+            },
+            {
+                title: "Name",
+                data: "value"
+            },
+            {
+                title: "Size",
+                data: "size"
+            }
+        ],
+        order: [[1, 'asc']],
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true
+    });
+    if (params.has('name')) {
+        $("#filter-search").val(params.get('name'));
+        table.column(1).search(params.get('name') || '').draw();
+    }
+    setupTableFilters(tableName, [0, 1]);
+}
+$(document).on('click', '#species-table tbody tr', function () {
+    const table = $("#species-table").DataTable();
+    const rowData = table.row(this).data();
+    if (rowData && rowData.id) {
+        window.location.href = `/species/${rowData.value.toString().toLowerCase()}`;
+    }
 });

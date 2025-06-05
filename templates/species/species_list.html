@@ -1,0 +1,70 @@
+{% extends "template.html" %} {% block body %}
+
+{% if current_user.is_admin %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+{% endif %}
+
+<h1>Species</h1>
+
+<div class="container m-2 position-relative">
+    {% if current_user.is_admin %}
+     <button type="button" id="new-species-btn" data-bs-toggle="modal" data-bs-target="#species-new-form" class="btn btn-link position-absolute top-0 end-0 m-2 p-0" title="New Species">
+        <i class="fa fa-plus"></i>
+    </button>
+    {% endif %}
+
+    <div class="row mb-2">
+        <div class="col-auto w-50">
+            <text-input label-text="Search" custom-id="filter-search"></text-input>
+        </div>
+    </div>
+
+    <div class="row mb-2">
+        <div class="col-auto">
+            <button class="btn rounded-3 dropdown-toggle text-white" type="button" id="filterButton" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                <i class="fa-solid fa-filter"></i>
+                <span>Filter</span>
+            </button>
+
+            <ul class="dropdown-menu" aria-labelledby="filterButton" id="filter-dropdown" data-table="#species-table">
+            </ul>
+        </div>
+        <div class="col-auto">
+            <div id="active-filters"></div>
+        </div>
+        <div class="col-auto ms-auto">
+            <button id="clear-all-filters" class="btn btn-sm btn-outline-secondary ms-2 d-none">Clear All Filters</button>
+        </div>
+    </div>
+    <table id="species-table" class="table table-striped"></table>
+</div>
+{% if current_user.is_admin %}
+<custom-modal title="Species" custom-id="species-new-form">
+    <div class="container">
+        <div class="row mb-2">
+            <div class="col-4 mb-2">
+                <text-input label-text="Name" custom-id="species-name" required></text-input>
+            </div>
+            <div class="col-4 mb-2">
+                <text-input label-text="Pre-Requisite?" custom-id="power-prereq"></text-input>
+            </div>
+            <div class="col-4 mb-2">
+                <text-input label-text="Cast Time" custom-id="power-casttime"></text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <textarea id="species-desc" value="" spellcheck="true" class="form-control big-edit-body" required></textarea>
+        </div>
+        <div class="row mb-2">
+            <div class="col mb-3">
+                <button type="button" class="btn btn-primary float-end m-3" id="species-new-submit" data-bs-dismiss="modal">
+                    Submit
+                </button>
+            </div>
+        </div>
+    </div>
+</custom-modal>
+{% endif %}
+
+{% endblock %}
