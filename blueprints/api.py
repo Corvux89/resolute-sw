@@ -604,6 +604,12 @@ def delete_species(species_id):
     if not species:
         raise NotFound()
     
+    if db.session.query(Character).filter(and_(
+        Character.active == True,
+        Character._species == species.id
+    )).count() > 0:
+        raise BadRequest("Current active characters have that species set")
+    
     db.session.delete(species)
     db.session.commit()
 
