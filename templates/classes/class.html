@@ -1,0 +1,49 @@
+{% extends "template.html" %}{% block body %}
+
+<div class="container class-detail-page">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <h3 class="text-primary class-detail-title fw-bold" style="letter-spacing:2px;">
+                {{ primary_class.value|upper }}
+            </h3>
+        </div>
+    </div>
+
+    <!-- Bottom: Art and Flavortext -->
+    <div class="row">
+       <div class="class-flavor-wrap mb-3">
+            {% if primary_class.image_url %}
+            <img src="{{ primary_class.image_url }}" alt="{{ primary_class.value }} image" class="class-image-float"/>
+            {% endif %}
+            <div class="class-flavor-text">
+                {{ primary_class.html_flavortext|safe }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top: Table and Features -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-3 class-info-card">
+                <div class="card-header class-info-card-header fw-bold">
+                    THE {{ primary_class.value|upper }}
+                </div>
+                <div class="card-body p-2">
+                    {% if primary_class.html_level_table %}
+                        {{ primary_class.html_level_table|safe }}
+                    {% elif primary_class.level_changes %}
+                        <pre>{{ primary_class.level_changes }}</pre>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="class-section-title text-danger fw-bold">CLASS FEATURES</h5>
+                    <div class="mb-2 class-features-card">{{ primary_class.html_features|safe }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

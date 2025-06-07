@@ -20,6 +20,7 @@ from models.G0T0 import (
     Player,
     Power,
     PowerType,
+    PrimaryClass,
     RefMessage,
     Species,
 )
@@ -615,6 +616,41 @@ def delete_species(species_id):
 
     return jsonify(200)
 
+@api_blueprint.route('/classes', methods=["GET"])
+def get_classes():
+    db: SQLAlchemy = current_app.config.get("DB")
+    query = db.session.query(PrimaryClass)
+
+    classes = query.all()
+
+    if request.args.get("source"):
+        source: ContentSource = (
+            db.session.query(ContentSource)
+            .filter(
+                or_(
+                    func.lower(ContentSource.abbreviation)
+                    == request.args.get("source").lower(),
+                    ContentSource.name.ilike(f"%{request.args.get('source').lower()}%"),
+                )
+            )
+            .first()
+        )
+        if not source:
+            raise NotFound("Content source not found")
+
+        query = query.filter(PrimaryClass._source == source.id)
+
+    filter_map = {
+        "name": PrimaryClass.value,
+    }
+
+    for arg, column in filter_map.items():
+        if value := request.args.get(arg):
+            query = query.filter(column.ilike(f"%{value.lower()}%"))
+
+    if not classes:
+        raise NotFound("No Classes found")
+    return jsonify(classes)
 
 # --------------------------- #
 # Private Methods

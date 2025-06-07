@@ -446,3 +446,72 @@ $(document).on('click', '#species-delete-confirmed', function(){
         
     })
 })
+
+// Classes
+if ($("#class-table").length){
+    const params = new URLSearchParams(window.location.search);
+    const tableName = "#class-table"
+
+    destroyTable(tableName)
+
+    const table = $(tableName).DataTable({
+        ajax: {
+            url: '/api/classes',
+            dataSrc: ''
+        },
+        pageLength: 500,
+        columns: [
+            {
+                title: "Class",
+                data: "value",
+                render: function(data){
+                    return `<a href="/classes/${encodeURIComponent(data.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`
+                }
+            },
+            {
+                title: "Desc",
+                data: "summary",
+                render: function(data, type, row){
+                    return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`
+                }
+            },
+            {
+                title: "Hit Die",
+                data: "hit_die",
+                render: function(data, type, row){
+                    if (!data) return ""
+
+                    return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">d${data}</a>`
+                }
+            },
+            {
+                title: "Primary Ability",
+                data: "primary_ability",
+                render: function(data, type, row){
+                    if (!data) return ""
+                    return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`
+                }
+            },
+            {
+                title: "Archetypes",
+                data: "archetype_flavor",
+                render: function(data, type, row){
+                    if (!data) return ""
+                    return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`
+                }
+            }
+        ],
+        order: [[0, 'asc']],
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true
+    })
+
+    if (params.has('name')){
+        $("#filter-search").val(params.get('name'))
+        table.column(1).search(params.get('name') || '').draw();
+    }
+    setupTableFilters(tableName, [0,1,4])
+}

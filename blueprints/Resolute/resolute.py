@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 
 from helpers.general_helpers import perform_search
-from models.G0T0 import ContentSource, PowerAlignment, PowerType, Species
+from models.G0T0 import ContentSource, PowerAlignment, PowerType, PrimaryClass, Species
 from models.exceptions import NotFound
 from models.general import Content
 
@@ -58,6 +58,20 @@ def species_details(species):
         raise NotFound()
 
     return render_template("/species/species.html", species=species, options=_get_options())
+
+@resolute_blueprint.route("/classes", methods=["GET"])
+def classes():
+    return render_template("/classes/classes_list.html", options=_get_options())
+
+@resolute_blueprint.route("/classes/<p_class>", methods=["GET"])
+def class_details(p_class):
+    db: SQLAlchemy = current_app.config.get("DB")
+    primary_class: PrimaryClass = db.session.query(PrimaryClass).filter(func.lower(PrimaryClass.value) == unquote(p_class).lower()).first()
+
+    if not primary_class:
+        raise NotFound()
+
+    return render_template("/classes/class.html", primary_class=primary_class, options=_get_options())
 
 
 # --------------------------- #

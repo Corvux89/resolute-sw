@@ -85,10 +85,51 @@ class PrimaryClass(db.Model, BaseModel):
     __tablename__ = "c_character_class"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
+    summary: Mapped[str]
+    primary_ability: Mapped[str]
+    flavortext: Mapped[str]
+    level_changes: Mapped[str]
+    hit_die: Mapped[int]
+    level_1_hp: Mapped[str]
+    higher_hp: Mapped[str]
+    armor_prof: Mapped[str]
+    weapon_prof: Mapped[str]
+    tool_prof: Mapped[str]
+    saving_throws: Mapped[str]
+    skill_choices: Mapped[str]
+    starting_equipment: Mapped[str]
+    features: Mapped[str]
+    archetype_flavor: Mapped[str]
+    image_url: Mapped[str]
+    _caster_type: Mapped[int] = mapped_column(
+        "caster_type", ForeignKey("c_power_type.id"), nullable=True
+    )
+    _source: Mapped[int] = mapped_column(
+        "source", ForeignKey("c_content_source.id"), nullable=True
+    )
 
-    def __init__(self, **kwargs):
-        self.id = kwargs.get("id")
-        self.value = kwargs.get("value")
+    _source_record = relationship("ContentSource")
+    _caster_type_record = relationship("PowerType")
+
+    @property
+    def html_flavortext(self):
+        return render_markdown(self.flavortext)
+    
+    @property
+    def html_features(self):
+        return render_markdown(self.features)
+    
+    @property
+    def html_level_table(self):
+        return render_markdown(self.level_changes)
+    
+    @property
+    def source(self):
+        return self._source_record
+    
+    @property
+    def caster_type(self):
+        return self._caster_type_record
 
 
 class Archetype(db.Model, BaseModel):

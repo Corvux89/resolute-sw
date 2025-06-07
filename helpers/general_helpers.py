@@ -1,7 +1,7 @@
 from flask import current_app, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
-from models.G0T0 import Power, Species
+from models.G0T0 import Power, PrimaryClass, Species
 from models.general import Content, SearchResult
 
 def perform_search(query: str):
@@ -30,6 +30,16 @@ def perform_search(query: str):
 
     for s in species:
         results.append(SearchResult(f"Species - {s.value}", f"{url_for('resolute.species_details', species=s.value.lower())}"))
+
+    # Classes
+    classes = db.session.query(PrimaryClass).filter(or_(
+        PrimaryClass.value.ilike(f"%{query.lower()}%"),
+        PrimaryClass.features.ilike(f"%{query.lower()}%"),
+        PrimaryClass.summary.ilike(f"%{query.lower()}%")
+    )).all()
+
+    for c in classes:
+        results.append(SearchResult(f"Class - {c.value}", f"{url_for('resolute.class_details', p_class=c.value.lower())}"))
 
     return results
 

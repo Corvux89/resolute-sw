@@ -55,7 +55,7 @@ h2, h3, h4, p {
     font-size: 120%;
 }
 
-body{
+body, .card{
     display: inline;
     font-family: "Lexend", sans-serif;
     font-optical-sizing: auto;
@@ -199,4 +199,47 @@ body{
     max-height: 300px;
     max-width: 100%;
     object-fit: contain;
+}
+
+.class-detail-page {
+    padding: 2rem;
+    border-radius: 8px;
+}
+.class-detail-title {
+    letter-spacing: 2px;
+}
+.class-info-card-header {
+    font-size: 1.2rem;
+}
+.class-section-title, .class-features-card h3 {
+    border-bottom: 2px solid #1976d2;
+    margin-bottom: 1rem;
+}
+
+.class-flavor-text {
+    font-size: 1rem;
+}
+
+.class-flavor-wrap {
+    overflow: hidden; /* helps contain the float */
+}
+.class-image-float {
+    float: left; /* or right, depending on your preference */
+    margin: 0 2rem 1rem 0;
+    max-width: 320px;
+    max-height: 400px;
+    object-fit: contain;
+    display: block;
+}
+.class-flavor-text {
+    font-size: 1rem;
+    /* No margin-left needed, let float handle it */
+}
+@media (max-width: 768px) {
+    .class-image-float {
+        float: none;
+        display: block;
+        margin: 0 auto 1rem auto;
+        max-width: 100%;
+    }
 }

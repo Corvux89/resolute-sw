@@ -60,7 +60,9 @@ export function setupTableFilters(table_name, exceptions) {
                 if (col.render) {
                     // @ts-expect-error This works...idk why typescript has issues with it
                     const render = col.render(raw, 'display', row).toString();
-                    return render.split(",")[0];
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = render;
+                    return tempDiv.textContent.split(",")[0] ?? "";
                 }
                 return raw.split(",")[0];
             }).filter(v => v != null && v !== "")));
