@@ -243,3 +243,39 @@ body, .card{
         max-width: 100%;
     }
 }
+
+.class-info-card .card-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+/* Alternating row colors */
+.class-info-card .card-body table tbody tr:nth-child(even) {
+    background-color: #d3e6f2;
+    color: black
+}
+.class-info-card .card-body table tbody tr:nth-child(odd) {
+    background-color: #b3d1e6;
+    color: black
+}
+
+/* Header styling */
+.class-info-card .card-body table thead tr th {
+    background-color: #b3e5fc;
+    color: #222;
+    font-weight: bold;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 2px solid #1976d2;
+}
+
+/* Space out columns */
+.class-info-card .card-body table th,
+.class-info-card .card-body table td {
+    color: black;
+    padding: 0.5rem 1.5rem;
+    text-align: left;
+    font-size: 1rem;
+    min-width: 100px;
+    border: none;
+}
