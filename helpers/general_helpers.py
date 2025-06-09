@@ -47,7 +47,7 @@ def perform_search(query: str):
     ))
 
     for a in arch:
-        results.append(SearchResult(f"Archetype - {a.value}", f"#"))
+        results.append(SearchResult(f"Archetype - {a.value}", f"{url_for('resolute.archetype_details', arch=a.value.lower())}"))
 
     return results
 

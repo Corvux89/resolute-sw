@@ -1,4 +1,4 @@
-import { Power, PrimaryClass, Species } from "./types.js";
+import { Archetype, Power, PrimaryClass, Species } from "./types.js";
 
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
@@ -117,6 +117,7 @@ export function setupTableFilters(table_name: string, exceptions?: number[], ini
          // Reapply active state for dropdown items based on initial filters
         if (initialFilters) {
             Object.entries(initialFilters).forEach(([colIdx, filterValue]) => {
+                if (!filterValue) return
                 const submenuID = `submenu-${colIdx}`;
                 const $submenuItem = $(`#${submenuID} .filter-option`).filter(function () {
                     return $(this).data('value').toString().toLowerCase() === filterValue.toLowerCase();
@@ -283,4 +284,33 @@ export function fetchClassInputs(): PrimaryClass{
     }
 
     return prim_class
+}
+
+export function fetchArchetypInputs(): Archetype{
+    const source_option = $("#archetype-source").find(':selected')
+    const caster_option = $("#archetype-caster-type").find(":selected")
+    let parent_option = null
+
+    if ($("#archetype-parent").length){
+        parent_option = $("#archetype-source").find(':selected')
+    }
+
+    const archetype: Archetype = {
+        id: $("#archetype-edit-form").data('id'),
+        value: $("#archetype-name").val().toString(),
+        parent: parent_option ? Number(parent_option.val()) : $("#archetype-edit-form").data('parent'),
+        image_url: $("#archetype-image-url").val().toString(),
+        caster_type: caster_option.val() ? {
+           id: Number(caster_option.val()),
+           value: caster_option.html()
+        } : null,
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        },
+        flavortext: getMDEValue('archetype-flavortext'),
+        level_table: getMDEValue('archetype-level-table')
+    }
+    console.log(archetype)
+    return archetype
 }

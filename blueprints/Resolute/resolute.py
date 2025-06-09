@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 
 from helpers.general_helpers import perform_search
-from models.G0T0 import ContentSource, PowerAlignment, PowerType, PrimaryClass, Species
+from models.G0T0 import Archetype, ContentSource, PowerAlignment, PowerType, PrimaryClass, Species
 from models.exceptions import NotFound
 from models.general import Content
 
@@ -75,7 +75,22 @@ def class_details(p_class):
 
 @resolute_blueprint.route("/archetypes", methods=["GET"])
 def archetypes():
-    return render_template("/archetypes/archetype_list.html", options=_get_options())
+    db: SQLAlchemy = current_app.config.get("DB")
+    classes = db.session.query(PrimaryClass.id, PrimaryClass.value).all()
+
+    prim_classes = [{"value": v.id, "label": v.value} for v in classes]
+    
+    return render_template("/archetypes/archetype_list.html", options=_get_options(), classes=prim_classes)
+
+@resolute_blueprint.route("/archetypes/<arch>", methods=["GET"])
+def archetype_details(arch):
+    db: SQLAlchemy = current_app.config.get("DB")
+    archetype: Archetype = db.session.query(Archetype).filter(func.lower(Archetype.value) == unquote(arch).lower()).first()
+
+    if not archetype:
+        raise NotFound()
+
+    return render_template("/archetypes/archetype.html", archetype=archetype, options=_get_options())
 
 # --------------------------- #
 # Private Methods

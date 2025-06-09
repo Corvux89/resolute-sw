@@ -794,7 +794,7 @@ def get_archetypes():
 @is_admin
 def new_archetype():
     db: SQLAlchemy = current_app.config.get("DB")
-    data = request.json()
+    data = request.get_json()
 
     try:
         arch: Archetype = Archetype.from_json(data)
@@ -809,7 +809,7 @@ def new_archetype():
 @is_admin
 def update_archetypes():
     db: SQLAlchemy = current_app.config.get("DB")
-    data = request.json()
+    data = request.get_json()
 
     try:
         if not (a_id := data.get('id')):
@@ -856,8 +856,8 @@ def delete_archetype(arch_id):
         ):
         raise BadRequest("Current active character(s) have that archetype set")
     
-    # db.session.delete(arch)
-    # db.session.commit()
+    db.session.delete(arch)
+    db.session.commit()
 
     return jsonify(200)
 

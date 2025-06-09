@@ -1,0 +1,58 @@
+{% extends "template.html" %}{% block body %}
+
+{% if current_user.is_admin %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+{% endif %}
+
+<div class="container class-detail-page">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <h3 class="text-primary class-detail-title fw-bold">
+                {{ archetype.value|upper }}
+                 {% if current_user.is_admin %}
+                <button type="button"
+                id="edit-class-btn-{{ archetype.id }}"
+                class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
+                data-species-id="{{ archetype.id }}"
+                title="Edit Archetype"
+                data-bs-toggle="modal"
+                data-bs-target="#archetype-edit-form">
+                    <i class="fa fa-pencil"></i>
+                </button>
+                {% endif %}
+            </h3>
+        </div>
+    </div>
+
+    <!-- Art and Flavortext -->
+    <div class="row">
+       <div class="class-flavor-wrap mb-3">
+            {% if archetype.image_url %}
+            <img src="{{ archetype.image_url }}" alt="{{ archetype.value }} image" class="class-image-float"/>
+            {% endif %}
+            <div class="class-flavor-text">
+                {{ archetype.html_flavortext|safe }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table and Features -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-3 class-info-card">
+                <div class="card-body p-2">
+                    {% if archetype.html_level_table %}
+                        {{ archetype.html_level_table|safe }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_admin %}
+{% include '/archetypes/archetype_modal.html' %}
+{% endif %}
+
+{% endblock %}

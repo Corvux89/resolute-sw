@@ -1,0 +1,81 @@
+<custom-modal title="Archetype" custom-id="archetype-edit-form" {% if archetype %}data-id="{{ archetype.id }}" data-parent="{{ archetype.parent }}" {% endif %}>
+    <div class="container">
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input 
+                custom-id="archetype-name" 
+                label-text="Archetype Name" 
+                value="{{archetype.value if archetype else ''}}">
+                </text-input>
+            </div>
+            <div class="col-6 mb-2">
+                <text-input 
+                    custom-id="archetype-image-url" 
+                    label-text="Image URL" 
+                    value="{{archetype.image_url if archetype else ''}}">
+                </text-input>
+            </div>
+        </div>
+        {% if not archetype and classes %}
+        <div class="row mb-2">
+           <div class="col-6 mb-2">
+                <select-input
+                custom-id="archetype-parent"
+                custom-label="Parent Class"
+                options='{{ classes|tojson }}'
+                >
+                </select-input>
+           </div> 
+        </div>
+        {% endif %}
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                 <select-input 
+                    custom-id="archetype-caster-type" 
+                    custom-label="Caster Type" 
+                    allownone 
+                    options='{{ options["power-type"]|tojson }}'
+                    {% if archetype and archetype.caster_type %}selected="{{ archetype.caster_type.id }}"{% endif %}>
+                </select-input>
+            </div>
+            <div class="col-6 mb-2">
+                <select-input 
+                    custom-id="archetype-source" 
+                    custom-label="Source" 
+                    options='{{ options["content-source"]|tojson }}'
+                    selected="{{archetype.source if archetype else '6'}}">
+                </select-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label for="archetype-flavortext" class="form-label fw-bold">Flavortext</label>
+            <textarea id="archetype-flavortext" value="" spellcheck="true" class="form-control big-edit-body">{{ archetype.flavortext if archetype else ''}}</textarea>
+        </div>
+        <div class="row mb-2">
+            <label for="archetype-level-table" class="form-label fw-bold">Level Table</label>
+            <textarea id="archetype-level-table" value="" spellcheck="true" class="form-control big-edit-body">{{ archetype.level_table if archetype else ''}}</textarea>
+        </div>
+        <div class="row mb-2">
+            <div class="col mb-3">
+                <button type="button" class="btn btn-primary float-end m-3" id="archetype-submit" data-bs-dismiss="modal">
+                    Submit
+                </button>
+                <button type="button" class="btn btn-danger float-end m-3" id="archetype-delete" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#delete-confirm-modal">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</custom-modal>
+
+<custom-modal title="Confirm Delete" custom-id="delete-confirm-modal">
+    <div class="container">
+        <div class="row mb-2">
+            Are you sure you want to delete this archetype?
+        </div>
+        <div class="row-mb-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-id="" id="archetype-delete-confirmed">Delete</button>
+        </div>
+    </div>
+</custom-modal>

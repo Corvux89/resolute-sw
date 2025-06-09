@@ -10,13 +10,6 @@
     {{ content.html_content | safe}}
     {% endif %}
 
-    {% if pdf_url %}
-    <iframe src="{{pdf_url}}" class="pdf-frame">
-        This browser does not support PDFs. Please download the PDF to view it:
-        <a href="{{pdf_url}}">Download PDF</a>
-    </iframe>
-    {% endif %}
-
     {% if current_user.is_admin and content%}
      <button type="button" id="edit-content-btn" data-bs-toggle="modal" data-bs-target="#content-edit-form" class="btn btn-link position-absolute top-0 end-0 m-2 p-0" title="Edit Content">
         <i class="fa fa-pencil"></i>

@@ -1,4 +1,4 @@
-import { defaultPowerModal, destroyTable, fetchClassInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
+import { defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
 // Generic Content
 if ($("#content-edit-form").length) {
     //@ts-expect-error This is pulled in from a parent and no import needed
@@ -532,7 +532,10 @@ if ($("#archetype-table").length) {
         columns: [
             {
                 title: "Archetype",
-                data: "value"
+                data: "value",
+                render: function (data) {
+                    return `<a href="/archetypes/${encodeURIComponent(data.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
+                }
             },
             {
                 title: "Class",
@@ -552,3 +555,64 @@ if ($("#archetype-table").length) {
     }
     setupTableFilters(tableName, [0], { 1: params.get('class') });
 }
+$("#archetype-edit-form").on('shown.bs.modal', function () {
+    setupMDE('archetype-flavortext');
+    setupMDE('archetype-level-table');
+    const archetype = fetchArchetypInputs();
+    console.log(archetype);
+    if (!archetype.id) {
+        $("#archetype-delete").addClass("d-none");
+    }
+    else {
+        $("#archetype-delete").removeClass("d-none");
+    }
+});
+$(document).on('click', '#archetype-submit', function () {
+    const archetype = fetchArchetypInputs();
+    if (!archetype.id) {
+        $.ajax({
+            url: `api/archetypes`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(archetype),
+            success: function () {
+                ToastSuccess("Primary Class Added");
+                $("#archetype-table").DataTable().ajax.reload();
+            },
+            error: function (e) {
+                ToastError(`Failed: ${e.responseText}`);
+            }
+        });
+    }
+    else {
+        $.ajax({
+            url: `${window.location.origin}/api/archetypes`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(archetype),
+            success: function () {
+                window.location.reload();
+            },
+            error: function (e) {
+                ToastError(`Failed: ${e.responseText}`);
+            }
+        });
+    }
+});
+$(document).on('click', '#archetype-delete-confirmed', function () {
+    const archetype = fetchArchetypInputs();
+    if (!archetype.id)
+        return;
+    $.ajax({
+        url: `${window.location.origin}/api/archetypes/${archetype.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function () {
+            ToastError("Archetype Deleted");
+            window.location.href = `/archetypes`;
+        },
+        error: function (e) {
+            ToastError(`Failed: ${e.responseText}`);
+        }
+    });
+});

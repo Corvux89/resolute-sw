@@ -74,7 +74,7 @@ export interface PrimaryClass {
     caster_type?: GenericCategory
 }
 
-export interface Archetypes {
+export interface Archetype {
     id?: number
     value: string
     parent: number
