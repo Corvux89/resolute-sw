@@ -1,15 +1,31 @@
 {% extends "template.html" %}{% block body %}
 
+{% if current_user.is_admin %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+{% endif %}
+
 <div class="container class-detail-page">
     <div class="row">
         <div class="col-12 mb-3">
-            <h3 class="text-primary class-detail-title fw-bold" style="letter-spacing:2px;">
+            <h3 class="text-primary class-detail-title fw-bold">
                 {{ primary_class.value|upper }}
+                 {% if current_user.is_admin %}
+                <button type="button"
+                id="edit-class-btn-{{ primary_class.id }}"
+                class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
+                data-species-id="{{ primary_class.id }}"
+                title="Edit Class"
+                data-bs-toggle="modal"
+                data-bs-target="#class-edit-form">
+                    <i class="fa fa-pencil"></i>
+                </button>
+                {% endif %}
             </h3>
         </div>
     </div>
 
-    <!-- Bottom: Art and Flavortext -->
+    <!-- Art and Flavortext -->
     <div class="row">
        <div class="class-flavor-wrap mb-3">
             {% if primary_class.image_url %}
@@ -21,7 +37,7 @@
         </div>
     </div>
     
-    <!-- Top: Table and Features -->
+    <!-- Table and Features -->
     <div class="row">
         <div class="col-12">
             <div class="card mb-3 class-info-card">
@@ -39,11 +55,44 @@
             <div class="card mb-3">
                 <div class="card-body">
                     <h5 class="class-section-title text-danger fw-bold">CLASS FEATURES</h5>
-                    <div class="mb-2 class-features-card">{{ primary_class.html_features|safe }}</div>
+                    <p>As a {{ primary_class.value }}, you gain the following class features.</p>
+
+                    <!-- HIT POINTS -->
+                    <div class="mb-2">
+                        <span class="fw-bold text-danger">HIT POINTS</span><br>
+                        <span class="fw-bold">Hit Dice:</span> {{ primary_class.hit_die }}<br>
+                        <span class="fw-bold">Hit Points at 1st Level:</span> {{ primary_class.level_1_hp }}<br>
+                        <span class="fw-bold">Hit Points at Higher Levels:</span> {{ primary_class.higher_hp }}
+                    </div>
+
+                    <!-- PROFICIENCIES -->
+                    <div class="mb-2">
+                        <span class="fw-bold text-danger">PROFICIENCIES</span><br>
+                        <span class="fw-bold">Armor:</span> {{ primary_class.armor_prof }}<br>
+                        <span class="fw-bold">Weapons:</span> {{ primary_class.weapon_prof }}<br>
+                        <span class="fw-bold">Tools:</span> {{ primary_class.tool_prof }}<br>
+                        <span class="fw-bold">Saving Throws:</span> {{ primary_class.saving_throws }}<br>
+                        <span class="fw-bold">Skills:</span> {{ primary_class.skill_choices }}
+                    </div>
+
+                    <!-- EQUIPMENT -->
+                    <div class="mb-2">
+                        <span class="fw-bold text-danger">EQUIPMENT</span><br>
+                        {{ primary_class.html_starting_equip|safe }}
+                    </div>
+
+                    <!-- Now the rest of the features (markdown/html) -->
+                    <div class="mb-2 class-features-card">
+                        {{ primary_class.html_features|safe }}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{% if current_user.is_admin %}
+{% include '/classes/class_modal.html' %}
+{% endif %}
 
 {% endblock %}

@@ -253,13 +253,14 @@ export class SelectInput extends HTMLElement {
   private selectedValue: string = '';
   private multiple: boolean = false;
   private size: string = '';
+  private allowNone: boolean = false;
 
   constructor() {
     super();
   }
 
   static get observedAttributes() {
-    return ['options', 'selected', 'custom-id', 'custom-label', 'multiple'];
+    return ['options', 'selected', 'custom-id', 'custom-label', 'multiple', 'allownone'];
   }
 
   connectedCallback() {
@@ -289,6 +290,8 @@ export class SelectInput extends HTMLElement {
     if (name === 'selected') {
       this.selectedValue = newValue;
     }
+
+    this.allowNone = this.hasAttribute('allownone')
 
     this.render();
   }
@@ -324,20 +327,25 @@ export class SelectInput extends HTMLElement {
       this.size = size;
     }
 
+    this.allowNone = this.hasAttribute('allownone')
     this.multiple = this.hasAttribute('multiple')
     
   }
 
-  private renderOptions() {
-    return this.options
-      .map(
-        (option) =>
-          `<option value="${option.value}" ${
-            option.value == this.selectedValue ? 'selected' : ''
-          }>${option.label}</option>`
-      )
-      .join('');
+ private renderOptions() {
+  let options = this.options;
+  if (this.allowNone) {
+    options = [{ value: '', label: '' }, ...options];
   }
+  return options
+    .map(
+      (option) =>
+        `<option value="${option.value}" ${
+          option.value == this.selectedValue ? 'selected' : ''
+        }>${option.label}</option>`
+    )
+    .join('');
+}
 
   render() {
 

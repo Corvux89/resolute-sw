@@ -11,8 +11,10 @@ from models.discord import DiscordChannel
 from models.G0T0 import (
     Activity,
     ActivityPoints,
+    Archetype,
     BotMessage,
     Character,
+    CharacterClass,
     CodeConversion,
     ContentSource,
     G0T0Guild,
@@ -621,8 +623,6 @@ def get_classes():
     db: SQLAlchemy = current_app.config.get("DB")
     query = db.session.query(PrimaryClass)
 
-    classes = query.all()
-
     if request.args.get("source"):
         source: ContentSource = (
             db.session.query(ContentSource)
@@ -648,9 +648,218 @@ def get_classes():
         if value := request.args.get(arg):
             query = query.filter(column.ilike(f"%{value.lower()}%"))
 
+    classes = query.all()
+
     if not classes:
         raise NotFound("No Classes found")
     return jsonify(classes)
+
+@api_blueprint.route('/classes', methods=["POST"])
+@is_admin
+def new_class():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+
+    try:
+        prim_class: PrimaryClass = PrimaryClass.from_json(data)
+        db.session.add(prim_class)
+        db.session.commit()
+    except Exception as e:
+        raise BadRequest()
+    
+    return jsonify(200)
+    
+@api_blueprint.route('/classes', methods=["PATCH"])
+@is_admin
+def update_class():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+
+    try:
+        if not (class_id := data.get('id')):
+            raise BadRequest()
+        
+        prim_class: PrimaryClass = db.session.query(PrimaryClass).filter(PrimaryClass.id == class_id).first()
+
+        if not prim_class:
+            raise NotFound()
+        
+        for field in ["value", "summary", "primary_ability", "flavortext", "level_changes", "hit_die", "level_1_hp", "higher_hp", "armor_prof",
+                      "weapon_prof", "tool_prof", "saving_throws", "skill_choices", "starting_equipment", "features", "archetype_flavor", "image_url"]:
+            if field in data:
+                setattr(prim_class, field, data[field])
+
+        if "source" in data and data["source"]:
+            prim_class._source = data["source"].get('id')
+        if "caster_type" in data and data["caster_type"]:
+            prim_class._caster_type = data["caster_type"].get('id')
+
+        db.session.commit()
+    except NotFound:
+        raise NotFound()
+    except Exception as e:
+        raise BadRequest()
+    
+    return jsonify(200)
+
+@api_blueprint.route('/classes/<class_id>', methods=["DELETE"])
+@is_admin
+def delete_class(class_id):
+    db: SQLAlchemy = current_app.config.get("DB")
+    prim_class: PrimaryClass = db.session.query(PrimaryClass).filter(PrimaryClass.id == class_id).first()
+
+    if not prim_class:
+        raise NotFound()
+    
+    if (db.session.query(CharacterClass)
+        .join(Character, CharacterClass.character_id == Character.id)
+        .filter(and_(
+            CharacterClass.active == True,
+            Character.active == True,
+            CharacterClass._primary_class == class_id
+        )).count() > 0
+        ):
+        raise BadRequest("Current active character have that class set")
+    
+    db.session.delete(prim_class)
+    db.session.commit()
+
+    return jsonify(200)
+
+@api_blueprint.route("/archetypes", methods=["GET"])
+def get_archetypes():
+    db: SQLAlchemy = current_app.config.get("DB")
+    query = db.session.query(Archetype)
+
+    if request.args.get("source"):
+        source: ContentSource = (
+            db.session.query(ContentSource)
+            .filter(
+                or_(
+                    func.lower(ContentSource.abbreviation)
+                    == request.args.get("source").lower(),
+                    ContentSource.name.ilike(f"%{request.args.get('source').lower()}%"),
+                )
+            )
+            .first()
+        )
+        if not source:
+            raise NotFound("Content source not found")
+
+        query = query.filter(Archetype._source == source.id)
+
+    if request.args.get('class'):
+        prim_class: PrimaryClass = (
+            db.session.query(PrimaryClass)
+            .filter(
+                PrimaryClass.value.ilike(f"%{request.args.get('class').lower()}%")
+            ).first()
+        )
+
+        if not prim_class:
+            raise NotFound(f"Primary class '{request.args.get('class')}' not found")
+        
+        query = query.filter(Archetype.parent == prim_class.id) 
+
+    if request.args.get('caster'):
+        caster_type: PowerType = (
+            db.session.query(PowerType)
+            .filter(
+                PowerType.value.ilike(f"%{request.args.get('caster').lower()}%")
+                ).first()
+            )
+        
+        if not caster_type:
+            raise NotFound("Caster type not found")
+        
+        query = query.filter(Archetype._caster_type == caster_type.id)
+
+
+    filter_map = {
+        "name": Archetype.value,
+    }
+
+    for arg, column in filter_map.items():
+        if value := request.args.get(arg):
+            query = query.filter(column.ilike(f"%{value.lower()}%"))
+
+    archetypes = query.all()
+
+    if not archetypes:
+        raise NotFound()
+    
+    return jsonify(archetypes)
+
+@api_blueprint.route('/archetypes', methods=["POST"])
+@is_admin
+def new_archetype():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.json()
+
+    try:
+        arch: Archetype = Archetype.from_json(data)
+        db.session.add(arch)
+        db.session.commit()
+    except Exception as e:
+        raise BadRequest(e)
+    
+    return jsonify(200)
+
+@api_blueprint.route('/archetypes', methods=["PATCH"])
+@is_admin
+def update_archetypes():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.json()
+
+    try:
+        if not (a_id := data.get('id')):
+            raise BadRequest("No object ID specified")
+        
+        arch = db.session.query(Archetype).filter(Archetype.id == a_id).first()
+
+        if not arch:
+            raise NotFound("Archetype not found")
+        
+        for field in ["value", "level_table", "image_url", "flavortext"]:
+            if field in data:
+                setattr(arch, field, data[field])
+
+        if "source" in data and data["source"]:
+            arch._source = data["source"].get('id')
+        if "caster_type" in data and data["caster_type"]:
+            arch._caster_type = data["caster_type"].get('id')
+
+        db.session.commit()        
+    except NotFound as e:
+        raise NotFound(e)
+    except Exception as e:
+        raise BadRequest(e)
+    
+    return jsonify(200)
+
+@api_blueprint.route('/archetypes/<arch_id>', methods=["DELETE"])
+@is_admin
+def delete_archetype(arch_id):
+    db: SQLAlchemy = current_app.config.get("DB")
+    arch: Archetype = db.session.query(Archetype).filter(Archetype.id == arch_id).first()
+
+    if not arch:
+        raise NotFound()
+    
+    if (db.session.query(CharacterClass)
+        .join(Character, CharacterClass.character_id == Character.id)
+        .filter(and_(
+            CharacterClass.active == True,
+            Character.active == True,
+            CharacterClass._archetype == arch_id
+        )).count() > 0
+        ):
+        raise BadRequest("Current active character(s) have that archetype set")
+    
+    # db.session.delete(arch)
+    # db.session.commit()
+
+    return jsonify(200)
 
 # --------------------------- #
 # Private Methods

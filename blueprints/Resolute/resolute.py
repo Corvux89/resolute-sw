@@ -73,6 +73,9 @@ def class_details(p_class):
 
     return render_template("/classes/class.html", primary_class=primary_class, options=_get_options())
 
+@resolute_blueprint.route("/archetypes", methods=["GET"])
+def archetypes():
+    return render_template("/archetypes/archetype_list.html", options=_get_options())
 
 # --------------------------- #
 # Private Methods
@@ -97,10 +100,12 @@ def _get_options():
     sources = db.session.query(ContentSource).all()
     alignments = db.session.query(PowerAlignment).all()
     sizes = [{"value": v, "label": v} for v in ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]]
+    stats = [{"value": v, "label": v} for v in ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]]
 
     options["power-type"] = [{"value": p.id, "label": p.value} for p in power_type]
     options["content-source"] = [{"value": s.id, "label": s.name} for s in sources]
     options["alignment"] = [{"value": a.id, "label": a.value} for a in alignments]
     options["sizes"] = sizes
+    options["stats"] = stats
 
     return options

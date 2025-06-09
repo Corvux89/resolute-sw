@@ -69,6 +69,21 @@ export interface PrimaryClass {
     html_flavortext?: string
     html_features?: string
     html_level_table?: string
+    html_starting_equip?: string
     source?: ContentSource
     caster_type?: GenericCategory
+}
+
+export interface Archetypes {
+    id?: number
+    value: string
+    parent: number
+    caster_type?: GenericCategory
+    flavortext?: string
+    html_flavortext?: string
+    level_table?: string
+    html_level_table?: string
+    image_url?: string
+    parent_name?: string
+    source?: ContentSource
 }

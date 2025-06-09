@@ -1,5 +1,6 @@
+
 import { Power } from "./types.js";
-import { defaultPowerModal, destroyTable, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
+import { defaultPowerModal, destroyTable, fetchClassInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
 
 // Generic Content
 if ($("#content-edit-form").length){
@@ -189,6 +190,7 @@ $(document).on('click', '[data-dismiss="badge"]', function() {
 $(document).on('click', '#clear-all-filters', function() {
     $('.filter-option.active').removeClass('active');
     $('#active-filters').empty();
+    $("#filter-search").val('')
     const tableID = $("#filter-dropdown").data('table')
     const table = $(tableID).DataTable();
     table.columns().search('').draw();
@@ -388,14 +390,10 @@ $('#species-edit-form').on('shown.bs.modal', function(){
     } else {
         $("#species-delete").removeClass("d-none")
     }
-
-
-    console.log(species)
 })
 
 $(document).on('click', "#species-submit", function(){
     const species = fetchSpeciesInputs()
-    console.log(species)
 
    if (!species.id){
         $.ajax({
@@ -497,7 +495,7 @@ if ($("#class-table").length){
                 data: "archetype_flavor",
                 render: function(data, type, row){
                     if (!data) return ""
-                    return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`
+                    return `<a href="/archetypes?class=${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`
                 }
             }
         ],
@@ -511,7 +509,116 @@ if ($("#class-table").length){
 
     if (params.has('name')){
         $("#filter-search").val(params.get('name'))
-        table.column(1).search(params.get('name') || '').draw();
+        table.column(0).search(params.get('name') || '').draw();
     }
     setupTableFilters(tableName, [0,1,4])
+}
+
+$('#class-edit-form').on('shown.bs.modal', function(){
+    setupMDE("class-equipment")
+    setupMDE("class-flavortext")
+    setupMDE("class-level-changes")
+    setupMDE("class-features")
+
+    const prim_class = fetchClassInputs()
+
+    if (!prim_class.id){
+        $("#class-delete").addClass("d-none")
+    } else {
+        $("#class-delete").removeClass("d-none")
+    }
+})
+
+$(document).on('click', "#class-submit", function(){
+    const prim_class = fetchClassInputs()
+
+   if (!prim_class.id){
+        $.ajax({
+            url: `api/classes`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(prim_class),
+            success: function() {
+                ToastSuccess("Primary Class Added")
+                $("#class-table").DataTable().ajax.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    } else {
+        $.ajax({
+            url: `${window.location.origin}/api/classes`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(prim_class),
+            success: function() {
+                window.location.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    }
+})
+
+$(document).on('click', '#class-delete-confirmed', function(){
+    const prim_class = fetchClassInputs()
+
+    if (!prim_class.id) return
+
+    $.ajax({
+        url: `${window.location.origin}/api/classes/${prim_class.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function(){
+            ToastError("Primary Class Deleted")
+            window.location.href = `/classes`;
+        },
+        error: function(e){
+            ToastError(`Failed: ${e.responseText}`)
+        }
+        
+    })
+})
+
+// Archetypes
+if ($("#archetype-table").length){
+    const params = new URLSearchParams(window.location.search);
+    const tableName = "#archetype-table"
+
+    destroyTable(tableName)
+
+    const table = $(tableName).DataTable({
+        ajax: {
+            url: '/api/archetypes',
+            dataSrc: ''
+        },
+        pageLength: 500,
+        columns: [
+            {
+                title: "Archetype",
+                data: "value"
+            },
+            {
+                title: "Class",
+                data: "parent_name"
+            }
+        ],
+        order: [[0,'asc']],
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true
+    })
+
+     if (params.has('name')){
+        $("#filter-search").val(params.get('name'))
+        table.column(1).search(params.get('name') || '').draw();
+    }
+
+    setupTableFilters(tableName, [0], { 1: params.get('class')})
+
+
 }

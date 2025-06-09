@@ -22,6 +22,11 @@ class ContentSource(db.Model, BaseModel):
     name: Mapped[str]
     abbreviation: Mapped[str]
 
+class PowerType(db.Model, BaseModel):
+    __tablename__ = "c_power_type"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
 
 class Activity(db.Model, BaseModel):
     __tablename__ = "c_activity"
@@ -111,6 +116,30 @@ class PrimaryClass(db.Model, BaseModel):
     _source_record = relationship("ContentSource")
     _caster_type_record = relationship("PowerType")
 
+    @classmethod
+    def from_json(cls, json):
+        return cls(
+            value=json.get("value"),
+            summary=json.get("summary", ""),
+            primary_ability=json.get("primary_ability", ""),
+            flavortext=json.get("flavortext", ""),
+            level_changes=json.get("level_changes", ""),
+            hit_die=json.get("hit_die", 0),
+            level_1_hp=json.get("level_1_hp", ""),
+            higher_hp=json.get("higher_hp", ""),
+            armor_prof=json.get("armor_prof", ""),
+            weapon_prof=json.get("weapon_prof", ""),
+            tool_prof=json.get("tool_prof", ""),
+            saving_throws=json.get("saving_throws", ""),
+            skill_choices=json.get("skill_choices", ""),
+            starting_equipment=json.get("starting_equipment", ""),
+            features=json.get("features", ""),
+            archetype_flavor=json.get("archetype_flavor", ""),
+            image_url=json.get("image_url", ""),
+            _caster_type=json.get("caster_type", {}).get("id"),
+            _source=json.get("source", {}).get("id"),
+        )
+
     @property
     def html_flavortext(self):
         return render_markdown(self.flavortext)
@@ -122,6 +151,10 @@ class PrimaryClass(db.Model, BaseModel):
     @property
     def html_level_table(self):
         return render_markdown(self.level_changes)
+    
+    @property
+    def html_starting_equip(self):
+        return render_markdown(self.starting_equipment)
     
     @property
     def source(self):
@@ -136,12 +169,43 @@ class Archetype(db.Model, BaseModel):
     __tablename__ = "c_character_archetype"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
-    parent: Mapped[int]
+    parent: Mapped[int]= mapped_column(ForeignKey("c_character_class.id"))
+    flavortext: Mapped[str]
+    level_table: Mapped[str]
+    image_url: Mapped[str]
+    _caster_type: Mapped[int] = mapped_column("caster_type", ForeignKey("c_power_type.id"))
+    _source: Mapped[int] = mapped_column("source", ForeignKey("c_content_source.id"))
 
-    def __init__(self, **kwargs):
-        self.id = kwargs.get("id")
-        self.value = kwargs.get("value")
-        self.parent = kwargs.get("parent")
+    _parent_class = relationship("PrimaryClass", foreign_keys=[parent], lazy="joined")
+
+    caster_type = relationship("PowerType")
+    
+    source = relationship("ContentSource")
+
+    @classmethod
+    def from_json(cls, json):
+        return cls(
+            id=json.get("id"),
+            value=json.get("value"),
+            parent=json.get("parent"),
+            flavortext=json.get("flavortext", ""),
+            level_table=json.get("level_table", ""),
+            image_url=json.get("image_url", ""),
+            _caster_type=json.get("caster_type", {}).get("id"),
+            _source=json.get("source", {}).get("id"),
+        )
+
+    @property
+    def parent_name(self):
+        return self._parent_class.value if self._parent_class else None
+    
+    @property
+    def html_flavortext(self):
+        return render_markdown(self.flavortext)
+    
+    @property
+    def html_level_table(self):
+        return render_markdown(self.level_table)
 
 class Species(db.Model, BaseModel):
     __tablename__ = "c_character_species"
@@ -759,12 +823,6 @@ class BotMessage(BaseModel):
         self.title = title
         self.pin = kwargs.get("pin", False)
         self.error = kwargs.get("error", "")
-
-
-class PowerType(db.Model, BaseModel):
-    __tablename__ = "c_power_type"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    value: Mapped[str]
 
 
 class PowerAlignment(db.Model, BaseModel):

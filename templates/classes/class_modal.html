@@ -1,71 +1,86 @@
-<custom-modal title="Species" custom-id="class-edit-form" {% if species %}data-id="{{ species.id }}"{% endif %}>
+<custom-modal title="Species" custom-id="class-edit-form" {% if primary_class %}data-id="{{ primary_class.id }}"{% endif %}>
     <div class="container">
         <div class="row mb-2">
             <div class="col-4 mb-2">
-                <text-input label-text="Name" custom-id="species-name" required value="{{ species.value if species else '' }}"></text-input>
+                <text-input label-text="Name" custom-id="class-name" required value="{{ primary_class.value if primary_class else '' }}"></text-input>
             </div>
             <div class="col-8 mb-2">
-                <text-input label-text="Distinctions" custom-id="species-distinctions" value="{{ species.distinctions if species else '' }}"></text-input>
+                <text-input label-text="Summary" custom-id="class-summary" value="{{ primary_class.summary if primary_class else '' }}"></text-input>
             </div>
         </div>
         <div class="row mb-2">
             <div class="col-6 mb-2">
-                <text-input label-text="Image URL" custom-id="species-image" value="{{ species.image_url if species else '' }}"></text-input>
+                <text-input label-text="Image URL" custom-id="class-image" value="{{ primary_class.image_url if primary_class else '' }}"></text-input>
             </div>
             <div class="col-6 mb-2">
-                <select-input custom-id="species-source" custom-label="Content Source" options='{{ options['content-source']|tojson }}' selected="{{ species.source.id if species else '6' }}"></select-input>
-            </div>
-        </div>
-        <div class="row mb-2">
-            <div class="col-3 mb-2">
-                <select-input custom-id="species-size" custom-label="Size" options='{{ options['sizes']|tojson }}' selected="{{ species.size if species else 'Medium' }}"></select-input>
-            </div>
-            <div class="col-3 mb-2">
-                <text-input label-text="Skin Color" custom-id="species-skin" value="{{ species.skin_options if species else '' }}"></text-input>
-            </div>
-            <div class="col-3 mb-2">
-                <text-input label-text="Hair Color" custom-id="species-hair" value="{{ species.hair_options if species else '' }}"></text-input>
-            </div>
-            <div class="col-3 mb-2">
-                <text-input label-text="Eye Color" custom-id="species-eye" value="{{ species.eye_options if species else '' }}"></text-input>
-            </div>
-        </div>
-        <div class="row mb-2">
-            <div class="col-3 mb-2">
-                <text-input label-text="Height Average" custom-id="species-havg" value="{{ species.height_average if species else '' }}"></text-input>
-            </div>
-            <div class="col-3 mb-2">
-                <text-input label-text="Height Mod" custom-id="species-hmod" value="{{ species.height_mod if species else '' }}"></text-input>
-            </div>
-            <div class="col-3 mb-2">
-                <text-input label-text="Weight Average" custom-id="species-wavg" value="{{ species.weight_average if species else '' }}"></text-input>
-            </div>
-            <div class="col-3 mb-2">
-                <text-input label-text="Weight Mod" custom-id="species-wmod" value="{{ species.weight_mod if species else '' }}"></text-input>
+                <select-input custom-id="class-source" custom-label="Content Source" options='{{ options['content-source']|tojson }}' selected="{{ primary_class.source.id if primary_class else '6' }}"></select-input>
             </div>
         </div>
         <div class="row mb-2">
             <div class="col-6 mb-2">
-                <text-input label-text="Homeworld" custom-id="species-world" value="{{ species.homeworld if species else '' }}"></text-input>
+                <select-input custom-id="class-ability" custom-label="Primary Ability" options='{{ options['stats']|tojson }}' {% if primary_class %}selected="{{ primary_class.primary_ability }}"{% endif %}></select-input>
             </div>
             <div class="col-6 mb-2">
-                <text-input label-text="Language(s)" custom-id="species-language" value="{{ species.language if species else '' }}"></text-input>
+                <number-input label-text="Hit Die" custom-id="class-hd" value="{{ primary_class.hit_die if primary_class else '' }}"></number-input>
             </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input custom-id="class-level1" label-text="Level 1 HP" value="{{ primary_class.level_1_hp if primary_class else ''}}"></text-input>
+            </div>
+            <div class="col-6 mb-2">
+                <text-input custom-id="class-higher" label-text="HP at Higher Levels" value="{{ primary_class.higher_hp if primary_class else ''}}"></text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input custom-id="class-armor" label-text="Armor Proficiencies" value="{{ primary_class.armor_prof if primary_class else ''}}"></text-input>
+            </div>
+             <div class="col-6 mb-2">
+                <text-input custom-id="class-weapon" label-text="Weapon Proficiencies" value="{{ primary_class.weapon_prof if primary_class else ''}}"></text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input custom-id="class-tool" label-text="Tool Proficiencies" value="{{ primary_class.tool_prof if primary_class else ''}}"></text-input>
+            </div>
+            <div class="col-6 mb-2">
+                <text-input custom-id="class-saving" label-text="Saving Throws" value="{{ primary_class.saving_throws if primary_class else ''}}"></text-input>
+            </div>
+        </div>
+          <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input custom-id="class-skill" label-text="Skill Choices" value="{{ primary_class.skill_choices if primary_class else ''}}"></text-input>
+            </div>
+            <div class="col-6 mb-2">
+                <text-input custom-id="class-archetype" label-text="Archetype Flavor" value="{{ primary_class.archetype_flavor if primary_class else ''}}"></text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <select-input custom-id="class-caster" custom-label="Caster Type" allownone options='{{ options['stats']|tojson }}' {% if primary_class %}selected="{{ primary_class.caster_type }}"{% endif %}></select-input>
         </div>
         <div clas="row mb-2">
-             <label for="species-flavortext" class="form-label">Flavortext</label>
-            <textarea id="species-flavortext" value="" spellcheck="true" class="form-control big-edit-body">{{ species.flavortext if species else ''}}</textarea>
+             <label for="class-equipment" class="form-label fw-bold">Starting Equipment</label>
+            <textarea id="class-equipment" value="" spellcheck="true" class="form-control">{{ primary_class.starting_equipment if primary_class else ''}}</textarea>
         </div>
         <div clas="row mb-2">
-             <label for="species-traits" class="form-label">Traits</label>
-            <textarea id="species-traits" value="" spellcheck="true" class="form-control big-edit-body"> {{ species.traits if species else '' }}</textarea>
+             <label for="class-flavortext" class="form-label fw-bold">Flavortext</label>
+            <textarea id="class-flavortext" value="" spellcheck="true" class="form-control big-edit-body">{{ primary_class.flavortext if primary_class else ''}}</textarea>
+        </div>
+        <div clas="row mb-2">
+             <label for="class-level-changes" class="form-label fw-bold">Level Changes (Table)</label>
+            <textarea id="class-level-changes" value="" spellcheck="true" class="form-control big-edit-body"> {{ primary_class.level_changes if primary_class else '' }}</textarea>
+        </div>
+        <div clas="row mb-2">
+            <label for="class-features" class="form-label fw-bold">Features</label>
+            <textarea id="class-features" value="" spellcheck="true" class="form-control big-edit-body">{{ primary_class.features if primary_class else ''}}</textarea>
         </div>
         <div class="row mb-2">
             <div class="col mb-3">
-                <button type="button" class="btn btn-primary float-end m-3" id="species-submit" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-primary float-end m-3" id="class-submit" data-bs-dismiss="modal">
                     Submit
                 </button>
-                <button type="button" class="btn btn-danger float-end m-3" id="species-delete" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#delete-confirm-modal">
+                <button type="button" class="btn btn-danger float-end m-3" id="class-delete" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#delete-confirm-modal">
                     Delete
                 </button>
             </div>
@@ -76,11 +91,11 @@
 <custom-modal title="Confirm Delete" custom-id="delete-confirm-modal">
     <div class="container">
         <div class="row mb-2">
-            Are you sure you want to delete this species?
+            Are you sure you want to delete this class?
         </div>
         <div class="row-mb-2">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-id="" id="species-delete-confirmed">Delete</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-id="" id="class-delete-confirmed">Delete</button>
         </div>
     </div>
 </custom-modal>

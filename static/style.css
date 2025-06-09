@@ -231,10 +231,7 @@ body, .card{
     object-fit: contain;
     display: block;
 }
-.class-flavor-text {
-    font-size: 1rem;
-    /* No margin-left needed, let float handle it */
-}
+
 @media (max-width: 768px) {
     .class-image-float {
         float: none;

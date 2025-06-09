@@ -17,30 +17,34 @@
             </div>
         </div>
         <div class="row mb-2">
-            <div class="col-3 mb-2">
+            <div class="col-6 mb-2">
                 <select-input custom-id="species-size" custom-label="Size" options='{{ options['sizes']|tojson }}' selected="{{ species.size if species else 'Medium' }}"></select-input>
             </div>
-            <div class="col-3 mb-2">
+            <div class="col-6 mb-2">
                 <text-input label-text="Skin Color" custom-id="species-skin" value="{{ species.skin_options if species else '' }}"></text-input>
             </div>
-            <div class="col-3 mb-2">
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
                 <text-input label-text="Hair Color" custom-id="species-hair" value="{{ species.hair_options if species else '' }}"></text-input>
             </div>
-            <div class="col-3 mb-2">
+            <div class="col-6 mb-2">
                 <text-input label-text="Eye Color" custom-id="species-eye" value="{{ species.eye_options if species else '' }}"></text-input>
             </div>
         </div>
         <div class="row mb-2">
-            <div class="col-3 mb-2">
+            <div class="col-6 mb-2">
                 <text-input label-text="Height Average" custom-id="species-havg" value="{{ species.height_average if species else '' }}"></text-input>
             </div>
-            <div class="col-3 mb-2">
+            <div class="col-6 mb-2">
                 <text-input label-text="Height Mod" custom-id="species-hmod" value="{{ species.height_mod if species else '' }}"></text-input>
             </div>
-            <div class="col-3 mb-2">
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
                 <text-input label-text="Weight Average" custom-id="species-wavg" value="{{ species.weight_average if species else '' }}"></text-input>
             </div>
-            <div class="col-3 mb-2">
+            <div class="col-6 mb-2">
                 <text-input label-text="Weight Mod" custom-id="species-wmod" value="{{ species.weight_mod if species else '' }}"></text-input>
             </div>
         </div>

@@ -1,4 +1,4 @@
-import { Power, Species } from "./types.js";
+import { Power, PrimaryClass, Species } from "./types.js";
 
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
@@ -45,15 +45,33 @@ export function getMDEValue(element: string): string{
 }
 
 export function updateClearAllFiltersButton(): void {
-    if ($('#active-filters .badge').length > 0) {
+    if ($('#active-filters .badge').length > 0 || $("#filter-search").val() != "") {
         $('#clear-all-filters').removeClass('d-none');
     } else {
         $('#clear-all-filters').addClass('d-none');
     }
 }
 
-export function setupTableFilters(table_name: string, exceptions?: number[]) {
+export function setupTableFilters(table_name: string, exceptions?: number[], initialFilters?: {[colIdx: number]: string}) {
     const table = $(table_name).DataTable();
+
+    // // Apply initial filters and update dropdown/badges
+    // if (initialFilters) {
+    //     Object.entries(initialFilters).forEach(([colIdx, filterValue]) => {
+    //         // Apply the filter to the table
+    //         table.column(Number(colIdx)).search(filterValue || '').draw();
+
+    //         // Mark the corresponding dropdown item as active
+    //         const submenuID = `submenu-${colIdx}`;
+    //         const $submenuItem = $(`#${submenuID} .filter-option`).filter(function () {
+    //             return $(this).data('value').toString().toLowerCase() === filterValue.toLowerCase();
+    //         });
+
+    //         if ($submenuItem.length) {
+    //             $submenuItem.addClass('active');
+    //         }
+    //     });
+    // }
 
     table.on("xhr", function(){
         const data = <object[]> table.ajax.json()
@@ -95,11 +113,26 @@ export function setupTableFilters(table_name: string, exceptions?: number[]) {
                     `
             $filterMenu.append(subMenu)
         })
+
+         // Reapply active state for dropdown items based on initial filters
+        if (initialFilters) {
+            Object.entries(initialFilters).forEach(([colIdx, filterValue]) => {
+                const submenuID = `submenu-${colIdx}`;
+                const $submenuItem = $(`#${submenuID} .filter-option`).filter(function () {
+                    return $(this).data('value').toString().toLowerCase() === filterValue.toLowerCase();
+                });
+
+                if ($submenuItem.length) {
+                    $submenuItem.trigger('click');
+                }
+            });
+        }
     })
 
     if ($("#filter-search").length){
         $('#filter-search').on('input', function() {
             table.search((this as HTMLInputElement).value).draw();
+            updateClearAllFiltersButton()
         });
     }
 }
@@ -213,4 +246,41 @@ export function fetchSpeciesInputs(): Species{
     }
 
     return species
+}
+
+export function fetchClassInputs(): PrimaryClass{
+    const source_option = $("#class-source").find(':selected')
+    const ability_option = $("#class-ability").find(":selected")
+    const caster_option = $("#class-caster").find(":selected")
+
+    const prim_class: PrimaryClass = {
+        id: $("#class-edit-form").data('id'),
+        value: $("#class-name").val().toString(),
+        image_url: $("#class-image").val().toString(),
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        },
+        primary_ability: ability_option.val().toString(),
+        hit_die: Number($("#class-hd").val()),
+        level_1_hp: $("#class-level1").val().toString(),
+        higher_hp: $("#class-higher").val().toString(),
+        armor_prof: $("#class-armor").val().toString(),
+        weapon_prof: $("#class-weapon").val().toString(),
+        tool_prof: $("#class-tool").val().toString(),
+        saving_throws: $("#class-saving").val().toString(),
+        skill_choices: $("#class-skill").val().toString(),
+        archetype_flavor: $("#class-archetype").val().toString(),
+        caster_type: caster_option.val() ? {
+            id: Number(caster_option.val()),
+            value: caster_option.html()
+        } 
+        : null,
+        starting_equipment: getMDEValue("class-equipment"),
+        flavortext: getMDEValue("class-flavortext"),
+        level_changes: getMDEValue("class-level-changes"),
+        features: getMDEValue("class-features"),
+    }
+
+    return prim_class
 }
