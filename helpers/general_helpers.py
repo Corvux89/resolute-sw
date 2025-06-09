@@ -1,7 +1,7 @@
 from flask import current_app, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
-from models.G0T0 import Power, PrimaryClass, Species
+from models.G0T0 import Archetype, Power, PrimaryClass, Species
 from models.general import Content, SearchResult
 
 def perform_search(query: str):
@@ -40,6 +40,14 @@ def perform_search(query: str):
 
     for c in classes:
         results.append(SearchResult(f"Class - {c.value}", f"{url_for('resolute.class_details', p_class=c.value.lower())}"))
+
+    # Archetypes
+    arch = db.session.query(Archetype).filter(or_(
+        Archetype.value.ilike(f"%{query.lower()}%"),
+    ))
+
+    for a in arch:
+        results.append(SearchResult(f"Archetype - {a.value}", f"#"))
 
     return results
 
