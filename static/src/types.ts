@@ -87,3 +87,21 @@ export interface Archetype {
     parent_name?: string
     source?: ContentSource
 }
+
+export interface Equipment {
+    id?: string
+    name: string
+    source?: ContentSource
+    description?: string
+    cost?: number
+    weight?: number
+    category?: GenericCategory
+    dmg_number_of_die?: number
+    dmg_die_type?: number
+    dmg_type?: string
+    weapon_class?: GenericCategory
+    armor_class?: GenericCategory
+    properties?: string
+    ac?: string
+    stealth_dis?: boolean
+}

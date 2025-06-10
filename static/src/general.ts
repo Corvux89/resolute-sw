@@ -1,5 +1,5 @@
 
-import { Power } from "./types.js";
+import { Equipment, Power } from "./types.js";
 import { defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
 
 // Generic Content
@@ -57,6 +57,71 @@ if ($("#content-edit-form").length){
         });
     })
 }
+
+$(document).on('click', '.filter-option', function(e){
+    e.preventDefault();
+    const colIdx = $(this).data('col');
+    const tableID = $("#filter-dropdown").data('table')
+    const table = $(tableID).DataTable();
+    // Highlight selected
+    $(this).toggleClass('active');
+
+    updateFilters(colIdx)
+
+    // Remove all badges for this column
+    $(`[id^=filter-badge-${colIdx}-]`).remove();
+
+    const activeValues = getActiveFilters(colIdx)
+
+    // Add badges for all active values
+    activeValues.forEach(val => {
+        const badgeId = `filter-badge-${colIdx}-${String(val).replace(/\W/g, '')}`;
+        const $option = $(`#submenu-${colIdx} .filter-option.active`).filter(function() {
+            return $.fn.dataTable.util.escapeRegex(String($(this).data('value'))) === val;
+        });
+
+        if ($(`#${badgeId}`).length === 0) {
+            $('#active-filters').append(
+                `<span class="badge badge-pointer bg-primary me-1"
+                    id="${badgeId}"
+                    data-col="${colIdx}"
+                    data-value="${$option.data('value')}"
+                    data-dismiss="badge">
+                    ${table.settings().init().columns[colIdx].title}: ${$option.data('value')}
+                </span>`
+                );
+            }
+    });  
+
+    updateClearAllFiltersButton()
+})
+
+$(document).on('click', '[data-dismiss="badge"]', function() {
+    const colIdx = $(this).data('col');
+    const value = $(this).data('value');
+    
+    $(`#submenu-${colIdx} .filter-option`).each(function() {
+        if ($(this).data('value') == value) {
+            $(this).removeClass('active');
+        }
+    });
+
+    $(this).remove();
+
+    updateFilters(colIdx)
+
+    updateClearAllFiltersButton()
+});
+
+$(document).on('click', '#clear-all-filters', function() {
+    $('.filter-option.active').removeClass('active');
+    $('#active-filters').empty();
+    $("#filter-search").val('')
+    const tableID = $("#filter-dropdown").data('table')
+    const table = $(tableID).DataTable();
+    table.columns().search('').draw();
+    updateClearAllFiltersButton()
+});
 
 // Powers
 if ($("#power-table").length){
@@ -131,71 +196,6 @@ if ($("#power-table").length){
     }
     setupTableFilters(tableName, [0,2])
 }
-
-$(document).on('click', '.filter-option', function(e){
-    e.preventDefault();
-    const colIdx = $(this).data('col');
-    const tableID = $("#filter-dropdown").data('table')
-    const table = $(tableID).DataTable();
-    // Highlight selected
-    $(this).toggleClass('active');
-
-    updateFilters(colIdx)
-
-    // Remove all badges for this column
-    $(`[id^=filter-badge-${colIdx}-]`).remove();
-
-    const activeValues = getActiveFilters(colIdx)
-
-    // Add badges for all active values
-    activeValues.forEach(val => {
-        const badgeId = `filter-badge-${colIdx}-${String(val).replace(/\W/g, '')}`;
-        const $option = $(`#submenu-${colIdx} .filter-option.active`).filter(function() {
-            return $.fn.dataTable.util.escapeRegex(String($(this).data('value'))) === val;
-        });
-
-        if ($(`#${badgeId}`).length === 0) {
-            $('#active-filters').append(
-                `<span class="badge badge-pointer bg-primary me-1"
-                    id="${badgeId}"
-                    data-col="${colIdx}"
-                    data-value="${$option.data('value')}"
-                    data-dismiss="badge">
-                    ${table.settings().init().columns[colIdx].title}: ${$option.data('value')}
-                </span>`
-                );
-            }
-    });  
-
-    updateClearAllFiltersButton()
-})
-
-$(document).on('click', '[data-dismiss="badge"]', function() {
-    const colIdx = $(this).data('col');
-    const value = $(this).data('value');
-    
-    $(`#submenu-${colIdx} .filter-option`).each(function() {
-        if ($(this).data('value') == value) {
-            $(this).removeClass('active');
-        }
-    });
-
-    $(this).remove();
-
-    updateFilters(colIdx)
-
-    updateClearAllFiltersButton()
-});
-
-$(document).on('click', '#clear-all-filters', function() {
-    $('.filter-option.active').removeClass('active');
-    $('#active-filters').empty();
-    $("#filter-search").val('')
-    const tableID = $("#filter-dropdown").data('table')
-    const table = $(tableID).DataTable();
-    table.columns().search('').draw();
-    updateClearAllFiltersButton()
-});
 
 $(document).on('click', "#power-table tbody tr", function() {
     if ($(this).closest('btn').length) return
@@ -380,7 +380,7 @@ if ($("#species-table").length){
 }
 
 $('#species-edit-form').on('shown.bs.modal', function(){
-    setupMDE("species-flavortext")
+    // setupMDE("species-flavortext")
     setupMDE("species-traits")
 
     const species = fetchSpeciesInputs()
@@ -689,4 +689,208 @@ $(document).on('click', '#archetype-delete-confirmed', function(){
         }
         
     })
+})
+
+// Equipment
+if ($("#equipment-table").length){
+    const params = new URLSearchParams(window.location.search);
+    const tableName = "#equipment-table"
+    const filterExclusions = [0]
+
+    destroyTable(tableName)
+
+    const columns = [
+        {
+            title: "Name",
+            data: "name"
+        }
+    ]
+
+    if (window.location.pathname.includes('weapons')){
+        filterExclusions.push(2,3,4)
+        columns.push(
+            {
+                title: "Type",
+                data: "weapon_class",
+                // @ts-expect-error cmon man
+                render: function(data){
+                    if (!data) return ''
+                    return data.value
+                }
+            },
+            {
+                title: "Property",
+                data: "properties"
+            },
+            {
+                title: "Cost",
+                data: "cost"      
+            },
+            {
+                title: "Damage",
+                render: function(data, type, row){
+                    try{
+                        if (!("dmg_number_of_die" in row) || !row.dmg_number_of_die || row.dmg_number_of_die == 0) return ''
+                        const properties = row.properties.split(', ').map(c => c.replace(/[\s\d]/g, ''));                    
+                        if (properties.includes('special')) return 'Special'
+                        return `${row.dmg_number_of_die}d${row.dmg_die_type || ""} [${row.dmg_type || ""}]`
+                    }
+                    catch{
+                        return ''
+                    }
+                }
+            },
+            {
+                title: "Damage Die",
+                visible: false,
+                data: "dmg_die_type",
+                render: function(data){
+                    if (!data) return ''
+                    return `d${data}`
+                }
+            },
+            {
+                title: "Damage Type",
+                visible: false,
+                data: "dmg_type"
+            },
+            {
+                title: "Properties",
+                data: "properties",
+                visible: false,
+                render: function(data){
+                    return data.split(', ').map(c => c.replace(/[\d]/g, '').split("(")[0])
+                }
+            }
+        )
+    } else if (window.location.pathname.includes('armor')){
+        filterExclusions.push(2,3,4)
+        columns.push(
+            {
+                title: "Type",
+                data: "armor_class",
+                // @ts-expect-error cmon man
+                render: function(data){
+                    if (!data) return ''
+                    return data.value
+                }
+            },
+            {
+                title: "Property",
+                data: "properties"
+            },
+            {
+                title: "Cost",
+                data: "cost"      
+            },
+            {
+                title: "AC",
+                data: "ac"
+            },
+            {
+                title: "Stealth",
+                data: "stealth_dis",
+                render: function(data){
+                    if (!data) return '-'
+                    return data == true ? "Disadvantage" : '-'
+                }
+            },
+            {
+                title: "Properties",
+                data: "properties",
+                visible: false,
+                render: function(data){
+                    return data.split(', ').map(c => c.replace(/[\d]/g, '').split("(")[0])
+                }
+            }
+        )
+    } else {
+        filterExclusions.push(2,3)
+        columns.push(
+            {
+                title: "Category",
+                data: "category",
+                // @ts-expect-error cmon man
+                render: function(data){
+                    if (!data) return ''
+                    return data.value
+                }
+            },
+            {
+                title: "Cost",
+                data: "cost"      
+            },
+        )
+    }
+
+
+    const table = $(tableName).DataTable({
+        ajax: {
+            url: 'api/equipment',
+            dataSrc: '',
+            data: function(d){
+                
+                d["type"] = window.location.pathname.includes("weapons") ? "weapon": window.location.pathname.includes("armor") ? "armor" : "adventuring"
+            }
+        },
+        pageLength: 500,
+        columns: columns,
+        order: [[1,'asc'], [0, 'asc']],
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true,
+    })
+
+    if (params.has('name')){
+        $("#filter-search").val(params.get('name'))
+        table.column(0).search(params.get('name') || '').draw();
+    }
+    setupTableFilters(tableName, filterExclusions)
+}
+
+$(document).on('click', "#equipment-table tbody tr", function(){
+    if ($(this).closest('btn').length) return
+
+    const table = $("#equipment-table").DataTable()
+    const row = table.row(this)
+    const equipment = row.data() as Equipment
+    let stop = false
+
+    if ($(this).hasClass("bold-row")) stop=true
+
+    $("#equipment-table tbody tr").removeClass("bold-row")
+
+    $('.dropdown-row').remove()
+
+    if (!equipment || stop) return
+    let editButton = ''
+
+    if (document.body.dataset.admin == "True"){
+        editButton = `
+            <button type="button"
+                id="edit-power-btn-${equipment.id}"
+                class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
+                data-power-id="${equipment.id}"
+                title="Edit Power"
+                data-bs-toggle="modal"
+                data-bs-target="#equipment-edit-form">
+                <i class="fa fa-pencil"></i>
+            </button>
+        `
+    }
+    const additionalInfo = `
+        <tr class="dropdown-row">
+            <td colspan="${table.columns().count()}">
+                ${editButton}
+                <div class="p-3">
+                    ${equipment.description} 
+                </div>
+            </td>
+        </tr>
+    `
+ 
+    $(this).after(additionalInfo)
+    $(this).addClass("bold-row")
 })

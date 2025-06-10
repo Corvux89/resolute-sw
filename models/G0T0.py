@@ -27,6 +27,20 @@ class PowerType(db.Model, BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
 
+class ArmorClass(db.Model, BaseModel):
+    __tablename__ = "c_armor_class"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
+class WeaponClass(db.Model, BaseModel):
+    __tablename__ = "c_weapon_class"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
+class EquipmentCategory(db.Model, BaseModel):
+    __tablename__ = "c_equipment_category"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
 
 class Activity(db.Model, BaseModel):
     __tablename__ = "c_activity"
@@ -830,7 +844,6 @@ class PowerAlignment(db.Model, BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
 
-
 class Power(db.Model, BaseModel):
     __tablename__ = "powers"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
@@ -887,3 +900,26 @@ class Power(db.Model, BaseModel):
     @property
     def html_desc(self):
         return render_markdown(self.description)
+    
+class Equipment(db.Model, BaseModel):
+    __tablename__ = "equipment"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    name: Mapped[str]
+    _source: Mapped[int] = mapped_column("source", ForeignKey("c_content_source.id"), nullable=True)
+    description: Mapped[str]
+    cost: Mapped[int]
+    weight: Mapped[int]
+    _category: Mapped[int] = mapped_column("category", ForeignKey("c_equipment_category.id"))
+    dmg_number_of_die: Mapped[int]
+    dmg_die_type: Mapped[int]
+    dmg_type: Mapped[str]
+    _weapon_class: Mapped[int] = mapped_column("weapon_class", ForeignKey("c_weapon_class.id"), nullable=True)
+    _armor_class: Mapped[int] = mapped_column("armor_class", ForeignKey("c_armor_class.id"), nullable=True)
+    properties: Mapped[str]
+    ac: Mapped[str]
+    stealth_dis: Mapped[bool]
+
+    source = relationship("ContentSource")
+    category = relationship("EquipmentCategory")
+    weapon_class= relationship("WeaponClass")
+    armor_class = relationship("ArmorClass")

@@ -13,7 +13,7 @@ def redirect_dest(fallback):
     return redirect(url_for(dest)) if dest else redirect(fallback)
 
 
-@auth_blueprint.route("/login/<provider>")
+@auth_blueprint.get("/login/<provider>")
 def login(provider):
     provider_data = current_app.config["OAUTH2_PROVIDERS"].get(provider)
 
@@ -37,7 +37,7 @@ def login(provider):
     return redirect(authorization_url)
 
 
-@auth_blueprint.route("/callback/<provider>")
+@auth_blueprint.get("/callback/<provider>")
 def callback(provider):
     provider_data = current_app.config["OAUTH2_PROVIDERS"].get(provider)
 
@@ -85,7 +85,7 @@ def callback(provider):
     return redirect(data.get("redirect", url_for("homepage")))
 
 
-@auth_blueprint.route("/logout")
+@auth_blueprint.get("/logout")
 def logout():
     logout_user()
     return redirect(url_for("homepage"))

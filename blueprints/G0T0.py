@@ -33,7 +33,7 @@ G0T0_blueprint = Blueprint("G0T0", __name__)
 app = Flask(__name__)
 
 
-@G0T0_blueprint.route("/", methods=["GET"])
+@G0T0_blueprint.get("/")
 @login_required
 def main():
     if is_admin():

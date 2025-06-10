@@ -1,4 +1,5 @@
 from typing import Optional, Union
+from urllib.parse import unquote
 from flask import Blueprint, current_app, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import and_, asc, func, or_
@@ -17,6 +18,8 @@ from models.G0T0 import (
     CharacterClass,
     CodeConversion,
     ContentSource,
+    Equipment,
+    EquipmentCategory,
     G0T0Guild,
     LevelCost,
     Player,
@@ -33,13 +36,13 @@ from sqlalchemy.orm import joinedload
 api_blueprint = Blueprint("api", __name__)
 
 
-@api_blueprint.route("/guild", methods=["GET"])
+@api_blueprint.get("/guild")
 def get_guild():
     guild = _get_guild()
     return jsonify(guild)
 
 
-@api_blueprint.route("/guild", methods=["PATCH"])
+@api_blueprint.patch("/guild")
 @is_admin
 def update_guild():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -105,15 +108,15 @@ def update_guild():
     return jsonify(200)
 
 
-@api_blueprint.route("/message", methods=["GET"])
-@api_blueprint.route("/message/<int:message_id>", methods=["GET"])
+@api_blueprint.get("/message")
+@api_blueprint.get("/message/<int:message_id>")
 @is_admin
 def get_messages(message_id: int = None):
     message = _get_message(message_id, True)
     return jsonify(message)
 
 
-@api_blueprint.route("/message", methods=["POST"])
+@api_blueprint.post("/message")
 @is_admin
 def create_message():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -146,7 +149,7 @@ def create_message():
     return jsonify(message)
 
 
-@api_blueprint.route("/message/<int:message_id>", methods=["PATCH"])
+@api_blueprint.patch("/message/<int:message_id>")
 @is_admin
 def update_message(message_id: int):
     message: RefMessage = _get_message(message_id)
@@ -179,7 +182,7 @@ def update_message(message_id: int):
     return jsonify(200)
 
 
-@api_blueprint.route("/message/<int:message_id>", methods=["DELETE"])
+@api_blueprint.delete("/message/<int:message_id>")
 @is_admin
 def delete_message(message_id: int):
     message: RefMessage = _get_message(message_id)
@@ -199,20 +202,20 @@ def delete_message(message_id: int):
     return jsonify(200)
 
 
-@api_blueprint.route("/channels", methods=["GET"])
+@api_blueprint.get("/channels")
 @is_admin
 def get_channels():
     return jsonify(current_app.discord.fetch_channels())
 
 
-@api_blueprint.route("/roles", methods=["GET"])
+@api_blueprint.get("/roles")
 @is_admin
 def get_roles():
     return jsonify(current_app.discord.fetch_roles())
 
 
-@api_blueprint.route("/players", methods=["GET"])
-@api_blueprint.route("/players/<int:player_id>", methods=["GET"])
+@api_blueprint.get("/players")
+@api_blueprint.get("/players/<int:player_id>")
 @is_admin
 def get_players(player_id: int = None):
     db: SQLAlchemy = current_app.config.get("DB")
@@ -233,13 +236,13 @@ def get_players(player_id: int = None):
     return jsonify(players[0] if player_id else players)
 
 
-@api_blueprint.route("/activities", methods=["GET"])
+@api_blueprint.get("/activities")
 @is_admin
 def get_activities():
     return jsonify(_get_activities())
 
 
-@api_blueprint.route("/activities", methods=["PATCH"])
+@api_blueprint.patch("/activities")
 @is_admin
 def update_activities():
     activities = _get_activities()
@@ -271,13 +274,13 @@ def update_activities():
     return jsonify(200)
 
 
-@api_blueprint.route("/activity_points", methods=["GET"])
+@api_blueprint.get("/activity_points")
 @is_admin
 def get_activity_points():
     return jsonify(_get_activity_points())
 
 
-@api_blueprint.route("/activity_points", methods=["PATCH"])
+@api_blueprint.patch("/activity_points")
 @is_admin
 def update_activity_points():
     points = _get_activity_points()
@@ -306,13 +309,13 @@ def update_activity_points():
     return jsonify(200)
 
 
-@api_blueprint.route("/code_conversion", methods=["GET"])
+@api_blueprint.get("/code_conversion")
 @is_admin
 def get_code_conversion():
     return jsonify(_get_code_conversion())
 
 
-@api_blueprint.route("/code_conversion", methods=["PATCH"])
+@api_blueprint.patch("/code_conversion")
 @is_admin
 def update_code_conversion():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -341,13 +344,13 @@ def update_code_conversion():
     return jsonify(200)
 
 
-@api_blueprint.route("/level_costs", methods=["GET"])
+@api_blueprint.get("/level_costs")
 @is_admin
 def get_level_costs():
     return jsonify(_get_level_costs())
 
 
-@api_blueprint.route("/level_costs", methods=["PATCH"])
+@api_blueprint.patch("/level_costs")
 @is_admin
 def update_level_costs():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -377,7 +380,7 @@ def update_level_costs():
     return jsonify(200)
 
 
-@api_blueprint.route("/content/<key>", methods=["PATCH"])
+@api_blueprint.patch("/content/<key>")
 @is_admin
 def update_content(key):
     db: SQLAlchemy = current_app.config.get("DB")
@@ -392,7 +395,7 @@ def update_content(key):
     return jsonify(200)
 
 
-@api_blueprint.route("/powers", methods=["GET"])
+@api_blueprint.get("/powers")
 def powers(type: str = None):
     db: SQLAlchemy = current_app.config.get("DB")
 
@@ -447,7 +450,7 @@ def powers(type: str = None):
 
     return jsonify(powers)
 
-@api_blueprint.route("/powers", methods=["POST"])
+@api_blueprint.post("/powers")
 @is_admin
 def new_power():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -461,7 +464,7 @@ def new_power():
 
     return jsonify(200)
 
-@api_blueprint.route('/powers', methods=["PATCH"])
+@api_blueprint.patch('/powers')
 @is_admin
 def update_power():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -498,7 +501,7 @@ def update_power():
         raise BadRequest()
     return jsonify(200)
 
-@api_blueprint.route('/powers/<power_id>', methods=["DELETE"])
+@api_blueprint.delete('/powers/<power_id>')
 @is_admin
 def delete_power(power_id):
     db: SQLAlchemy = current_app.config.get("DB")
@@ -512,7 +515,7 @@ def delete_power(power_id):
 
     return jsonify(200)
 
-@api_blueprint.route('/species', methods=["GET"])
+@api_blueprint.get('/species')
 def get_species():
     db: SQLAlchemy = current_app.config.get("DB")
 
@@ -551,7 +554,7 @@ def get_species():
     
     return jsonify(species)
 
-@api_blueprint.route('/species', methods=["POST"])
+@api_blueprint.post('/species')
 @is_admin
 def new_species():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -566,7 +569,7 @@ def new_species():
     
     return jsonify(200)
 
-@api_blueprint.route('/species', methods=["PATCH"])
+@api_blueprint.patch('/species')
 @is_admin
 def update_species():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -598,7 +601,7 @@ def update_species():
     
     return jsonify(200)
 
-@api_blueprint.route('/species/<species_id>', methods=["DELETE"])
+@api_blueprint.delete('/species/<species_id>')
 @is_admin
 def delete_species(species_id):
     db: SQLAlchemy = current_app.config.get("DB")
@@ -618,7 +621,7 @@ def delete_species(species_id):
 
     return jsonify(200)
 
-@api_blueprint.route('/classes', methods=["GET"])
+@api_blueprint.get('/classes')
 def get_classes():
     db: SQLAlchemy = current_app.config.get("DB")
     query = db.session.query(PrimaryClass)
@@ -654,7 +657,7 @@ def get_classes():
         raise NotFound("No Classes found")
     return jsonify(classes)
 
-@api_blueprint.route('/classes', methods=["POST"])
+@api_blueprint.post('/classes')
 @is_admin
 def new_class():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -669,7 +672,7 @@ def new_class():
     
     return jsonify(200)
     
-@api_blueprint.route('/classes', methods=["PATCH"])
+@api_blueprint.patch('/classes')
 @is_admin
 def update_class():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -702,7 +705,7 @@ def update_class():
     
     return jsonify(200)
 
-@api_blueprint.route('/classes/<class_id>', methods=["DELETE"])
+@api_blueprint.delete('/classes/<class_id>')
 @is_admin
 def delete_class(class_id):
     db: SQLAlchemy = current_app.config.get("DB")
@@ -726,7 +729,7 @@ def delete_class(class_id):
 
     return jsonify(200)
 
-@api_blueprint.route("/archetypes", methods=["GET"])
+@api_blueprint.get("/archetypes")
 def get_archetypes():
     db: SQLAlchemy = current_app.config.get("DB")
     query = db.session.query(Archetype)
@@ -790,7 +793,7 @@ def get_archetypes():
     
     return jsonify(archetypes)
 
-@api_blueprint.route('/archetypes', methods=["POST"])
+@api_blueprint.post('/archetypes')
 @is_admin
 def new_archetype():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -805,7 +808,7 @@ def new_archetype():
     
     return jsonify(200)
 
-@api_blueprint.route('/archetypes', methods=["PATCH"])
+@api_blueprint.patch('/archetypes')
 @is_admin
 def update_archetypes():
     db: SQLAlchemy = current_app.config.get("DB")
@@ -837,7 +840,7 @@ def update_archetypes():
     
     return jsonify(200)
 
-@api_blueprint.route('/archetypes/<arch_id>', methods=["DELETE"])
+@api_blueprint.delete('/archetypes/<arch_id>')
 @is_admin
 def delete_archetype(arch_id):
     db: SQLAlchemy = current_app.config.get("DB")
@@ -858,6 +861,38 @@ def delete_archetype(arch_id):
     
     db.session.delete(arch)
     db.session.commit()
+
+    return jsonify(200)
+
+@api_blueprint.get('/equipment')
+def get_equipment():
+    db: SQLAlchemy = current_app.config.get("DB")
+    query = db.session.query(Equipment)
+
+    if request.args.get('type'):
+        if request.args.get('type') == "adventuring":
+            query = query.filter(~Equipment._category.in_([3,4]))
+        else:
+            equip_type: EquipmentCategory = (
+                db.session.query(EquipmentCategory)
+                .filter(func.lower(EquipmentCategory.value) == unquote(request.args.get('type')).lower())
+                .first()
+            )
+
+            if not equip_type:
+                raise NotFound("Equipment type not found")
+            query = query.filter(Equipment._category == equip_type.id)
+
+    equipment = query.all()
+
+    if not equipment:
+        raise NotFound()
+    
+    return jsonify(equipment)
+
+@api_blueprint.patch('/equipment')
+def update_equipment():
+    db: SQLAlchemy = current_app.config.get("DB")
 
     return jsonify(200)
 

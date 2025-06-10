@@ -46,7 +46,9 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Items</a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">Mundane Items</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for("resolute.weapons") }}">Weapons</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for("resolute.armor") }}">Armor</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for("resolute.adventuring") }}">Adventuring Gear</a></li>
                         <li><a class="dropdown-item" href="#">Enhanced Items</a></li>
                     </ul>
                 </li>

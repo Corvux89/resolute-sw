@@ -79,7 +79,7 @@ export function setupTableFilters(table_name, exceptions, initialFilters) {
                     tempDiv.innerHTML = render;
                     return tempDiv.textContent.split(",")[0] ?? "";
                 }
-                return raw.split(",")[0];
+                return typeof raw === "string" ? raw.split(",")[0] : raw.toString();
             }).filter(v => v != null && v !== "")));
             values.sort((a, b) => a.localeCompare(b, undefined, { numberic: true, sensitivity: 'base' }));
             if (values.length == 0)
@@ -216,7 +216,7 @@ export function fetchSpeciesInputs() {
         homeworld: $("#species-world").val().toString(),
         language: $("#species-language").val().toString(),
         traits: getMDEValue("species-traits"),
-        flavortext: getMDEValue("species-flavortext"),
+        flavortext: $("#species-flavortext").val().toString(),
     };
     return species;
 }
