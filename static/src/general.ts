@@ -1,6 +1,6 @@
 
 import { Equipment, Power } from "./types.js";
-import { defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
+import { defaultEquipmentModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
 
 // Generic Content
 if ($("#content-edit-form").length){
@@ -193,6 +193,7 @@ if ($("#power-table").length){
     if (params.has('name')){
         $("#filter-search").val(params.get('name'))
         table.column(0).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton()
     }
     setupTableFilters(tableName, [0,2])
 }
@@ -375,12 +376,13 @@ if ($("#species-table").length){
     if (params.has('name')){
         $("#filter-search").val(params.get('name'))
         table.column(1).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton()
     }
     setupTableFilters(tableName, [0,1])
 }
 
-$('#species-edit-form').on('shown.bs.modal', function(){
-    // setupMDE("species-flavortext")
+$('#species-edit-form').on('show.bs.modal', function(){
+    setupMDE("species-flavortext")
     setupMDE("species-traits")
 
     const species = fetchSpeciesInputs()
@@ -510,11 +512,12 @@ if ($("#class-table").length){
     if (params.has('name')){
         $("#filter-search").val(params.get('name'))
         table.column(0).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton()
     }
     setupTableFilters(tableName, [0,1,4])
 }
 
-$('#class-edit-form').on('shown.bs.modal', function(){
+$('#class-edit-form').on('show.bs.modal', function(){
     setupMDE("class-equipment")
     setupMDE("class-flavortext")
     setupMDE("class-level-changes")
@@ -619,12 +622,13 @@ if ($("#archetype-table").length){
      if (params.has('name')){
         $("#filter-search").val(params.get('name'))
         table.column(1).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton()
     }
 
     setupTableFilters(tableName, [0], { 1: params.get('class')})
 }
 
-$("#archetype-edit-form").on('shown.bs.modal', function(){
+$("#archetype-edit-form").on('show.bs.modal', function(){
     setupMDE('archetype-flavortext')
     setupMDE('archetype-level-table')
 
@@ -846,6 +850,7 @@ if ($("#equipment-table").length){
     if (params.has('name')){
         $("#filter-search").val(params.get('name'))
         table.column(0).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton()
     }
     setupTableFilters(tableName, filterExclusions)
 }
@@ -870,9 +875,9 @@ $(document).on('click', "#equipment-table tbody tr", function(){
     if (document.body.dataset.admin == "True"){
         editButton = `
             <button type="button"
-                id="edit-power-btn-${equipment.id}"
+                id="edit-equipment-btn-${equipment.id}"
                 class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
-                data-power-id="${equipment.id}"
+                data-equip-id="${equipment.id}"
                 title="Edit Power"
                 data-bs-toggle="modal"
                 data-bs-target="#equipment-edit-form">
@@ -893,4 +898,87 @@ $(document).on('click', "#equipment-table tbody tr", function(){
  
     $(this).after(additionalInfo)
     $(this).addClass("bold-row")
+})
+
+$(document).on('click', '#equipment-next', function(){
+    const equipment_category_option = $("#equipment-category").find(":selected")
+
+    if (!equipment_category_option.val()){
+        ToastError("Select an equipment category first")
+    }
+    
+    let equipment: Equipment = fetchEquipmentInputs()
+
+    if (equipment.id !== undefined){
+        equipment = {}
+    }
+
+    equipment.category = {"id": Number(equipment_category_option.val()), "value": equipment_category_option.html()}
+
+
+    defaultEquipmentModal(equipment)
+})
+
+$(document).on('click', '#equipment-table .edit-button', function(){
+    const table = $("#equipment-table").DataTable()
+    const equipId = $(this).data('equip-id');
+    const equipment: Equipment = table.rows().data().toArray().find((row: Equipment) => row.id == equipId);
+    
+    if (!equipment) ToastError("Equipment not found")
+
+    defaultEquipmentModal(equipment)
+})
+
+$(document).on('click', '#equipment-submit', function(){
+    const equipment = fetchEquipmentInputs()
+
+    if (!equipment.id){
+        $.ajax({
+            url: `api/equipment`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(equipment),
+            success: function() {
+                ToastSuccess("Equipment Added")
+                $("#equipment-table").DataTable().ajax.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    } else {
+        $.ajax({
+            url: `api/equipment`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(equipment),
+            success: function() {
+                ToastSuccess("Equipment Updated")
+                $("#equipment-table").DataTable().ajax.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    }
+})
+
+$(document).on('click', '#equipment-delete-confirmed', function(){
+    const equipment = fetchEquipmentInputs()
+
+    if (!equipment.id) return
+
+    $.ajax({
+        url: `/api/equipment/${equipment.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function(){
+            ToastError("Equipment Deleted")
+            $("#equipment-table").DataTable().ajax.reload()
+        },
+        error: function(e){
+            ToastError(`Failed: ${e.responseText}`)
+        }
+        
+    })
 })

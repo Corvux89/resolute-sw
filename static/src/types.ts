@@ -90,7 +90,7 @@ export interface Archetype {
 
 export interface Equipment {
     id?: string
-    name: string
+    name?: string
     source?: ContentSource
     description?: string
     cost?: number

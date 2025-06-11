@@ -1,12 +1,19 @@
 from flask import current_app, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
-from models.G0T0 import Archetype, Power, PrimaryClass, Species
+from models.G0T0 import Archetype, Equipment, Power, PrimaryClass, Species
 from models.general import Content, SearchResult
 
 def perform_search(query: str):
     db: SQLAlchemy = current_app.config.get("DB")
     results: list[SearchResult] = []
+
+    if query == "":
+        return []
+
+    for rule in current_app.url_map.iter_rules():
+        if query.lower() in rule.rule.lower() or query.lower() in rule.endpoint.lower():
+            results.append(SearchResult(f"Page - {rule.rule.replace('/','')}", f"{rule.rule}"))
     
     # Web Content
     contents = db.session.query(Content).filter(Content.content.ilike(f"%{query.lower()}%")).all()
@@ -48,6 +55,21 @@ def perform_search(query: str):
 
     for a in arch:
         results.append(SearchResult(f"Archetype - {a.value}", f"{url_for('resolute.archetype_details', arch=a.value.lower())}"))
+
+    # Equipment
+    equip = db.session.query(Equipment).filter(or_(
+        Equipment.name.ilike(f"%{query.lower()}%")
+    ))
+
+    for e in equip:
+        url = "adventuring"
+        if e.category.value == "Weapon":
+            url="weapons"
+        elif e.category == "Armor":
+            url="armor"
+            
+
+        results.append(SearchResult(f"{e.category.value} - {e.name}", f"{url_for(f'resolute.{url}', name=e.name)}"))
 
     return results
 

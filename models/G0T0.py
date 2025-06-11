@@ -923,3 +923,23 @@ class Equipment(db.Model, BaseModel):
     category = relationship("EquipmentCategory")
     weapon_class= relationship("WeaponClass")
     armor_class = relationship("ArmorClass")
+
+    @classmethod
+    def from_json(cls, json):
+        return cls(
+            id=json.get("id", uuid.uuid4()),
+            name=json.get("name"),
+            _source=json.get("source", {}).get("id"),
+            description=json.get("description", ""),
+            cost=json.get("cost", 0),
+            weight=json.get("weight", 0),
+            _category=json.get("category", {}).get("id"),
+            dmg_number_of_die=json.get("dmg_number_of_die", 0),
+            dmg_die_type=json.get("dmg_die_type", 0),
+            dmg_type=json.get("dmg_type", ""),
+            _weapon_class=json.get("weapon_class", {}).get("id"),
+            _armor_class=json.get("armor_class", {}).get("id"),
+            properties=json.get("properties", ""),
+            ac=json.get("ac", ""),
+            stealth_dis=json.get("stealth_dis", False),
+        )

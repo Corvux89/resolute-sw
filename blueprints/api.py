@@ -890,11 +890,70 @@ def get_equipment():
     
     return jsonify(equipment)
 
-@api_blueprint.patch('/equipment')
-def update_equipment():
+@api_blueprint.post('/equipment')
+@is_admin
+def new_equipment():
     db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+
+    try:
+       equipment: Equipment = Equipment.from_json(data)
+       db.session.add(equipment) 
+       db.session.commit()
+    except Exception as e:
+        raise BadRequest()
 
     return jsonify(200)
+
+@api_blueprint.patch('/equipment')
+@is_admin
+def update_equipment():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+
+    try:
+        if not (a_id := data.get('id')):
+            raise BadRequest("No object ID specified")
+        
+        equipment = db.session.query(Equipment).filter(Equipment.id == a_id).first()
+
+        if not equipment:
+            raise NotFound("Equipment not found")
+        
+        for field in ["name", "description", "cost", "weight", "dmg_number_of_die", "dmg_die_type",
+                      "dmg_type", "properties", "ac", "stealth_dis"]:
+            if field in data:
+                setattr(equipment, field, data[field])
+
+        if "source" in data and data["source"]:
+            equipment._source = data["source"].get('id')
+        if "weapon_class" in data and data["weapon_class"]:
+            equipment._weapon_class = data["weapon_class"].get('id')
+        if "armor_class" in data and data["armor_class"]:
+            equipment._armor_class = data["armor_class"].get('id')
+
+        db.session.commit()        
+    except NotFound as e:
+        raise NotFound(e)
+    except Exception as e:
+        raise BadRequest(e)
+    
+    return jsonify(200)
+
+@api_blueprint.delete('/equipment/<equip_id>')
+@is_admin
+def delete_equipment(equip_id):
+    db: SQLAlchemy = current_app.config.get("DB")
+    equipment: Equipment = db.session.query(Equipment).filter(Equipment.id == equip_id).first()
+
+    if not equipment:
+        raise NotFound()
+    
+    db.session.delete(equipment)
+    db.session.commit()
+
+    return jsonify(200)
+    
 
 # --------------------------- #
 # Private Methods

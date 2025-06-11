@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 
 from helpers.general_helpers import perform_search
-from models.G0T0 import Archetype, ContentSource, PowerAlignment, PowerType, PrimaryClass, Species
+from models.G0T0 import Archetype, ArmorClass, ContentSource, EquipmentCategory, PowerAlignment, PowerType, PrimaryClass, Species, WeaponClass
 from models.exceptions import NotFound
 from models.general import Content
 
@@ -123,9 +123,15 @@ def _get_options():
     db: SQLAlchemy = current_app.config.get("DB")
     options = {}
 
+    def build_select_option(value_attr: str, label_attr: str, obj: []):
+        return [{"value": getattr(o, value_attr), "label": getattr(o, label_attr)} for o in obj]
+
     power_type = db.session.query(PowerType).all()
     sources = db.session.query(ContentSource).all()
     alignments = db.session.query(PowerAlignment).all()
+    equipment_category = db.session.query(EquipmentCategory).all()
+    weapon_class = db.session.query(WeaponClass).all()
+    armor_class = db.session.query(ArmorClass).all()
     sizes = [{"value": v, "label": v} for v in ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]]
     stats = [{"value": v, "label": v} for v in ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]]
 
@@ -134,5 +140,9 @@ def _get_options():
     options["alignment"] = [{"value": a.id, "label": a.value} for a in alignments]
     options["sizes"] = sizes
     options["stats"] = stats
+    options["equipment-category"] = [{"value": e.id, "label": e.value} for e in equipment_category]
+    options["weapon-class"] = build_select_option("id", "value", weapon_class)
+    options["armor-class"] = build_select_option("id", "value", armor_class)
+
 
     return options

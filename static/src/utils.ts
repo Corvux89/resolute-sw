@@ -1,4 +1,4 @@
-import { Archetype, Power, PrimaryClass, Species } from "./types.js";
+import { Archetype, Equipment, Power, PrimaryClass, Species } from "./types.js";
 
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
@@ -132,8 +132,13 @@ export function setupTableFilters(table_name: string, exceptions?: number[], ini
 
     if ($("#filter-search").length){
         $('#filter-search').on('input', function() {
-            table.search((this as HTMLInputElement).value).draw();
+            const params = new URLSearchParams(window.location.search);
+            table.search($(this).val().toString()).draw();
             updateClearAllFiltersButton()
+
+            if (params.has('name') && $(this).val() == ""){
+                table.column(0).search("").draw()
+            }
         });
     }
 }
@@ -313,4 +318,90 @@ export function fetchArchetypInputs(): Archetype{
     }
     console.log(archetype)
     return archetype
+}
+
+export function defaultEquipmentModal(equip: Equipment): void{
+    if (!equip.id){
+        $("#equipment-edit-form").removeData("id")
+        $("#equipment-delete").addClass("d-none")
+    } else {
+        $("#equipment-edit-form").data('id', equip.id)
+        $("#equipment-delete").removeClass("d-none")
+    }
+
+    if (equip.category?.value == 'Armor'){
+        setSelectInputValue("#equipment-armor-class", equip.armor_class?.id?.toString() ?? "")
+
+        $("#armor-class-col").removeClass("d-none")
+        $("#ac-col").removeClass("d-none")
+        $("#equipment-ac").val(equip.ac)
+        $("#stealth-col").removeClass("d-none")
+        $("#equipment-stealth-dis").prop('checked', equip.stealth_dis ?? false)
+        $("#equipment-properties").val(equip.properties)
+
+        $("#weapon-class-col").addClass("d-none")
+        $("#damage-row").addClass("d-none")
+    } else if (equip.category?.value == 'Weapon'){
+        setSelectInputValue("#equipment-weapon-class", equip.weapon_class?.id?.toString() ?? "")
+        $("#weapon-class-col").removeClass("d-none")
+        $("#damage-row").removeClass("d-none")
+        $("#equipment-dmg-number-die").val(equip.dmg_number_of_die)
+        $("#equipment-dmg-die-type").val(equip.dmg_die_type)
+        $("#equipment-dmg-type").val(equip.dmg_type)
+        $("#equipment-properties").val(equip.properties)
+
+        $("#armor-class-col").addClass("d-none")
+        $("#ac-col").addClass("d-none")
+        $("#stealth-col").addClass("d-none")
+    } else {
+        $("#weapon-class-col").addClass("d-none")
+        $("#damage-row").addClass("d-none")
+        $("#armor-class-col").addClass("d-none")
+        $("#ac-col").addClass("d-none")
+        $("#stealth-col").addClass("d-none")
+        $("#prop-col").addClass("d-none")
+    }
+
+    $("#equipment-edit-form").data('category', equip.category)
+    $("#equipment-name").val(equip.name)
+    $("#equipment-description").val(equip.description)
+    $("#equipment-cost").val(equip.cost)
+    $("#equipment-weight").val(equip.weight)
+    setSelectInputValue("#equipment-source", equip.source?.id?.toString() ?? "6")
+
+}
+
+export function fetchEquipmentInputs(): Equipment {
+    const source_option = $("#equipment-source").find(":selected")
+    const weapon_option = $("#equipment-weapon-class").find(":selected")
+    const armor_option = $("#equipment-armor-class").find(":selected")
+
+    const equip: Equipment = {
+        id: $("#equipment-edit-form").data('id'),
+        name: $("#equipment-name").val().toString(),
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        },
+        description: $("#equipment-description").val().toString(),
+        cost: Number($("#equipment-cost").val()),
+        weight: Number($("#equipment-weight").val()),
+        category: $("#equipment-edit-form").data('category'),
+        dmg_number_of_die: Number($("#equipment-dmg-number.die").val()),
+        dmg_die_type: Number($("#equipment-dmg-tie-type").val()),
+        dmg_type: $("#equipment-dmg-type").val().toString(),
+        weapon_class: weapon_option.val() ? {
+            id: Number(weapon_option.val()),
+            value: weapon_option.html()
+        } : null,
+        armor_class: armor_option.val() ? {
+            id: Number(armor_option.val()),
+            value: armor_option.html()
+        }: null,
+        properties: $("#equipment-properties").val().toString(),
+        ac: $("#equipment-ac").val().toString(),
+        stealth_dis: $("#equipment-stealth-dis").prop("checked")
+    }
+
+    return equip
 }

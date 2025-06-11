@@ -9,7 +9,7 @@
 
 <div class="container m-2 position-relative">
     {% if current_user.is_admin %}
-     <button type="button" id="new-equipment-btn" data-bs-toggle="modal" data-bs-target="#equipment-edit-form" class="btn btn-link position-absolute top-0 end-0 m-2 p-0" title="New Equipment">
+     <button type="button" id="new-equipment-btn" data-bs-toggle="modal" data-bs-target="#equipment-new-form" class="btn btn-link position-absolute top-0 end-0 m-2 p-0" title="New Equipment">
         <i class="fa fa-plus"></i>
     </button>
     {% endif %}
@@ -39,15 +39,77 @@
     </div>
     <table id="equipment-table" class="table table-striped"></table>
 </div>
+
 {% if current_user.is_admin %}
+<custom-modal title="New Equipment" custom-id="equipment-new-form">
+    <div class="container">
+        <div class="row mb-2">
+            <div class="col mb-2">
+                <select-input custom-id="equipment-category" custom-label="Equipment Category" options='{{ options['equipment-category']|tojson }}'></select-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col mb-3">
+                <button type="button" class="btn btn-primary float-end m-3" id="equipment-next" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#equipment-edit-form">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+</custom-modal>
+
 <custom-modal title="Equipment" custom-id="equipment-edit-form">
     <div class="container">
         <div class="row mb-2">
-            <div class="col-4 mb-2">
+            <div class="col-6 mb-2">
                 <text-input label-text="Name" custom-id="equipment-name" required></text-input>
             </div>
+            <div class="col-6 mb-2" id="armor-class-col">
+                <select-input custom-id="equipment-armor-class" custom-label="Armor Class" options='{{ options['armor-class']|tojson }}'></select-input>
+            </div>
+            <div class="col-6 mb-2" id="weapon-class-col">
+                <select-input custom-id="equipment-weapon-class" custom-label="Weapon Class" options='{{ options['weapon-class']|tojson }}'></select-input>
+            </div>
+        </div>
         <div class="row mb-2">
-            <textarea id="equipment-desc" value="" spellcheck="true" class="form-control big-edit-body" required></textarea>
+            <div class="col-6 mb-2">
+                <select-input custom-id="equipment-source" custom-label="Content Source" options='{{ options['content-source']|tojson }}'></select-input>
+            </div>
+            <div class="col-3 mb-2">
+                <number-input custom-id="equipment-cost" label-text="Cost"></number-input>
+            </div>
+            <div class="col-3 mb-2">
+                <number-input custom-id="equipment-weight" label-text="Weight"></number-input>
+            </div>
+        </div>
+        <div class="row mb-2" id="damage-row">
+            <div class="col-4 mb-2">
+                <number-input custom-id="equipment-dmg-number-die" label-text="Number of Damage Die"></number-input>
+            </div>
+            <div class="col-4 mb-2">
+                <number-input custom-id="equipment-dmg-die-type" label-text="Damage Die Type"></number-input>
+            </div>
+            <div class="col-4 mb-2">
+                <text-input label-text="Damage Type" custom-id="equipment-dmg-type" required></text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-2" id="prop-col">
+                <text-input label-text="Properties" custom-id="equipment-properties"></text-input>
+            </div>
+            <div class="col-3 mb-2" id="ac-col">
+                <text-input label-text="AC" custom-id="equipment-ac"></text-input>
+            </div>
+            <div class="col-3 mb-2" id="stealth-col">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="equipment-stealth-dis" name="equipment-stealth-dis">
+                    <label class="form-check-label" for="equipment-stealth-dis">Stealth Disadvantage?</label>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label for="archetype-level-table" class="form-label fw-bold">Description</label>
+            <textarea id="equipment-description" value="" spellcheck="true" class="form-control big-edit-body"></textarea>
         </div>
         <div class="row mb-2">
             <div class="col mb-3">
