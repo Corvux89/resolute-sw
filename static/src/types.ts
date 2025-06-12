@@ -3,6 +3,10 @@ interface GenericCategory {
     value: string
 }
 
+interface GenericChild extends GenericCategory {
+    parent?: number
+}
+
 interface ContentSource {
     id: number
     name: string
@@ -104,4 +108,19 @@ export interface Equipment {
     properties?: string
     ac?: string
     stealth_dis?: boolean
+}
+
+export interface EnhancedItem {
+    id?: string
+    name?: string
+    type?: GenericCategory
+    rarity?: GenericCategory
+    attunement?: boolean
+    text?: string
+    prerequisite?: string
+    subtype_ft?: string
+    subtype?: GenericChild,
+    cost?: number
+    source?: ContentSource
+    html_text?: string
 }

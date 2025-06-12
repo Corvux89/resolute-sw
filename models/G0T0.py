@@ -22,6 +22,11 @@ class ContentSource(db.Model, BaseModel):
     name: Mapped[str]
     abbreviation: Mapped[str]
 
+class Rarity(db.Model, BaseModel):
+    __tablename__ = "c_rarity"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
 class PowerType(db.Model, BaseModel):
     __tablename__ = "c_power_type"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -41,6 +46,17 @@ class EquipmentCategory(db.Model, BaseModel):
     __tablename__ = "c_equipment_category"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
+
+class EnhancedItemType(db.Model, BaseModel):
+    __tablename__ = "c_enhanced_type"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
+class EnhancedItemSubtype(db.Model, BaseModel):
+    __tablename__ = "c_enhanced_subtype"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+    parent: Mapped[str]
 
 class Activity(db.Model, BaseModel):
     __tablename__ = "c_activity"
@@ -942,4 +958,43 @@ class Equipment(db.Model, BaseModel):
             properties=json.get("properties", ""),
             ac=json.get("ac", ""),
             stealth_dis=json.get("stealth_dis", False),
+        )
+    
+class EnhancedItem(db.Model, BaseModel):
+    __tablename__ = "enhanced_items"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    name: Mapped[str]
+    _type: Mapped[int] = mapped_column("type", ForeignKey("c_enhanced_type.id"), nullable=True)
+    _rarity: Mapped[int] = mapped_column("rarity", ForeignKey("c_rarity.id"), nullable=True)
+    attunement: Mapped[bool]
+    text: Mapped[str]
+    prerequisite: Mapped[str]
+    subtype_ft: Mapped[str]
+    _subtype: Mapped[int] = mapped_column("subtype", ForeignKey("c_enhanced_subtype.id"), nullable=True)
+    cost: Mapped[int]
+    _source: Mapped[int] = mapped_column("source", ForeignKey("c_content_source.id"), nullable=True)
+
+    type = relationship("EnhancedItemType")
+    rarity = relationship("Rarity")
+    subtype = relationship("EnhancedItemSubtype")
+    source = relationship("ContentSource")
+
+    @property
+    def html_text(self):
+        return render_markdown(self.text)
+
+    @classmethod
+    def from_json(cls, json):
+        return cls(
+            id=json.get("id", uuid.uuid4()),
+            name=json.get("name"),
+            _type=json.get("type", {}).get("id"),
+            _rarity=json.get("rarity", {}).get("id"),
+            attunement=json.get("attunement", False),
+            text=json.get("text", ""),
+            prerequisite=json.get("prerequisite", ""),
+            subtype_ft=json.get("subtype_ft", ""),
+            _subtype=json.get("subtype", {}).get("id"),
+            cost=json.get("cost", 0),
+            _source=json.get("source", {}).get("id"),
         )

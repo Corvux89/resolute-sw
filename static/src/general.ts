@@ -1,6 +1,6 @@
 
-import { Equipment, Power } from "./types.js";
-import { defaultEquipmentModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters } from "./utils.js";
+import { EnhancedItem, Equipment, Power } from "./types.js";
+import { defaultEquipmentModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubtypeFields } from "./utils.js";
 
 // Generic Content
 if ($("#content-edit-form").length){
@@ -633,7 +633,6 @@ $("#archetype-edit-form").on('show.bs.modal', function(){
     setupMDE('archetype-level-table')
 
     const archetype = fetchArchetypInputs()
-    console.log(archetype)
 
      if (!archetype.id){
         $("#archetype-delete").addClass("d-none")
@@ -878,7 +877,7 @@ $(document).on('click', "#equipment-table tbody tr", function(){
                 id="edit-equipment-btn-${equipment.id}"
                 class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
                 data-equip-id="${equipment.id}"
-                title="Edit Power"
+                title="Edit Equipment"
                 data-bs-toggle="modal"
                 data-bs-target="#equipment-edit-form">
                 <i class="fa fa-pencil"></i>
@@ -975,6 +974,237 @@ $(document).on('click', '#equipment-delete-confirmed', function(){
         success: function(){
             ToastError("Equipment Deleted")
             $("#equipment-table").DataTable().ajax.reload()
+        },
+        error: function(e){
+            ToastError(`Failed: ${e.responseText}`)
+        }
+        
+    })
+})
+
+// Enhanced Items
+if ($("#item-table").length){
+    const params = new URLSearchParams(window.location.search);
+    const tableName = "#item-table"
+    
+    destroyTable(tableName)
+    
+    const table = $(tableName).DataTable({
+        ajax: {
+            url: 'api/enhanced_items',
+            dataSrc: '',
+            data: function(d){
+                d["type"] = window.location.pathname.replace("/enhanced_", "").replace("_", " ")
+            }
+        },
+        pageLength: 1000,
+        order: [[1,'asc'], [0, 'asc']],
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true,
+        columns: [
+            {
+                title: "Name",
+                data: "name"
+            },
+            {
+                title: "Type",
+                data: "type",
+                render: function(data){
+                    if (!data) return ''
+                    return data.value
+                }
+            },
+            {
+                title: "Subtype",
+                data: "subtype",
+                render: function(data, type, row){
+                    if (!data) return ''
+                    if (row.subtype_ft) return row.subtype_ft
+                    return data.value
+                }
+            },
+            {
+                title: "Rarity",
+                data: "rarity",
+                render: function(data){
+                    if (!data) return ''
+                    return data.value
+                }
+            },
+            {
+                title: "Prerequisite?",
+                data: "prerequisite",
+                render: function(data){
+
+                    if (data) {
+                        return `<i class="fa fa-check text-success"></i>`; // Green checkmark
+                    } else {
+                        return `<i class="fa fa-times text-danger"></i>`; // Red "x"
+                    }
+                }
+            },
+            {
+                title: "Attunement?",
+                data: "attunement",
+                render: function(data){
+                     if (data) {
+                        return `<i class="fa fa-check text-success"></i>`; // Green checkmark
+                    } else {
+                        return `<i class="fa fa-times text-danger"></i>`; // Red "x"
+                    }
+                }
+            },
+            {
+                title: "Cost",
+                data: "cost"
+            }
+        ]
+    })
+
+    if (params.has('name')){
+        $("#filter-search").val(params.get('name'))
+        table.column(0).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton()
+    }
+    setupTableFilters(tableName, [0,1,5])
+}
+
+$(document).on('click', "#item-table tbody tr", function(){
+    if ($(this).closest('btn').length) return
+
+    const table = $("#item-table").DataTable()
+    const row = table.row(this)
+    const item = row.data() as EnhancedItem
+    let stop = false
+
+    if ($(this).hasClass("bold-row")) stop=true
+
+    $("#item-table tbody tr").removeClass("bold-row")
+
+    $('.dropdown-row').remove()
+
+    if (!item || stop) return
+    let editButton = ''
+    let prereq = ''
+
+    if (document.body.dataset.admin == "True"){
+        editButton = `
+            <button type="button"
+                id="edit-item-btn-${item.id}"
+                class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
+                data-item-id="${item.id}"
+                title="Edit Item"
+                data-bs-toggle="modal"
+                data-bs-target="#item-edit-form">
+                <i class="fa fa-pencil"></i>
+            </button>
+        `
+    }
+
+    if (item.prerequisite) {
+    prereq = `
+        <div class="p-3 text-center">
+            <p><strong>Prerequisite:</strong> ${item.prerequisite}</p>
+        </div>
+    `;
+}
+
+    const additionalInfo = `
+        <tr class="dropdown-row">
+            <td colspan="${table.columns().count()}">
+                ${editButton}
+                ${prereq}
+                <div class="p-3">
+                    ${item.html_text} 
+                </div>
+            </td>
+        </tr>
+    `
+ 
+    $(this).after(additionalInfo)
+    $(this).addClass("bold-row")
+})
+
+$(document).on('click', '#item-next', function(){
+    const item_type_option = $("#item-type").find(":selected")
+
+    if (!item_type_option.val()){
+        ToastError("Select an item category first")
+    }
+    
+    let item: EnhancedItem = fetchItemInputs()
+
+    if (item.id !== undefined){
+        item = {}
+    }
+
+    item.type = {"id": Number(item_type_option.val()), "value": item_type_option.html()}
+
+    defaultItemModal(item)
+})
+
+$(document).on('change', '#item-subtype', function(){
+    updateSubtypeFields()
+})
+
+$(document).on('click', '#item-table .edit-button', function(){
+    const table = $("#item-table").DataTable()
+    const itemId = $(this).data('item-id');
+    const item: EnhancedItem = table.rows().data().toArray().find((row: EnhancedItem) => row.id == itemId);
+    
+    if (!item) ToastError("Enhance Item not found")
+    defaultItemModal(item)
+})
+
+$(document).on('click', '#item-submit', function(){
+    const item = fetchItemInputs()
+
+    if (!item.id){
+        $.ajax({
+            url: `api/enhanced_items`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(item),
+            success: function() {
+                ToastSuccess("Enhanced Item Added")
+                $("#item-table").DataTable().ajax.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    } else {
+        $.ajax({
+            url: `api/enhanced_items`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(item),
+            success: function() {
+                ToastSuccess("Enhanced Item Updated")
+                $("#item-table").DataTable().ajax.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    }
+})
+
+$(document).on('click', '#item-delete-confirmed', function(){
+    const item = fetchItemInputs()
+
+    if (!item.id) return
+
+    $.ajax({
+        url: `/api/enhanced_items/${item.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function(){
+            ToastError("Enhanced Item Deleted")
+            $("#item-table").DataTable().ajax.reload()
         },
         error: function(e){
             ToastError(`Failed: ${e.responseText}`)

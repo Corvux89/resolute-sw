@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 
 from helpers.general_helpers import perform_search
-from models.G0T0 import Archetype, ArmorClass, ContentSource, EquipmentCategory, PowerAlignment, PowerType, PrimaryClass, Species, WeaponClass
+from models.G0T0 import Archetype, ArmorClass, ContentSource, EnhancedItemSubtype, EnhancedItemType, EquipmentCategory, PowerAlignment, PowerType, PrimaryClass, Rarity, Species, WeaponClass
 from models.exceptions import NotFound
 from models.general import Content
 
@@ -44,6 +44,26 @@ def weapons():
 @resolute_blueprint.get('/armor')
 def armor():
     return render_template("equipment.html", title="Armor", options=_get_options())
+
+@resolute_blueprint.get('/enhanced_consumable')
+def enhanced_consumable():
+    return render_template("enhanced_items.html", title="Enhanced Items - Consumables", options=_get_options())
+
+@resolute_blueprint.get('/enhanced_item_modification')
+def enhanced_mods():
+    return render_template("enhanced_items.html", title="Enhanced Items - Item Modification", options=_get_options())
+
+@resolute_blueprint.get('/enhanced_droid_customization')
+def enhanced_customizations():
+    return render_template("enhanced_items.html", title="Enhanced Items - Droid Customizations", options=_get_options())
+
+@resolute_blueprint.get('/enhanced_cybernetic_augmentation')
+def enhanced_augmentation():
+    return render_template("enhanced_items.html", title="Enhanced Items - Cybernetic Augmentation", options=_get_options())
+
+@resolute_blueprint.get('/enhanced_other')
+def enhanced_other():
+    return render_template("enhanced_items.html", title="Enhanced Items", options=_get_options())
 
 @resolute_blueprint.get('/adventuring')
 def adventuring():
@@ -132,17 +152,21 @@ def _get_options():
     equipment_category = db.session.query(EquipmentCategory).all()
     weapon_class = db.session.query(WeaponClass).all()
     armor_class = db.session.query(ArmorClass).all()
+    rarity = db.session.query(Rarity).all()
+    e_type = db.session.query(EnhancedItemType).all()
     sizes = [{"value": v, "label": v} for v in ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]]
     stats = [{"value": v, "label": v} for v in ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]]
 
-    options["power-type"] = [{"value": p.id, "label": p.value} for p in power_type]
-    options["content-source"] = [{"value": s.id, "label": s.name} for s in sources]
-    options["alignment"] = [{"value": a.id, "label": a.value} for a in alignments]
+    options["power-type"] = build_select_option("id", "value", power_type)
+    options["content-source"] = build_select_option("id", "name", sources)
+    options["alignment"] = build_select_option("id", "value", alignments)
     options["sizes"] = sizes
     options["stats"] = stats
-    options["equipment-category"] = [{"value": e.id, "label": e.value} for e in equipment_category]
+    options["equipment-category"] = build_select_option("id", "value", equipment_category)
     options["weapon-class"] = build_select_option("id", "value", weapon_class)
     options["armor-class"] = build_select_option("id", "value", armor_class)
-
+    options["rarity"] = build_select_option("id", "value", rarity)
+    options["enhanced-item-type"] = build_select_option("id", "value", e_type)
+    options["enhanced-item-subtype"] = [j.to_dict() for j in db.session.query(EnhancedItemSubtype).all()]
 
     return options

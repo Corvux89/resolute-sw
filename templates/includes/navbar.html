@@ -49,7 +49,12 @@
                         <li><a class="dropdown-item" href="{{ url_for("resolute.weapons") }}">Weapons</a></li>
                         <li><a class="dropdown-item" href="{{ url_for("resolute.armor") }}">Armor</a></li>
                         <li><a class="dropdown-item" href="{{ url_for("resolute.adventuring") }}">Adventuring Gear</a></li>
-                        <li><a class="dropdown-item" href="#">Enhanced Items</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for("resolute.enhanced_consumable") }}">Consumables</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for("resolute.enhanced_mods") }}">Item Modifications</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for("resolute.enhanced_customizations") }}">Droid Customizations</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for("resolute.enhanced_augmentation") }}">Cybernetic Augmentations</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for("resolute.enhanced_other") }}">Enhanced Items (Everything Else)</a></li>
                     </ul>
                 </li>
 

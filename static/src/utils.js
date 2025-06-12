@@ -11,14 +11,14 @@ export function destroyTable(table) {
         $(table).DataTable().destroy();
     }
 }
-export function setupMDE(element, default_text) {
+export function setupMDE(element, default_text, clear_text = false) {
     const textarea = document.getElementById(element);
     if (!textarea)
         return;
     if (window[element] && typeof window[element].toTextArea === "function") {
         window[element].toTextArea();
     }
-    if (default_text)
+    if (default_text || clear_text)
         $(`#${element}`).val(default_text);
     //@ts-expect-error This is pulled in from a parent and no import needed
     window[element] = new EasyMDE({
@@ -43,23 +43,24 @@ export function updateClearAllFiltersButton() {
         $('#clear-all-filters').addClass('d-none');
     }
 }
+export function updateSubtypeFields() {
+    if ($("#item-subtype").children.length == 0) {
+        $("#item-subtype-col").addClass("d-none");
+        $("#item-subtype-ft-col").removeClass("d-none");
+    }
+    else {
+        $("#item-subtype-col").removeClass("d-none");
+        const subtype_options = $("#item-subtype").find(':selected');
+        if (subtype_options.val() && subtype_options.html() == "Specific" || subtype_options.html() == "Other") {
+            $("#item-subtype-ft-col").removeClass("d-none");
+        }
+        else {
+            $("#item-subtype-ft-col").addClass("d-none");
+        }
+    }
+}
 export function setupTableFilters(table_name, exceptions, initialFilters) {
     const table = $(table_name).DataTable();
-    // // Apply initial filters and update dropdown/badges
-    // if (initialFilters) {
-    //     Object.entries(initialFilters).forEach(([colIdx, filterValue]) => {
-    //         // Apply the filter to the table
-    //         table.column(Number(colIdx)).search(filterValue || '').draw();
-    //         // Mark the corresponding dropdown item as active
-    //         const submenuID = `submenu-${colIdx}`;
-    //         const $submenuItem = $(`#${submenuID} .filter-option`).filter(function () {
-    //             return $(this).data('value').toString().toLowerCase() === filterValue.toLowerCase();
-    //         });
-    //         if ($submenuItem.length) {
-    //             $submenuItem.addClass('active');
-    //         }
-    //     });
-    // }
     table.on("xhr", function () {
         const data = table.ajax.json();
         const columns = table.settings().init().columns;
@@ -127,6 +128,13 @@ export function setSelectInputValue(select_id, value) {
         return;
     elm.val(value);
 }
+export function renderDropdownOptions(dropdownId, options) {
+    const dropdown = $(dropdownId);
+    dropdown.empty(); // Clear existing options
+    options.forEach((option) => {
+        dropdown.append(`<option value="${option.value}">${option.label}</option>`);
+    });
+}
 export function getActiveFilters(colIdx) {
     const activeValues = $(`#submenu-${colIdx} .filter-option.active`).map(function () {
         return $.fn.dataTable.util.escapeRegex(String($(this).data('value')));
@@ -167,7 +175,7 @@ export function defaultPowerModal(power) {
     }
     $("#power-level").val(power.level);
     $("#power-duration").val(power.duration);
-    setupMDE("power-desc", power.description);
+    setupMDE("power-desc", power.description, true);
 }
 export function fetchPowerInputs() {
     const power = {};
@@ -281,7 +289,6 @@ export function fetchArchetypInputs() {
         flavortext: getMDEValue('archetype-flavortext'),
         level_table: getMDEValue('archetype-level-table')
     };
-    console.log(archetype);
     return archetype;
 }
 export function defaultEquipmentModal(equip) {
@@ -362,4 +369,62 @@ export function fetchEquipmentInputs() {
         stealth_dis: $("#equipment-stealth-dis").prop("checked")
     };
     return equip;
+}
+export function defaultItemModal(item) {
+    if (!item.id) {
+        $("#item-edit-form").removeData("id");
+        $("#item-delete").addClass("d-none");
+    }
+    else {
+        $("#item-edit-form").data('id', item.id);
+        $("#item-delete").removeClass("d-none");
+    }
+    $("#item-name").val(item.name);
+    $("#item-cost").val(item.cost);
+    $("#item-subtype-ft").val(item.subtype_ft);
+    const allSubtypes = $("#item-edit-form").data("subtypes");
+    if (!allSubtypes) {
+        console.error("Missing subtypes");
+        ToastError("Something went wrong");
+        return;
+    }
+    // Filter and map subtypes based on the item's type
+    const subtypes = allSubtypes
+        .filter((s) => s.parent === item.type.id) // Filter subtypes by parent type
+        .map((s) => ({ value: s.id, label: s.value }));
+    renderDropdownOptions("#item-subtype", subtypes);
+    updateSubtypeFields();
+    setSelectInputValue("#item-source", item.source?.id?.toString() ?? "6");
+    setSelectInputValue("#item-rarity", item.rarity?.id?.toString() ?? "");
+    $("#item-attunement").prop('checked', item.attunement ?? false);
+    $("#item-edit-form").data('type', item.type);
+    setupMDE("item-text", item.text, true);
+}
+export function fetchItemInputs() {
+    const source_option = $("#item-source").find(":selected");
+    const subtype_option = $("#item-subtype").find(":selected");
+    const rarity_option = $("#item-rarity").find(":selected");
+    const item = {
+        id: $("#item-edit-form").data('id'),
+        name: $("#item-name").val().toString(),
+        type: $("#item-edit-form").data('type'),
+        rarity: {
+            id: Number(rarity_option.val()),
+            value: rarity_option.html()
+        },
+        attunement: $("#item-attunement").prop('checked'),
+        text: getMDEValue("item-text"),
+        prerequisite: $("#item-prerequisite").val().toString(),
+        subtype_ft: $("#item-subtype-ft").val().toString(),
+        subtype: subtype_option.val() ? {
+            id: Number(subtype_option.val()),
+            value: subtype_option.html(),
+        } : null,
+        cost: Number($("#item-cost").val()),
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        }
+    };
+    return item;
 }

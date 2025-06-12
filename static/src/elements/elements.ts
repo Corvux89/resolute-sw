@@ -12,7 +12,7 @@ class CustomModal extends HTMLElement{
     const exclude = ['custom-id', 'title'];
     return Array.from(this.attributes)
       .filter(attr => !exclude.includes(attr.name))
-      .map(attr => `${attr.name}="${attr.value}"`)
+      .map(attr => `${attr.name}='${attr.value}'`)
       .join(' ');
   } 
 

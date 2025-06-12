@@ -1,4 +1,4 @@
-import { Archetype, Equipment, Power, PrimaryClass, Species } from "./types.js";
+import { Archetype, EnhancedItem, Equipment, Power, PrimaryClass, Species } from "./types.js";
 
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
@@ -16,7 +16,7 @@ export function destroyTable(table: string): void{
     }
 }
 
-export function setupMDE(element: string, default_text?: string): void{
+export function setupMDE(element: string, default_text?: string, clear_text?: boolean = false): void{
     const textarea = document.getElementById(element);
     if (!textarea) return;
 
@@ -24,7 +24,7 @@ export function setupMDE(element: string, default_text?: string): void{
         window[element].toTextArea()
     }
 
-    if (default_text) $(`#${element}`).val(default_text)
+    if (default_text || clear_text) $(`#${element}`).val(default_text)
     
     //@ts-expect-error This is pulled in from a parent and no import needed
     window[element] = new EasyMDE(
@@ -52,26 +52,24 @@ export function updateClearAllFiltersButton(): void {
     }
 }
 
+export function updateSubtypeFields(): void{
+    if ($("#item-subtype").children.length == 0){
+        $("#item-subtype-col").addClass("d-none")
+        $("#item-subtype-ft-col").removeClass("d-none")
+    } else {
+        $("#item-subtype-col").removeClass("d-none")
+        const subtype_options = $("#item-subtype").find(':selected')
+
+        if (subtype_options.val() && subtype_options.html() == "Specific" || subtype_options.html() == "Other"){
+            $("#item-subtype-ft-col").removeClass("d-none")
+        } else {
+            $("#item-subtype-ft-col").addClass("d-none")
+        }
+    }
+}
+
 export function setupTableFilters(table_name: string, exceptions?: number[], initialFilters?: {[colIdx: number]: string}) {
     const table = $(table_name).DataTable();
-
-    // // Apply initial filters and update dropdown/badges
-    // if (initialFilters) {
-    //     Object.entries(initialFilters).forEach(([colIdx, filterValue]) => {
-    //         // Apply the filter to the table
-    //         table.column(Number(colIdx)).search(filterValue || '').draw();
-
-    //         // Mark the corresponding dropdown item as active
-    //         const submenuID = `submenu-${colIdx}`;
-    //         const $submenuItem = $(`#${submenuID} .filter-option`).filter(function () {
-    //             return $(this).data('value').toString().toLowerCase() === filterValue.toLowerCase();
-    //         });
-
-    //         if ($submenuItem.length) {
-    //             $submenuItem.addClass('active');
-    //         }
-    //     });
-    // }
 
     table.on("xhr", function(){
         const data = <object[]> table.ajax.json()
@@ -149,6 +147,14 @@ export function setSelectInputValue(select_id: string, value: string): void{
     elm.val(value)
 }
 
+export function renderDropdownOptions(dropdownId: string, options: { value: number; label: string }[]): void {
+    const dropdown = $(dropdownId);
+    dropdown.empty(); // Clear existing options
+    options.forEach((option) => {
+        dropdown.append(`<option value="${option.value}">${option.label}</option>`);
+    });
+}
+
 export function getActiveFilters(colIdx: number): string[]{
     const activeValues = $(`#submenu-${colIdx} .filter-option.active`).map(function() {
         return $.fn.dataTable.util.escapeRegex(String($(this).data('value')));
@@ -192,7 +198,7 @@ export function defaultPowerModal(power: Power): void{
     $("#power-level").val(power.level)
     $("#power-duration").val(power.duration)
 
-    setupMDE("power-desc", power.description)
+    setupMDE("power-desc", power.description, true)
 }
 
 export function fetchPowerInputs(): Power{
@@ -316,7 +322,6 @@ export function fetchArchetypInputs(): Archetype{
         flavortext: getMDEValue('archetype-flavortext'),
         level_table: getMDEValue('archetype-level-table')
     }
-    console.log(archetype)
     return archetype
 }
 
@@ -404,4 +409,72 @@ export function fetchEquipmentInputs(): Equipment {
     }
 
     return equip
+}
+
+export function defaultItemModal(item: EnhancedItem): void {
+    if (!item.id){
+        $("#item-edit-form").removeData("id")
+        $("#item-delete").addClass("d-none")
+    } else {
+        $("#item-edit-form").data('id', item.id)
+        $("#item-delete").removeClass("d-none")
+    }
+
+    $("#item-name").val(item.name)
+    $("#item-cost").val(item.cost)
+    $("#item-subtype-ft").val(item.subtype_ft)
+
+     const allSubtypes = $("#item-edit-form").data("subtypes");
+
+    if (!allSubtypes) {
+        console.error("Missing subtypes");
+        ToastError("Something went wrong");
+        return;
+    }
+
+    // Filter and map subtypes based on the item's type
+    const subtypes = allSubtypes
+        .filter((s) => s.parent === item.type.id) // Filter subtypes by parent type
+        .map((s) => ({ value: s.id, label: s.value })); 
+
+    renderDropdownOptions("#item-subtype", subtypes)
+    updateSubtypeFields()
+
+    setSelectInputValue("#item-source", item.source?.id?.toString() ?? "6")
+    setSelectInputValue("#item-rarity", item.rarity?.id?.toString() ?? "")
+    $("#item-attunement").prop('checked', item.attunement ?? false)
+    $("#item-edit-form").data('type', item.type)
+
+    setupMDE("item-text", item.text, true)
+}
+
+export function fetchItemInputs(): EnhancedItem{
+    const source_option = $("#item-source").find(":selected")
+    const subtype_option = $("#item-subtype").find(":selected")
+    const rarity_option = $("#item-rarity").find(":selected")
+
+    const item: EnhancedItem = {
+        id: $("#item-edit-form").data('id'),
+        name: $("#item-name").val().toString(),
+        type: $("#item-edit-form").data('type'),
+        rarity: {
+            id: Number(rarity_option.val()),
+            value: rarity_option.html()
+        },
+        attunement: $("#item-attunement").prop('checked'),
+        text: getMDEValue("item-text"),
+        prerequisite: $("#item-prerequisite").val().toString(),
+        subtype_ft: $("#item-subtype-ft").val().toString(),
+        subtype: subtype_option.val() ? { 
+            id: Number(subtype_option.val()),
+            value: subtype_option.html(),
+        } : null,
+        cost: Number($("#item-cost").val()),
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        }
+    }
+
+    return item
 }

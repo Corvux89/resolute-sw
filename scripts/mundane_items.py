@@ -28,7 +28,7 @@ output = [
 
 for obj in data:
     image = None
-    def get_value(key: str, default: str = None):
+    def get_value(key: str, default: str = None): 
         val = obj.get(key)
 
         if val == "None":

@@ -18,6 +18,9 @@ from models.G0T0 import (
     CharacterClass,
     CodeConversion,
     ContentSource,
+    EnhancedItem,
+    EnhancedItemSubtype,
+    EnhancedItemType,
     Equipment,
     EquipmentCategory,
     G0T0Guild,
@@ -953,7 +956,100 @@ def delete_equipment(equip_id):
     db.session.commit()
 
     return jsonify(200)
+
+@api_blueprint.get('/enhanced_items')
+def get_enhanced_items():
+    db: SQLAlchemy = current_app.config.get("DB")
+    query = db.session.query(EnhancedItem)
+
+    if request.args.get('type'):
+        if request.args.get('type').lower() == 'other':
+            query = query.filter(~EnhancedItem._type.in_([3,7,5,4]))
+        else:
+            i_type: EnhancedItemType = (
+                db.session.query(EnhancedItemType)
+                .filter(func.lower(EnhancedItemType.value) == unquote(request.args.get('type')).lower())
+                .first()
+            )
+
+            if not i_type:
+                raise NotFound("Enhanced Item Type no found")
+            query = query.filter(EnhancedItem._type == i_type.id)
+
+    items = query.all()
+
+    if not items:
+        raise NotFound()
     
+    return jsonify(items)
+
+@api_blueprint.post('/enhanced_items')
+@is_admin
+def new_enhanced_item():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+
+    try:
+        e_item: EnhancedItem = EnhancedItem.from_json(data)
+        db.session.add(e_item)
+        db.session.commit()
+    except Exception as e:
+        raise BadRequest()
+    
+    return jsonify(200)
+
+@api_blueprint.patch('/enhanced_items')
+@is_admin
+def update_enhanced_item():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+
+    try:
+        if not (a_id := data.get('id')):
+            raise BadRequest("No object ID specified")
+        
+        e_item = db.session.query(EnhancedItem).filter(EnhancedItem.id == a_id).first()
+
+        if not e_item:
+            raise NotFound("Equipment not found")
+        
+        for field in ["name", "attunemtn", "text", "prerequisite", "subtype_ft", "cost"]:
+            if field in data:
+                setattr(e_item, field, data[field])
+
+        if "source" in data and data["source"]:
+            e_item._source = data["source"].get('id')
+        if "subtype" in data and data["subtype"]:
+            subtype: EnhancedItemSubtype = db.session.query(EnhancedItemSubtype).filter(EnhancedItemSubtype.id == data["subtype"].get('id')).first()
+
+            if not subtype or (subtype and subtype.parent != e_item.type.id):
+                raise BadRequest("Subtype is not valid")
+            
+            e_item._subtype = subtype.id
+        if "rarity" in data and data["rarity"]:
+            e_item._rarity = data["rarity"].get('id')
+
+        db.session.commit()        
+    except NotFound as e:
+        raise NotFound(e)
+    except Exception as e:
+        raise BadRequest(e)
+    
+    return jsonify(200)
+
+@api_blueprint.delete('/enhanced_items/<e_id>')
+@is_admin
+def delete_enhanced_item(e_id):
+    db: SQLAlchemy = current_app.config.get("DB")
+    e_item: EnhancedItem = db.session.query(EnhancedItem).filter(EnhancedItem.id == e_id).first()
+
+    if not e_item:
+        raise NotFound()
+    
+    db.session.delete(e_item)
+    db.session.commit()
+
+    return jsonify(200)
 
 # --------------------------- #
 # Private Methods
