@@ -18,13 +18,31 @@ output = [
         "dmg_number_of_die",
         "dmg_die_type",
         "dmg_type",
-        "weapon_class",
-        "armor_class",
+        "sub_category",
         "properties",
         "ac",
         "stealth_dis"
     ]
 ]
+
+subcategory_map = {
+    3: {
+        "SimpleBlaster": 1,
+        "MartialBlaster": 2,
+        "MartialVibroweapon": 3,
+        "SimpleLightweapon": 4,
+        "MartialLightweapon": 5,
+        "ExoticBlaster": 6,
+        "ExoticVibroweapon": 7,
+        "ExoticLightweapon": 8
+    },
+    4: {
+        "Light": 9,
+        "Medium": 10,
+        "Heavy": 11,
+        "Shield": 12
+    }
+}
 
 for obj in data:
     image = None
@@ -35,6 +53,16 @@ for obj in data:
             return default
         return val
     try:
+        category = get_value('equipmentCategoryEnum')
+        subcategory = None
+
+        if sub_map := subcategory_map.get(category):
+            if subcategory := sub_map.get(get_value('weaponClassification')):
+                pass
+            elif subcategory := sub_map.get(get_value('armorClassification')):
+                pass
+
+
         line = [
             uuid.uuid4(),
             get_value('contentSourceEnum'),
@@ -42,12 +70,11 @@ for obj in data:
             get_value('description'),
             get_value('cost'),
             get_value('weight'),
-            get_value('equipmentCategoryEnum'),
+            category,
             get_value('damageNumberOfDice'),
             get_value('damageDieType'),
             get_value('damageType') if get_value('damageType') != "Unknown" else None,
-            get_value('weaponClassificationEnum') if get_value('weaponClassificationEnum') != 0 else None,
-            get_value('armorClassificationEnum') if get_value('armorClassificationEnum') != 0 else None,
+            subcategory,
             ", ".join(get_value('properties')) if get_value('properties') else None,
             get_value('ac'),
             get_value('stealthDisadvantage')

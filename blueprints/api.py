@@ -23,6 +23,7 @@ from models.G0T0 import (
     EnhancedItemType,
     Equipment,
     EquipmentCategory,
+    EquipmentSubCategory,
     G0T0Guild,
     LevelCost,
     Player,
@@ -918,7 +919,7 @@ def update_equipment():
         if not (a_id := data.get('id')):
             raise BadRequest("No object ID specified")
         
-        equipment = db.session.query(Equipment).filter(Equipment.id == a_id).first()
+        equipment: Equipment = db.session.query(Equipment).filter(Equipment.id == a_id).first()
 
         if not equipment:
             raise NotFound("Equipment not found")
@@ -930,10 +931,12 @@ def update_equipment():
 
         if "source" in data and data["source"]:
             equipment._source = data["source"].get('id')
-        if "weapon_class" in data and data["weapon_class"]:
-            equipment._weapon_class = data["weapon_class"].get('id')
-        if "armor_class" in data and data["armor_class"]:
-            equipment._armor_class = data["armor_class"].get('id')
+        if "sub_category" in data and data["sub_category"]:
+            sub_category = db.session.query(EquipmentSubCategory).filter(EquipmentSubCategory.id == data["sub_category"].get('id')).first()
+
+            if sub_category.parent != equipment._category:
+                raise BadRequest()
+            equipment._sub_category = sub_category.id
 
         db.session.commit()        
     except NotFound as e:

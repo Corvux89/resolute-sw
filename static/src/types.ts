@@ -103,8 +103,7 @@ export interface Equipment {
     dmg_number_of_die?: number
     dmg_die_type?: number
     dmg_type?: string
-    weapon_class?: GenericCategory
-    armor_class?: GenericCategory
+    sub_category?: GenericChild
     properties?: string
     ac?: string
     stealth_dis?: boolean

@@ -32,20 +32,16 @@ class PowerType(db.Model, BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
 
-class ArmorClass(db.Model, BaseModel):
-    __tablename__ = "c_armor_class"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    value: Mapped[str]
-
-class WeaponClass(db.Model, BaseModel):
-    __tablename__ = "c_weapon_class"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    value: Mapped[str]
-
 class EquipmentCategory(db.Model, BaseModel):
     __tablename__ = "c_equipment_category"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
+
+class EquipmentSubCategory(db.Model, BaseModel):
+    __tablename__ = "c_equipment_subcategory"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+    parent: Mapped[int]
 
 class EnhancedItemType(db.Model, BaseModel):
     __tablename__ = "c_enhanced_type"
@@ -929,16 +925,14 @@ class Equipment(db.Model, BaseModel):
     dmg_number_of_die: Mapped[int]
     dmg_die_type: Mapped[int]
     dmg_type: Mapped[str]
-    _weapon_class: Mapped[int] = mapped_column("weapon_class", ForeignKey("c_weapon_class.id"), nullable=True)
-    _armor_class: Mapped[int] = mapped_column("armor_class", ForeignKey("c_armor_class.id"), nullable=True)
+    _sub_category: Mapped[int] = mapped_column("sub_category", ForeignKey("c_equipment_subcategory.id"), nullable=True)
     properties: Mapped[str]
     ac: Mapped[str]
     stealth_dis: Mapped[bool]
 
+    sub_category = relationship("EquipmentSubCategory")
     source = relationship("ContentSource")
     category = relationship("EquipmentCategory")
-    weapon_class= relationship("WeaponClass")
-    armor_class = relationship("ArmorClass")
 
     @classmethod
     def from_json(cls, json):
@@ -953,8 +947,7 @@ class Equipment(db.Model, BaseModel):
             dmg_number_of_die=json.get("dmg_number_of_die", 0),
             dmg_die_type=json.get("dmg_die_type", 0),
             dmg_type=json.get("dmg_type", ""),
-            _weapon_class=json.get("weapon_class", {}).get("id"),
-            _armor_class=json.get("armor_class", {}).get("id"),
+            _sub_category=json.get('sub_category', {}).get('id'),
             properties=json.get("properties", ""),
             ac=json.get("ac", ""),
             stealth_dis=json.get("stealth_dis", False),

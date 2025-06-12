@@ -1,6 +1,6 @@
 
 import { EnhancedItem, Equipment, Power } from "./types.js";
-import { defaultEquipmentModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubtypeFields } from "./utils.js";
+import { defaultEquipmentModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 
 // Generic Content
 if ($("#content-edit-form").length){
@@ -714,7 +714,7 @@ if ($("#equipment-table").length){
         columns.push(
             {
                 title: "Type",
-                data: "weapon_class",
+                data: "sub_category",
                 // @ts-expect-error cmon man
                 render: function(data){
                     if (!data) return ''
@@ -771,7 +771,7 @@ if ($("#equipment-table").length){
         columns.push(
             {
                 title: "Type",
-                data: "armor_class",
+                data: "sub_category",
                 // @ts-expect-error cmon man
                 render: function(data){
                     if (!data) return ''
@@ -1147,7 +1147,7 @@ $(document).on('click', '#item-next', function(){
 })
 
 $(document).on('change', '#item-subtype', function(){
-    updateSubtypeFields()
+    updateSubTypeFields()
 })
 
 $(document).on('click', '#item-table .edit-button', function(){

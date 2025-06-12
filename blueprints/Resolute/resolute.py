@@ -1,4 +1,3 @@
-import json
 from urllib.parse import unquote
 
 from flask import Blueprint, current_app, render_template, request
@@ -6,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 
 from helpers.general_helpers import perform_search
-from models.G0T0 import Archetype, ArmorClass, ContentSource, EnhancedItemSubtype, EnhancedItemType, EquipmentCategory, PowerAlignment, PowerType, PrimaryClass, Rarity, Species, WeaponClass
+from models.G0T0 import Archetype, ContentSource, EnhancedItemSubtype, EnhancedItemType, EquipmentCategory, EquipmentSubCategory, PowerAlignment, PowerType, PrimaryClass, Rarity, Species
 from models.exceptions import NotFound
 from models.general import Content
 
@@ -150,8 +149,6 @@ def _get_options():
     sources = db.session.query(ContentSource).all()
     alignments = db.session.query(PowerAlignment).all()
     equipment_category = db.session.query(EquipmentCategory).all()
-    weapon_class = db.session.query(WeaponClass).all()
-    armor_class = db.session.query(ArmorClass).all()
     rarity = db.session.query(Rarity).all()
     e_type = db.session.query(EnhancedItemType).all()
     sizes = [{"value": v, "label": v} for v in ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]]
@@ -163,8 +160,7 @@ def _get_options():
     options["sizes"] = sizes
     options["stats"] = stats
     options["equipment-category"] = build_select_option("id", "value", equipment_category)
-    options["weapon-class"] = build_select_option("id", "value", weapon_class)
-    options["armor-class"] = build_select_option("id", "value", armor_class)
+    options["equipment-subcategory"] = [j.to_dict() for j in db.session.query(EquipmentSubCategory).all()]
     options["rarity"] = build_select_option("id", "value", rarity)
     options["enhanced-item-type"] = build_select_option("id", "value", e_type)
     options["enhanced-item-subtype"] = [j.to_dict() for j in db.session.query(EnhancedItemSubtype).all()]

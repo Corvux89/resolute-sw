@@ -1,4 +1,4 @@
-import { defaultEquipmentModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubtypeFields } from "./utils.js";
+import { defaultEquipmentModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 // Generic Content
 if ($("#content-edit-form").length) {
     //@ts-expect-error This is pulled in from a parent and no import needed
@@ -635,7 +635,7 @@ if ($("#equipment-table").length) {
         filterExclusions.push(2, 3, 4);
         columns.push({
             title: "Type",
-            data: "weapon_class",
+            data: "sub_category",
             // @ts-expect-error cmon man
             render: function (data) {
                 if (!data)
@@ -689,7 +689,7 @@ if ($("#equipment-table").length) {
         filterExclusions.push(2, 3, 4);
         columns.push({
             title: "Type",
-            data: "armor_class",
+            data: "sub_category",
             // @ts-expect-error cmon man
             render: function (data) {
                 if (!data)
@@ -1025,7 +1025,7 @@ $(document).on('click', '#item-next', function () {
     defaultItemModal(item);
 });
 $(document).on('change', '#item-subtype', function () {
-    updateSubtypeFields();
+    updateSubTypeFields();
 });
 $(document).on('click', '#item-table .edit-button', function () {
     const table = $("#item-table").DataTable();

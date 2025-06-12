@@ -43,8 +43,8 @@ export function updateClearAllFiltersButton() {
         $('#clear-all-filters').addClass('d-none');
     }
 }
-export function updateSubtypeFields() {
-    if ($("#item-subtype").children.length == 0) {
+export function updateSubTypeFields() {
+    if ($("#item-subtype").children.length == 1) {
         $("#item-subtype-col").addClass("d-none");
         $("#item-subtype-ft-col").removeClass("d-none");
     }
@@ -57,6 +57,16 @@ export function updateSubtypeFields() {
         else {
             $("#item-subtype-ft-col").addClass("d-none");
         }
+    }
+}
+export function updateSubCategoryFields() {
+    const numberOfOptions = $("#equipment-subcategory").find("option").length;
+    console.log(numberOfOptions);
+    if (numberOfOptions == 0) {
+        $("#equipment-subcategory-col").addClass("d-none");
+    }
+    else {
+        $("#item-subcategory-col").removeClass("d-none");
     }
 }
 export function setupTableFilters(table_name, exceptions, initialFilters) {
@@ -128,9 +138,12 @@ export function setSelectInputValue(select_id, value) {
         return;
     elm.val(value);
 }
-export function renderDropdownOptions(dropdownId, options) {
+export function renderDropdownOptions(dropdownId, options, allowNone = false) {
     const dropdown = $(dropdownId);
     dropdown.empty(); // Clear existing options
+    if (allowNone) {
+        options = [{ value: '', label: '' }, ...options];
+    }
     options.forEach((option) => {
         dropdown.append(`<option value="${option.value}">${option.label}</option>`);
     });
@@ -165,7 +178,7 @@ export function defaultPowerModal(power) {
     $("#power-prereq").val(power.pre_requisite);
     $("#power-casttime").val(power.casttime);
     $("#power-range").val(power.range);
-    setSelectInputValue("#power-source", power.source?.id?.toString() ?? "");
+    setSelectInputValue("#power-source", power.source && power.source.id ? power.source.id.toString() : "6");
     $("#power-conc").prop('checked', power.concentration ?? false);
     if (power.type.value == "Tech") {
         $('#align-col').addClass('d-none');
@@ -301,47 +314,52 @@ export function defaultEquipmentModal(equip) {
         $("#equipment-delete").removeClass("d-none");
     }
     if (equip.category?.value == 'Armor') {
-        setSelectInputValue("#equipment-armor-class", equip.armor_class?.id?.toString() ?? "");
-        $("#armor-class-col").removeClass("d-none");
         $("#ac-col").removeClass("d-none");
         $("#equipment-ac").val(equip.ac);
         $("#stealth-col").removeClass("d-none");
         $("#equipment-stealth-dis").prop('checked', equip.stealth_dis ?? false);
         $("#equipment-properties").val(equip.properties);
-        $("#weapon-class-col").addClass("d-none");
         $("#damage-row").addClass("d-none");
     }
     else if (equip.category?.value == 'Weapon') {
-        setSelectInputValue("#equipment-weapon-class", equip.weapon_class?.id?.toString() ?? "");
-        $("#weapon-class-col").removeClass("d-none");
         $("#damage-row").removeClass("d-none");
         $("#equipment-dmg-number-die").val(equip.dmg_number_of_die);
         $("#equipment-dmg-die-type").val(equip.dmg_die_type);
         $("#equipment-dmg-type").val(equip.dmg_type);
         $("#equipment-properties").val(equip.properties);
-        $("#armor-class-col").addClass("d-none");
         $("#ac-col").addClass("d-none");
         $("#stealth-col").addClass("d-none");
     }
     else {
-        $("#weapon-class-col").addClass("d-none");
         $("#damage-row").addClass("d-none");
-        $("#armor-class-col").addClass("d-none");
         $("#ac-col").addClass("d-none");
         $("#stealth-col").addClass("d-none");
         $("#prop-col").addClass("d-none");
     }
+    const allSubCats = $("#equipment-edit-form").data('subcategory');
+    if (!allSubCats) {
+        console.error("Missing Sub Categories");
+        ToastError("Something went wrong");
+        return;
+    }
+    // Filter and map subtypes based on the item's type
+    const subtypes = allSubCats
+        .filter((s) => s.parent === equip.category.id) // Filter subtypes by parent type
+        .map((s) => ({ value: s.id, label: s.value }));
+    renderDropdownOptions("#equipment-subcategory", subtypes, true);
+    setSelectInputValue("#equipment-subcategory", equip.sub_category && equip.sub_category.id ? equip.sub_category.id.toString() : "");
+    updateSubCategoryFields();
     $("#equipment-edit-form").data('category', equip.category);
     $("#equipment-name").val(equip.name);
     $("#equipment-description").val(equip.description);
     $("#equipment-cost").val(equip.cost);
     $("#equipment-weight").val(equip.weight);
-    setSelectInputValue("#equipment-source", equip.source?.id?.toString() ?? "6");
+    console.log(equip);
+    setSelectInputValue("#equipment-source", equip.source && equip.source.id ? equip.source.id.toString() : "6");
 }
 export function fetchEquipmentInputs() {
     const source_option = $("#equipment-source").find(":selected");
-    const weapon_option = $("#equipment-weapon-class").find(":selected");
-    const armor_option = $("#equipment-armor-class").find(":selected");
+    const subcat_option = $("#equipment-subcategory").find(":selected");
     const equip = {
         id: $("#equipment-edit-form").data('id'),
         name: $("#equipment-name").val().toString(),
@@ -356,13 +374,9 @@ export function fetchEquipmentInputs() {
         dmg_number_of_die: Number($("#equipment-dmg-number.die").val()),
         dmg_die_type: Number($("#equipment-dmg-tie-type").val()),
         dmg_type: $("#equipment-dmg-type").val().toString(),
-        weapon_class: weapon_option.val() ? {
-            id: Number(weapon_option.val()),
-            value: weapon_option.html()
-        } : null,
-        armor_class: armor_option.val() ? {
-            id: Number(armor_option.val()),
-            value: armor_option.html()
+        sub_category: subcat_option.val() ? {
+            id: Number(subcat_option.val()),
+            value: subcat_option.html()
         } : null,
         properties: $("#equipment-properties").val().toString(),
         ac: $("#equipment-ac").val().toString(),
@@ -392,10 +406,11 @@ export function defaultItemModal(item) {
     const subtypes = allSubtypes
         .filter((s) => s.parent === item.type.id) // Filter subtypes by parent type
         .map((s) => ({ value: s.id, label: s.value }));
-    renderDropdownOptions("#item-subtype", subtypes);
-    updateSubtypeFields();
-    setSelectInputValue("#item-source", item.source?.id?.toString() ?? "6");
-    setSelectInputValue("#item-rarity", item.rarity?.id?.toString() ?? "");
+    renderDropdownOptions("#item-subtype", subtypes, true);
+    setSelectInputValue("#item-subtype", item.subtype && item.subtype.id ? item.subtype.id.toString() : "");
+    updateSubTypeFields();
+    setSelectInputValue("#item-source", item.source && item.source.id ? item.source?.id?.toString() : "6");
+    setSelectInputValue("#item-rarity", item.rarity && item.rarity.id ? item.rarity.id.toString() : "1");
     $("#item-attunement").prop('checked', item.attunement ?? false);
     $("#item-edit-form").data('type', item.type);
     setupMDE("item-text", item.text, true);

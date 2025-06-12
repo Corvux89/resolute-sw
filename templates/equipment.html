@@ -58,17 +58,17 @@
     </div>
 </custom-modal>
 
-<custom-modal title="Equipment" custom-id="equipment-edit-form">
+<custom-modal title="Equipment" custom-id="equipment-edit-form" data-subcategory='{{ options['equipment-subcategory']|tojson }}'>
     <div class="container">
         <div class="row mb-2">
             <div class="col-6 mb-2">
                 <text-input label-text="Name" custom-id="equipment-name" required></text-input>
             </div>
-            <div class="col-6 mb-2" id="armor-class-col">
-                <select-input custom-id="equipment-armor-class" custom-label="Armor Class" options='{{ options['armor-class']|tojson }}'></select-input>
-            </div>
-            <div class="col-6 mb-2" id="weapon-class-col">
-                <select-input custom-id="equipment-weapon-class" custom-label="Weapon Class" options='{{ options['weapon-class']|tojson }}'></select-input>
+            <div class="col-6 mb-2" id="equipment-subcategory-col">
+                <select-input 
+                custom-id="equipment-subcategory" 
+                custom-label="Sub Category" 
+                allownone></select-input>
             </div>
         </div>
         <div class="row mb-2">
