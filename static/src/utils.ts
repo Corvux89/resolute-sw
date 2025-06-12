@@ -16,7 +16,7 @@ export function destroyTable(table: string): void{
     }
 }
 
-export function setupMDE(element: string, default_text?: string, clear_text?: boolean = false): void{
+export function setupMDE(element: string, default_text?: string, clear_text: boolean = false): void{
     const textarea = document.getElementById(element);
     if (!textarea) return;
 
