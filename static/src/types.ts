@@ -130,4 +130,6 @@ export interface Feat {
     prerequisite?: string,
     source?: ContentSource,
     attributes?: string[]
+    text?: string
+    html_text?: string
 }

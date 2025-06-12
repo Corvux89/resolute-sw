@@ -1,4 +1,4 @@
-import { defaultEquipmentModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
+import { defaultEquipmentModal, defaultFeatModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchFeatInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 // Generic Content
 if ($("#content-edit-form").length) {
     //@ts-expect-error This is pulled in from a parent and no import needed
@@ -218,7 +218,6 @@ $(document).on('click', '#power-table .edit-button', function () {
 });
 $(document).on('click', '#new-power-btn', function () {
     let power = fetchPowerInputs();
-    console.log(power);
     if (power.id !== undefined) {
         power = {};
         const source_option = $("#power-source").find(`option:contains('Resolute Homebrew')`);
@@ -1082,6 +1081,192 @@ $(document).on('click', '#item-delete-confirmed', function () {
         success: function () {
             ToastError("Enhanced Item Deleted");
             $("#item-table").DataTable().ajax.reload();
+        },
+        error: function (e) {
+            ToastError(`Failed: ${e.responseText}`);
+        }
+    });
+});
+// Feats
+if ($("#feat-table").length) {
+    const params = new URLSearchParams(window.location.search);
+    const tableName = "#feat-table";
+    destroyTable(tableName);
+    const table = $(tableName).DataTable({
+        ajax: {
+            url: 'api/feats',
+            dataSrc: '',
+        },
+        pageLength: 1000,
+        order: [[0, 'asc']],
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true,
+        columns: [
+            {
+                title: "Name",
+                data: "name"
+            },
+            {
+                title: "Ability Score Increase",
+                data: "attributes",
+                render: function (data) {
+                    if (!data)
+                        return '';
+                    return data.join(" or ");
+                }
+            },
+            {
+                title: "Prerequisite?",
+                data: "prerequisite",
+            },
+            {
+                title: "Prerequisite?",
+                data: "prerequisite",
+                visible: false,
+                render: function (data) {
+                    if (data) {
+                        return "Yes";
+                    }
+                    else {
+                        return "No";
+                    }
+                }
+            },
+            {
+                title: "ASI",
+                data: "attributes",
+                visible: false,
+                render: function (data) {
+                    if (!data)
+                        return '';
+                    return data.map(c => c.replace(/[\d]/g, '').split(" ")[0]);
+                }
+            }
+        ]
+    });
+    if (params.has('name')) {
+        $("#filter-search").val(params.get('name'));
+        table.column(0).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton();
+    }
+    setupTableFilters(tableName, [0, 1, 2]);
+}
+$(document).on('click', "#feat-table tbody tr", function () {
+    if ($(this).closest('btn').length)
+        return;
+    const table = $("#feat-table").DataTable();
+    const row = table.row(this);
+    const feat = row.data();
+    let stop = false;
+    if ($(this).hasClass("bold-row"))
+        stop = true;
+    $("#feat-table tbody tr").removeClass("bold-row");
+    $('.dropdown-row').remove();
+    if (!feat || stop)
+        return;
+    let editButton = '';
+    let prereq = '';
+    if (document.body.dataset.admin == "True") {
+        editButton = `
+            <button type="button"
+                id="edit-feat-btn-${feat.id}"
+                class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
+                data-feat-id="${feat.id}"
+                title="Edit Feat"
+                data-bs-toggle="modal"
+                data-bs-target="#feat-edit-form">
+                <i class="fa fa-pencil"></i>
+            </button>
+        `;
+    }
+    if (feat.prerequisite) {
+        prereq = `
+        <div class="p-3 text-center">
+            <p><strong>Prerequisite:</strong> ${feat.prerequisite}</p>
+        </div>
+    `;
+    }
+    const additionalInfo = `
+        <tr class="dropdown-row">
+            <td colspan="${table.columns().count()}">
+                ${editButton}
+                ${prereq}
+                <div class="p-3">
+                    ${feat.html_text} 
+                </div>
+            </td>
+        </tr>
+    `;
+    $(this).after(additionalInfo);
+    $(this).addClass("bold-row");
+});
+$(document).on('click', '#feat-table .edit-button', function () {
+    const table = $("#feat-table").DataTable();
+    const featId = $(this).data('feat-id');
+    const feat = table.rows().data().toArray().find((row) => row.id == featId);
+    if (!feat)
+        ToastError("Power not found");
+    defaultFeatModal(feat);
+});
+$(document).on('click', '#new-feat-btn', function () {
+    let feat = fetchFeatInputs();
+    if (feat.id !== undefined) {
+        feat = {};
+        const source_option = $("#feat-source").find(`option:contains('Resolute Homebrew')`);
+        feat.source = {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        };
+    }
+    defaultFeatModal(feat);
+});
+$(document).on('click', '#feat-submit', function () {
+    const feat = fetchFeatInputs();
+    if (!feat.id) {
+        $.ajax({
+            url: `api/feats`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(feat),
+            success: function () {
+                ToastSuccess("Feature Added");
+                $("#feat-table").DataTable().ajax.reload();
+            },
+            error: function (e) {
+                ToastError(`Failed: ${e.responseText}`);
+            }
+        });
+    }
+    else {
+        $.ajax({
+            url: `api/feats`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(feat),
+            success: function () {
+                ToastSuccess("Feature Updated");
+                $("#feat-table").DataTable().ajax.reload();
+            },
+            error: function (e) {
+                ToastError(`Failed: ${e.responseText}`);
+            }
+        });
+    }
+});
+$(document).on('click', '#feat-delete-confirmed', function () {
+    const feat = fetchFeatInputs();
+    if (!feat.id)
+        return;
+    $.ajax({
+        url: `/api/feats/${feat.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function () {
+            ToastError("Feature Deleted");
+            $("#feat-table").DataTable().ajax.reload();
         },
         error: function (e) {
             ToastError(`Failed: ${e.responseText}`);

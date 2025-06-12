@@ -126,6 +126,16 @@ body, .card{
     left: 100%;
     top: -7px;
 }
+
+.dropdown-submenu {
+    display: flex; /* Use flexbox for layout */
+    flex-wrap: wrap; /* Allow wrapping */
+    max-height: 90vh; /* Prevent overflow beyond screen height */
+    overflow-y: auto; /* Add vertical scrolling if necessary */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    position: relative; /* Ensure proper positioning */
+}
+
 .dropdown-menu .dropdown-submenu-left {
     right: 100%;
     left: auto;
@@ -276,3 +286,4 @@ body, .card{
     min-width: 100px;
     border: none;
 }
+

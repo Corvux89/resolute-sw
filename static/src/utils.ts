@@ -93,16 +93,20 @@ export function setupTableFilters(table_name: string, exceptions?: number[], ini
 
             const values = Array.from(new Set(data.map(row => {
                 const raw = row[col.data.toString()]
-                if (raw == null) return
-
-                if (col.render){
-                    // @ts-expect-error This works...idk why typescript has issues with it
-                    const render = col.render(raw, 'display', row).toString()
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = render;
-                    return tempDiv.textContent.split(",")[0] ?? ""
+                if (raw == null || raw == undefined) return
+                try{
+                    if (col.render){
+                        // @ts-expect-error This works...idk why typescript has issues with it
+                        const render = col.render(raw, 'display', row).toString()
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = render;
+                        return tempDiv.textContent.split(",")[0] ?? ""
+                    }
+                    return typeof raw === "string" ? raw.split(",")[0] : raw.toString();
+                } catch{
+                    return
                 }
-                return typeof raw === "string" ? raw.split(",")[0] : raw.toString();
+                
             }).filter(v => v != null && v !== "")))
 
             values.sort((a, b) => a.localeCompare(b, undefined, {numberic: true, sensitivity: 'base'}))
@@ -155,6 +159,38 @@ export function setSelectInputValue(select_id: string, value: string): void{
     const elm = $(select_id)
     if (!elm) return
     elm.val(value)
+}
+
+function prefillCheckboxGroup(groupId: string, values: string[]): void {
+    const checkboxGroup = $(`#${groupId}`);
+    if (!checkboxGroup.length) {
+        console.error(`Checkbox group with ID "${groupId}" not found.`);
+        return;
+    }
+
+    values.forEach((value) => {
+        const checkbox = checkboxGroup.find(`input[type="checkbox"][id="${value}"]`);
+        if (checkbox.length) {
+            checkbox.prop("checked", true);
+        } else {
+            console.warn(`Checkbox with ID "${value}" not found in group "${groupId}".`);
+        }
+    });
+}
+
+function getSelectedCheckboxValues(groupId: string): string[] {
+    const selectedValues: string[] = [];
+    const checkboxGroup = $(`#${groupId}`);
+    if (!checkboxGroup.length) {
+        console.error(`Checkbox group with ID "${groupId}" not found.`);
+        return selectedValues;
+    }
+
+    checkboxGroup.find('input[type="checkbox"]:checked').each(function () {
+        selectedValues.push($(this).attr('id') || '');
+    });
+
+    return selectedValues;
 }
 
 export function renderDropdownOptions(dropdownId: string, options: { value: string; label: string }[], allowNone: boolean = false): void {
@@ -507,6 +543,26 @@ export function defaultFeatModal(feat: Feat): void{
     }
 
     $("#feat-name").val(feat.name)
-    $("#feat-prerequisite").val(feat.prerequisite)
+    $("#feat-prereq").val(feat.prerequisite)
     setSelectInputValue("#feat-source", feat.source && feat.source.id ? feat.source?.id?.toString() : "6")
+    setupMDE("feat-text", feat.text, true)
+    prefillCheckboxGroup("feat-attributes", feat.attributes)
+}
+
+export function fetchFeatInputs(): Feat{
+    const source_option = $("#feat-source").find(":selected")
+
+    const feat: Feat = {
+        id: $("#feat-edit-form").data('id'),
+        name: $("#feat-name").val().toString(),
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        },
+        attributes: getSelectedCheckboxValues("feat-attributes"),
+        prerequisite: $("#feat-prereq").val().toString(),
+        text: getMDEValue("feat-text")
+    }
+
+    return feat
 }

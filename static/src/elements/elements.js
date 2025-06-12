@@ -381,16 +381,6 @@ class CheckboxGroupInput extends HTMLElement {
             </div>
         `;
     }
-    getSelectedValues() {
-        const selectedValues = [];
-        this.options.forEach((option) => {
-            const checkbox = this.querySelector(`#${option.value}`);
-            if (checkbox && checkbox.checked) {
-                selectedValues.push(option.value);
-            }
-        });
-        return selectedValues;
-    }
 }
 customElements.define('custom-modal', CustomModal);
 customElements.define("text-input", TextInput);
