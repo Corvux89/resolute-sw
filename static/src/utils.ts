@@ -1,4 +1,4 @@
-import { Archetype, EnhancedItem, Equipment, Power, PrimaryClass, Species } from "./types.js";
+import { Archetype, EnhancedItem, Equipment, Feat, Power, PrimaryClass, Species } from "./types.js";
 
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
@@ -53,7 +53,8 @@ export function updateClearAllFiltersButton(): void {
 }
 
 export function updateSubTypeFields(): void{
-    if ($("#item-subtype").children.length == 1){
+    const numberOfOptions = $("#equipment-subcategory").find("option").length;
+    if (numberOfOptions == 1){
         $("#item-subtype-col").addClass("d-none")
         $("#item-subtype-ft-col").removeClass("d-none")
     } else {
@@ -70,8 +71,7 @@ export function updateSubTypeFields(): void{
 
 export function updateSubCategoryFields(): void{
     const numberOfOptions = $("#equipment-subcategory").find("option").length;
-    console.log(numberOfOptions);
-    if (numberOfOptions == 0){
+    if (numberOfOptions == 1){
         $("#equipment-subcategory-col").addClass("d-none")
     } else {
         $("#item-subcategory-col").removeClass("d-none")
@@ -413,8 +413,8 @@ export function fetchEquipmentInputs(): Equipment {
         cost: Number($("#equipment-cost").val()),
         weight: Number($("#equipment-weight").val()),
         category: $("#equipment-edit-form").data('category'),
-        dmg_number_of_die: Number($("#equipment-dmg-number.die").val()),
-        dmg_die_type: Number($("#equipment-dmg-tie-type").val()),
+        dmg_number_of_die: Number($("#equipment-dmg-number-die").val()),
+        dmg_die_type: Number($("#equipment-dmg-die-type").val()),
         dmg_type: $("#equipment-dmg-type").val().toString(),
         sub_category: subcat_option.val() ? {
             id: Number(subcat_option.val()),
@@ -495,4 +495,18 @@ export function fetchItemInputs(): EnhancedItem{
     }
 
     return item
+}
+
+export function defaultFeatModal(feat: Feat): void{
+    if (!feat.id){
+        $("#feat-edit-form").removeData("id")
+        $("#feat-delete").addClass("d-none")
+    } else {
+        $("#feat-edit-form").data('id', feat.id)
+        $("#feat-delete").removeClass("d-none")
+    }
+
+    $("#feat-name").val(feat.name)
+    $("#feat-prerequisite").val(feat.prerequisite)
+    setSelectInputValue("#feat-source", feat.source && feat.source.id ? feat.source?.id?.toString() : "6")
 }

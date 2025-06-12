@@ -120,6 +120,7 @@ $(document).on('click', '#clear-all-filters', function() {
     const tableID = $("#filter-dropdown").data('table')
     const table = $(tableID).DataTable();
     table.columns().search('').draw();
+    table.search('').draw()
     updateClearAllFiltersButton()
 });
 
@@ -255,7 +256,8 @@ $(document).on('click', '#power-table .edit-button', function(){
 })
 
 $(document).on('click', '#new-power-btn', function(){
-    let power: Power = fetchPowerInputs() 
+    let power: Power = fetchPowerInputs()
+    console.log(power) 
     if (power.id !== undefined){
         power = {}
         const source_option = $("#power-source").find(`option:contains('Resolute Homebrew')`)
@@ -924,6 +926,8 @@ $(document).on('click', '#equipment-table .edit-button', function(){
     const equipment: Equipment = table.rows().data().toArray().find((row: Equipment) => row.id == equipId);
     
     if (!equipment) ToastError("Equipment not found")
+
+    console.log(equipment)
 
     defaultEquipmentModal(equipment)
 })

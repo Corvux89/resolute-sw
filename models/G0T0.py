@@ -991,3 +991,29 @@ class EnhancedItem(db.Model, BaseModel):
             cost=json.get("cost", 0),
             _source=json.get("source", {}).get("id"),
         )
+    
+class Feat(db.Model, BaseModel):
+    __tablename__ = "feats"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    prerequisite: Mapped[str]
+    text: Mapped[str]
+    _source: Mapped[int] = mapped_column("source", ForeignKey("c_content_source.id"))
+    attributes: Mapped[list[str]] = mapped_column("attributes", ARRAY(String))
+
+    source = relationship("ContentSource")
+
+    @property
+    def html_text(self):
+        return render_markdown(self.text)
+    
+    @classmethod
+    def from_json(cls, json):
+        return cls(
+            id=json.get('id', uuid.uuid4()),
+            name=json.get('name'),
+            prerequisite=json.get('prerequisite'),
+            text=json.get('text'),
+            _source=json.get('source', {}).get('id'),
+            attributes=json.get('attributes', [])
+        )

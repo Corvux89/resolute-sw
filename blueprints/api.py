@@ -24,6 +24,7 @@ from models.G0T0 import (
     Equipment,
     EquipmentCategory,
     EquipmentSubCategory,
+    Feat,
     G0T0Guild,
     LevelCost,
     Player,
@@ -979,6 +980,15 @@ def get_enhanced_items():
                 raise NotFound("Enhanced Item Type no found")
             query = query.filter(EnhancedItem._type == i_type.id)
 
+    filter_map = {
+        "name": EnhancedItem.name,
+        "prereq": EnhancedItem.prerequisite,
+    }
+
+    for arg, column in filter_map.items():
+        if value := request.args.get(arg):
+            query = query.filter(column.ilike(f"%{value.lower()}%"))
+
     items = query.all()
 
     if not items:
@@ -1053,6 +1063,88 @@ def delete_enhanced_item(e_id):
     db.session.commit()
 
     return jsonify(200)
+
+@api_blueprint.get('/feats')
+def get_feats():
+    db: SQLAlchemy = current_app.config.get("DB")
+    query = db.session.query(Feat)
+
+    feats = query.all()
+
+    if not feats:
+        raise NotFound()
+    
+    filter_map = {
+        "name": Feat.name,
+        "prereq": Feat.prerequisite,
+    }
+
+    for arg, column in filter_map.items():
+        if value := request.args.get(arg):
+            query = query.filter(column.ilike(f"%{value.lower()}%"))
+    
+    return jsonify(feats)
+
+@api_blueprint.post('/feats')
+@is_admin
+def new_feat():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+
+    try:
+        feat: Feat = Feat.from_json(data)
+        db.session.add(feat)
+        db.session.commit()
+    except Exception as e:
+        raise BadRequest()
+    
+    return jsonify(200)
+
+@api_blueprint.patch('/feats')
+@is_admin
+def update_feat():
+    db: SQLAlchemy = current_app.config.get("DB")
+    data = request.get_json()
+
+    try:
+        if not (a_id := data.get('id')):
+            raise BadRequest("No object ID specified")
+        
+        feat: Feat = db.session.query(Feat).filter(Feat.id == a_id).first()
+
+        if not feat:
+            raise NotFound("Feat not found")
+        
+        for field in ["name", "prerequisite", "text", "attributes"]:
+            if field in data:
+                setattr(feat, field, data[field])
+
+        if "source" in data and data["source"]:
+            feat._source = data["source"].get('id')
+
+        db.session.commit()        
+    except NotFound as e:
+        raise NotFound(e)
+    except Exception as e:
+        raise BadRequest(e)
+    
+    return jsonify(200)
+
+@api_blueprint.delete('/feats/<f_id>')
+@is_admin
+def delete_feat(f_id):
+    db: SQLAlchemy = current_app.config.get("DB")
+    feat: Feat = db.session.query(Feat).filter(Feat.id == f_id).first()
+
+    if not feat:
+        raise NotFound()
+    
+    db.session.delete(feat)
+    db.session.commit()
+
+    return jsonify(200)
+
+
 
 # --------------------------- #
 # Private Methods

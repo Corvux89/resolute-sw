@@ -1,0 +1,63 @@
+{% extends "template.html" %} {% block body %}
+
+{% if current_user.is_admin %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+{% endif %}
+
+<h1>Feats</h1>
+
+<filterable-table table-id="feat-table" button-text="New Feat" key="feat"></filterable-table>
+
+{% if current_user.is_admin %}
+<custom-modal title="Feature" custom-id="feat-edit-form">
+    <div class="container">
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input label-text="Name" custom-id="feat-name" required></text-input>
+            </div>
+            <div class="col-6 mb-2">
+                <text-input label-text="Pre-Requisite?" custom-id="feat-prereq"></text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <select-input custom-id="feat-source" custom-label="Content Source" options='{{ options['content-source']|tojson }}'></select-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col mb-2">
+                <p class="font-bold">Attributes affected</p>
+                <checkbox-group-input custom-id="feat-attributes" options=' {{ options['stats']|tojson }} '></checkbox-group-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <textarea id="feat-desc" value="" spellcheck="true" class="form-control big-edit-body" required></textarea>
+        </div>
+        <div class="row mb-2">
+            <div class="col mb-3">
+                <button type="button" class="btn btn-primary float-end m-3" id="feat-submit" data-bs-dismiss="modal">
+                    Submit
+                </button>
+                <button type="button" class="btn btn-danger float-end m-3" id="feat-delete" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#delete-confirm-modal">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</custom-modal>
+
+<custom-modal title="Confirm Delete" custom-id="delete-confirm-modal">
+    <div class="container">
+        <div class="row mb-2">
+            Are you sure you want to delete this feat?
+        </div>
+        <div class="row-mb-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-id="" id="feat-delete-confirmed">Delete</button>
+        </div>
+    </div>
+</custom-modal>
+{% endif %}
+
+{% endblock %}

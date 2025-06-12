@@ -1,7 +1,7 @@
 from flask import current_app, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
-from models.G0T0 import Archetype, Equipment, Power, PrimaryClass, Species
+from models.G0T0 import Archetype, EnhancedItem, Equipment, Feat, Power, PrimaryClass, Species
 from models.general import Content, SearchResult
 
 def perform_search(query: str):
@@ -69,7 +69,24 @@ def perform_search(query: str):
             url="armor"
             
 
-        results.append(SearchResult(f"{e.category.value} - {e.name}", f"{url_for(f'resolute.{url}', name=e.name)}"))
+        results.append(SearchResult(f"Mundane Item: {e.category.value} - {e.name}", f"{url_for(f'resolute.{url}', name=e.name)}"))
+    
+    # Enhanced Item
+    items = db.session.query(EnhancedItem).filter(or_(
+        EnhancedItem.name.ilike(f"%{query.lower()}%")
+    ))
+
+    for i in items:
+        results.append(SearchResult(f"Enhanced Item - {i.name}"), f"{url_for('resolute.enhanced_items', name=i.name)}")
+
+    # Features
+    feats = db.session.query(Feat).filter(or_(
+        Feat.name.ilike(f"%{query.lower()}%"),
+        Feat.text.ilike(f"%{query.lower()}%")
+    ))
+
+    for f in feats:
+        results.append(SearchResult(f"Feature - {f.name}", f"{url_for('resolute.feats', name=f.name)}"))
 
     return results
 

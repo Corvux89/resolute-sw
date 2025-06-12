@@ -123,3 +123,11 @@ export interface EnhancedItem {
     source?: ContentSource
     html_text?: string
 }
+
+export interface Feat {
+    id?: string,
+    name?: string,
+    prerequisite?: string,
+    source?: ContentSource,
+    attributes?: string[]
+}

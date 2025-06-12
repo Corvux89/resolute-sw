@@ -123,6 +123,10 @@ def archetype_details(arch):
 
     return render_template("/archetypes/archetype.html", archetype=archetype, options=_get_options())
 
+@resolute_blueprint.get('/feats')
+def feats():
+    return render_template("/feats.html", options=_get_options())
+
 # --------------------------- #
 # Private Methods
 # --------------------------- #
@@ -152,7 +156,7 @@ def _get_options():
     rarity = db.session.query(Rarity).all()
     e_type = db.session.query(EnhancedItemType).all()
     sizes = [{"value": v, "label": v} for v in ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]]
-    stats = [{"value": v, "label": v} for v in ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]]
+    stats = [{"value": v, "label": v} for v in ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma", "Any"]]
 
     options["power-type"] = build_select_option("id", "value", power_type)
     options["content-source"] = build_select_option("id", "name", sources)

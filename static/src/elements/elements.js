@@ -301,7 +301,100 @@ export class SelectInput extends HTMLElement {
         }
     }
 }
+class FilterableTable extends HTMLElement {
+    constructor() {
+        super(...arguments);
+        this.tableId = "table";
+        this.key = '';
+        this.buttonText = '';
+    }
+    connectedCallback() {
+        this.tableId = this.getAttribute("table-id") || "table";
+        this.key = this.getAttribute("key") || "";
+        this.buttonText = this.getAttribute("button-text") || "";
+        this.render();
+    }
+    render() {
+        this.innerHTML = `
+            <div class="container m-2 position-relative">
+                ${document.body.dataset.admin == "True" ? `
+                    <button type="button" id="new-${this.key}-btn" data-bs-toggle="modal" data-bs-target="#${this.key}-edit-form" class="btn btn-link position-absolute top-0 end-0 m-2 p-0" title="${this.buttonText}">
+                        <i class="fa fa-plus"></i>
+                    </button>
+                ` : ""}
+                <div class="row mb-2">
+                    <div class="col-auto w-50">
+                        <text-input label-text="Search" custom-id="filter-search"></text-input>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-auto">
+                        <button class="btn rounded-3 dropdown-toggle text-white" type="button" id="filterButton" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <i class="fa-solid fa-filter"></i>
+                            <span>Filter</span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="filterButton" id="filter-dropdown" data-table="#${this.tableId}">
+                        </ul>
+                    </div>
+                    <div class="col-auto">
+                        <div id="active-filters"></div>
+                    </div>
+                    <div class="col-auto ms-auto">
+                        <button id="clear-all-filters" class="btn btn-sm btn-outline-secondary ms-2 d-none">Clear All Filters</button>
+                    </div>
+                </div>
+                <table id="${this.tableId}" class="table table-striped"></table>
+            </div>
+        `;
+    }
+}
+class CheckboxGroupInput extends HTMLElement {
+    constructor() {
+        super(...arguments);
+        this.options = [];
+        this.customId = "";
+    }
+    connectedCallback() {
+        this.customId = this.getAttribute("custom-id") || "checkbox-group";
+        const optionsAttr = this.getAttribute("options");
+        if (optionsAttr) {
+            try {
+                this.options = JSON.parse(optionsAttr);
+            }
+            catch (error) {
+                console.error("Failed to parse options:", error);
+            }
+        }
+        this.render();
+    }
+    render() {
+        this.innerHTML = `
+            <div id="${this.customId}" class="checkbox-group d-flex flex-wrap">
+                ${this.options
+            .map((option) => `
+                        <div class="form-check form-switch m-3">
+                            <input class="form-check-input" type="checkbox" id="${option.value}" name="${option.value}">
+                            <label class="form-check-label" for="${option.value}">${option.label}</label>
+                        </div>
+                    `)
+            .join("")}
+            </div>
+        `;
+    }
+    getSelectedValues() {
+        const selectedValues = [];
+        this.options.forEach((option) => {
+            const checkbox = this.querySelector(`#${option.value}`);
+            if (checkbox && checkbox.checked) {
+                selectedValues.push(option.value);
+            }
+        });
+        return selectedValues;
+    }
+}
 customElements.define('custom-modal', CustomModal);
 customElements.define("text-input", TextInput);
 customElements.define("number-input", NumberInput);
 customElements.define("select-input", SelectInput);
+customElements.define("filterable-table", FilterableTable);
+customElements.define("checkbox-group-input", CheckboxGroupInput);

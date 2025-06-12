@@ -97,6 +97,7 @@ $(document).on('click', '#clear-all-filters', function () {
     const tableID = $("#filter-dropdown").data('table');
     const table = $(tableID).DataTable();
     table.columns().search('').draw();
+    table.search('').draw();
     updateClearAllFiltersButton();
 });
 // Powers
@@ -217,6 +218,7 @@ $(document).on('click', '#power-table .edit-button', function () {
 });
 $(document).on('click', '#new-power-btn', function () {
     let power = fetchPowerInputs();
+    console.log(power);
     if (power.id !== undefined) {
         power = {};
         const source_option = $("#power-source").find(`option:contains('Resolute Homebrew')`);
@@ -820,6 +822,7 @@ $(document).on('click', '#equipment-table .edit-button', function () {
     const equipment = table.rows().data().toArray().find((row) => row.id == equipId);
     if (!equipment)
         ToastError("Equipment not found");
+    console.log(equipment);
     defaultEquipmentModal(equipment);
 });
 $(document).on('click', '#equipment-submit', function () {
