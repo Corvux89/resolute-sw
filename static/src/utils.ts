@@ -354,7 +354,7 @@ export function fetchArchetypInputs(): Archetype{
     let parent_option = null
 
     if ($("#archetype-parent").length){
-        parent_option = $("#archetype-source").find(':selected')
+        parent_option = $("#archetype-parent").find(':selected')
     }
 
     const archetype: Archetype = {
@@ -429,7 +429,6 @@ export function defaultEquipmentModal(equip: Equipment): void{
     $("#equipment-description").val(equip.description)
     $("#equipment-cost").val(equip.cost)
     $("#equipment-weight").val(equip.weight)
-    console.log(equip)
     setSelectInputValue("#equipment-source", equip.source && equip.source.id ? equip.source.id.toString() : "6");
 
 }

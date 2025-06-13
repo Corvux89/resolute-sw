@@ -1026,7 +1026,7 @@ def update_enhanced_item():
         if not e_item:
             raise NotFound("Equipment not found")
         
-        for field in ["name", "attunemtn", "text", "prerequisite", "subtype_ft", "cost"]:
+        for field in ["name", "attunement", "text", "prerequisite", "subtype_ft", "cost"]:
             if field in data:
                 setattr(e_item, field, data[field])
 

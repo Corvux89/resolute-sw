@@ -43,7 +43,7 @@
                     custom-id="archetype-source" 
                     custom-label="Source" 
                     options='{{ options["content-source"]|tojson }}'
-                    selected="{{archetype.source if archetype else '6'}}">
+                    selected="{{archetype.source.id if archetype else '6'}}">
                 </select-input>
             </div>
         </div>

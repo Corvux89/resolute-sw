@@ -66,7 +66,7 @@ app.discord = DiscordBot(app)
 @app.before_request
 def require_login():
     # Allow unauthenticated access to login, static files, and OAuth callback
-    allowed_routes = ["auth.login", "auth.callback", "static"]
+    allowed_routes = ["auth.login", "auth.callback", "static", "homepage"]
 
     if request.endpoint is None or request.endpoint in allowed_routes:
         return

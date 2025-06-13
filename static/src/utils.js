@@ -317,7 +317,7 @@ export function fetchArchetypInputs() {
     const caster_option = $("#archetype-caster-type").find(":selected");
     let parent_option = null;
     if ($("#archetype-parent").length) {
-        parent_option = $("#archetype-source").find(':selected');
+        parent_option = $("#archetype-parent").find(':selected');
     }
     const archetype = {
         id: $("#archetype-edit-form").data('id'),
@@ -387,7 +387,6 @@ export function defaultEquipmentModal(equip) {
     $("#equipment-description").val(equip.description);
     $("#equipment-cost").val(equip.cost);
     $("#equipment-weight").val(equip.weight);
-    console.log(equip);
     setSelectInputValue("#equipment-source", equip.source && equip.source.id ? equip.source.id.toString() : "6");
 }
 export function fetchEquipmentInputs() {

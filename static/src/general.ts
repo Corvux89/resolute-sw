@@ -119,8 +119,9 @@ $(document).on('click', '#clear-all-filters', function() {
     $("#filter-search").val('')
     const tableID = $("#filter-dropdown").data('table')
     const table = $(tableID).DataTable();
-    table.columns().search('').draw();
-    table.search('').draw()
+    table.columns().search('')
+    table.search('')
+    table.draw()
     updateClearAllFiltersButton()
 });
 
@@ -652,7 +653,7 @@ $(document).on('click', '#archetype-submit', function(){
             contentType: "application/json",
             data: JSON.stringify(archetype),
             success: function() {
-                ToastSuccess("Primary Class Added")
+                ToastSuccess("Archetype Added")
                 $("#archetype-table").DataTable().ajax.reload()
             },
             error: function(e) {
@@ -925,8 +926,6 @@ $(document).on('click', '#equipment-table .edit-button', function(){
     const equipment: Equipment = table.rows().data().toArray().find((row: Equipment) => row.id == equipId);
     
     if (!equipment) ToastError("Equipment not found")
-
-    console.log(equipment)
 
     defaultEquipmentModal(equipment)
 })
