@@ -422,9 +422,13 @@ if ($("#class-table").length) {
             {
                 title: "Hit Die",
                 data: "hit_die",
+                width: "10%",
                 render: function (data, type, row) {
                     if (!data)
                         return "";
+                    if (type == 'sort')
+                        return Number(data);
+                    console.log(type);
                     return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">d${data}</a>`;
                 }
             },
@@ -449,6 +453,12 @@ if ($("#class-table").length) {
         ],
         order: [[0, 'asc']],
         dom: 'rti',
+        columnDefs: [
+            {
+                targets: 2,
+                type: "num"
+            }
+        ],
         scrollCollapse: true,
         scrollY: "75vh",
         //@ts-expect-error idk why this errors but it does
