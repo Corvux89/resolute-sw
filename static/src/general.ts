@@ -1006,7 +1006,7 @@ if ($("#item-table").length){
                 d["type"] = window.location.pathname.replace("/enhanced_", "").replace("_", " ")
             }
         },
-        pageLength: 1000,
+        pageLength: 2000,
         order: [[1,'asc'], [0, 'asc']],
         dom: 'rti',
         scrollCollapse: true,
@@ -1030,8 +1030,8 @@ if ($("#item-table").length){
                 title: "Subtype",
                 data: "subtype",
                 render: function(data, type, row){
-                    if (!data) return ''
                     if (row.subtype_ft) return row.subtype_ft
+                    if (!data) return ''
                     return data.value
                 }
             },
@@ -1047,7 +1047,8 @@ if ($("#item-table").length){
             {
                 title: "Prerequisite?",
                 data: "prerequisite",
-                render: function(data){
+                render: function(data, type){
+                    console.log(type)
                     if (data) {
                         return `<i class="fa fa-check text-success"></i>`; // Green checkmark
                     } else {
@@ -1069,6 +1070,31 @@ if ($("#item-table").length){
             {
                 title: "Cost",
                 data: "cost"
+            },
+              {
+                title: "Prerequisite?",
+                data: "prerequisite",
+                visible: false,
+                render: function(data, type){
+                    console.log(type)
+                    if (data) {
+                        return 'Yes'
+                    } else {
+                        return 'No'
+                    }
+                }
+            },
+            {
+                title: "Attunement?",
+                data: "attunement",
+                visible: false,
+                render: function(data){
+                     if (data) {
+                        return 'Yes'
+                    } else {
+                        return 'No'
+                    }
+                }
             }
         ]
     })
@@ -1078,7 +1104,7 @@ if ($("#item-table").length){
         table.column(0).search(params.get('name') || '').draw();
         updateClearAllFiltersButton()
     }
-    setupTableFilters(tableName, [0,1,5])
+    setupTableFilters(tableName, [0,1,6])
 }
 
 $(document).on('click', "#item-table tbody tr", function(){

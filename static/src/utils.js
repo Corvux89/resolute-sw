@@ -81,12 +81,13 @@ export function setupTableFilters(table_name, exceptions, initialFilters) {
                 return;
             const values = Array.from(new Set(data.map(row => {
                 const raw = row[col.data.toString()];
-                if (raw == null || raw == undefined)
-                    return;
+                // if (raw == null || raw == undefined) return
                 try {
                     if (col.render) {
                         // @ts-expect-error This works...idk why typescript has issues with it
                         const render = col.render(raw, 'display', row).toString();
+                        if (render == null || render == undefined)
+                            return;
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = render;
                         return tempDiv.textContent.split(",")[0] ?? "";
