@@ -356,3 +356,7 @@ body, .card{
     padding: 8px; /* Add padding for spacing */
     font-size: 0.9em; /* Slightly smaller font for compactness */
 }
+
+div.dt-scroll-body thead tr th {
+    text-align: center !important; /* Center the text in table headers */
+}

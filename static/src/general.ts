@@ -2,6 +2,16 @@
 import { EnhancedItem, Equipment, Feat, Power } from "./types.js";
 import { defaultEquipmentModal, defaultFeatModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchFeatInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 
+function boolColumn(data, type){
+     if (data) {
+        if (type == "filter") return "Yes"
+        return `<i class="fa fa-check text-success"></i>`; // Green checkmark
+    } else {
+        if (type == "filter") return "No"
+        return `<i class="fa fa-times text-danger"></i>`; // Red "x"
+    }
+}
+
 // Generic Content
 if ($("#content-edit-form").length){
     
@@ -158,7 +168,9 @@ if ($("#power-table").length){
             { 
                 data: 'concentration',
                 title: "Conc?",
-                render: function(data) { return data ? "Yes" : "No"; }
+                render: function(data, type) { 
+                   return boolColumn(data, type)
+                }
             }
         ]
 
@@ -719,7 +731,7 @@ if ($("#equipment-table").length){
     ]
 
     if (window.location.pathname.includes('weapons')){
-        filterExclusions.push(2,3,4)
+        filterExclusions.push(3,4)
         columns.push(
             {
                 title: "Type",
@@ -732,7 +744,11 @@ if ($("#equipment-table").length){
             },
             {
                 title: "Property",
-                data: "properties"
+                data: "properties",
+                render: function(data, type){
+                    if (type == "filter") return data.split(', ').map(c => c.replace(/[\d]/g, '').split("(")[0])
+                    return data
+                }
             },
             {
                 title: "Cost",
@@ -765,18 +781,10 @@ if ($("#equipment-table").length){
                 title: "Damage Type",
                 visible: false,
                 data: "dmg_type"
-            },
-            {
-                title: "Properties",
-                data: "properties",
-                visible: false,
-                render: function(data){
-                    return data.split(', ').map(c => c.replace(/[\d]/g, '').split("(")[0])
-                }
             }
         )
     } else if (window.location.pathname.includes('armor')){
-        filterExclusions.push(2,3,4)
+        filterExclusions.push(3,4)
         columns.push(
             {
                 title: "Type",
@@ -787,9 +795,13 @@ if ($("#equipment-table").length){
                     return data.value
                 }
             },
-            {
+           {
                 title: "Property",
-                data: "properties"
+                data: "properties",
+                render: function(data, type){
+                    if (type == "filter") return data.split(', ').map(c => c.replace(/[\d]/g, '').split("(")[0])
+                    return data
+                }
             },
             {
                 title: "Cost",
@@ -805,14 +817,6 @@ if ($("#equipment-table").length){
                 render: function(data){
                     if (!data) return '-'
                     return data == true ? "Disadvantage" : '-'
-                }
-            },
-            {
-                title: "Properties",
-                data: "properties",
-                visible: false,
-                render: function(data){
-                    return data.split(', ').map(c => c.replace(/[\d]/g, '').split("(")[0])
                 }
             }
         )
@@ -1048,53 +1052,19 @@ if ($("#item-table").length){
                 title: "Prerequisite?",
                 data: "prerequisite",
                 render: function(data, type){
-                    console.log(type)
-                    if (data) {
-                        return `<i class="fa fa-check text-success"></i>`; // Green checkmark
-                    } else {
-                        return `<i class="fa fa-times text-danger"></i>`; // Red "x"
-                    }
+                   return boolColumn(data, type)
                 }
             },
             {
                 title: "Attunement?",
                 data: "attunement",
-                render: function(data){
-                     if (data) {
-                        return `<i class="fa fa-check text-success"></i>`; // Green checkmark
-                    } else {
-                        return `<i class="fa fa-times text-danger"></i>`; // Red "x"
-                    }
+                render: function(data, type){
+                    return boolColumn(data, type)
                 }
             },
             {
                 title: "Cost",
                 data: "cost"
-            },
-              {
-                title: "Prerequisite?",
-                data: "prerequisite",
-                visible: false,
-                render: function(data, type){
-                    console.log(type)
-                    if (data) {
-                        return 'Yes'
-                    } else {
-                        return 'No'
-                    }
-                }
-            },
-            {
-                title: "Attunement?",
-                data: "attunement",
-                visible: false,
-                render: function(data){
-                     if (data) {
-                        return 'Yes'
-                    } else {
-                        return 'No'
-                    }
-                }
             }
         ]
     })
@@ -1275,34 +1245,17 @@ if ($("#feat-table").length){
             {
                 title: "Ability Score Increase",
                 data: "attributes",
-                render: function(data){
+                render: function(data, type){
                     if (!data) return ''
+                    if (type == "filter") return data.map(c => c.replace(/[\d]/g, '').split(" ")[0])
                     return data.join(" or ")
                 }
             },
             {
                 title: "Prerequisite?",
                 data: "prerequisite",
-            },
-            {
-                title: "Prerequisite?",
-                data: "prerequisite",
-                visible: false,
-                render: function(data){
-                    if (data){
-                        return "Yes"
-                    } else {
-                        return "No"
-                    }
-                }
-            },
-            {
-                title: "ASI",
-                data: "attributes",
-                visible: false,
-                render: function(data){
-                    if (!data) return ''
-                    return data.map(c => c.replace(/[\d]/g, '').split(" ")[0])
+                render: function(data, type){
+                    return boolColumn(data, type)
                 }
             }
         ]
@@ -1313,7 +1266,7 @@ if ($("#feat-table").length){
         table.column(0).search(params.get('name') || '').draw();
         updateClearAllFiltersButton()
     }
-    setupTableFilters(tableName, [0,1,2])
+    setupTableFilters(tableName, [0])
 }
 
 $(document).on('click', "#feat-table tbody tr", function(){
