@@ -287,3 +287,72 @@ body, .card{
     border: none;
 }
 
+.monster-block {
+    display: block;
+    background-color: #f8f9fa; /* Light background for readability */
+    border: 2px solid #007acc; /* Blue border */
+    border-radius: 8px;
+    padding: 20px; /* Increase padding for better spacing */
+    margin: 20px 0; /* Add margin for separation */
+    font-family: "Arial", sans-serif;
+    color: #000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.monster-block h2 {
+    font-size: 1.6em; /* Slightly larger font size */
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 12px; /* Increase spacing below the title */
+    color: #007acc; /* Blue color for emphasis */
+}
+
+.monster-block p {
+    margin: 6px 0; /* Increase spacing between paragraphs */
+    line-height: 1.6; /* Improve readability */
+}
+
+.monster-block table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0; /* Increase spacing above and below the table */
+}
+
+.monster-block table th,
+.monster-block table td {
+    border: none; /* Remove borders */
+    padding: 8px; /* Increase padding for better spacing */
+    text-align: center;
+    font-size: 0.9em; /* Slightly smaller font for compactness */
+}
+
+.monster-block table th {
+    font-weight: bold; /* Bold headers */
+    color: #007acc; /* Blue color for emphasis */
+}
+
+.monster-block hr {
+    border: none;
+    border-top: 1px solid #007acc;
+    margin: 12px 0; /* Increase spacing above and below the divider */
+}
+
+.monster-block h3 {
+    font-size: 1.3em; /* Slightly larger font size */
+    font-weight: bold;
+    margin-top: 16px;
+    color: #007acc; /* Blue color for emphasis */
+}
+
+.monster-block table th {
+    text-align: center; /* Center the headers */
+    font-weight: bold; /* Make headers bold */
+    color: #007acc; /* Blue color for emphasis */
+    padding: 8px; /* Add padding for spacing */
+}
+
+.monster-block table td {
+    text-align: left; /* Align content to the left */
+    padding: 8px; /* Add padding for spacing */
+    font-size: 0.9em; /* Slightly smaller font for compactness */
+}

@@ -2,6 +2,8 @@ import datetime
 import json
 import uuid
 import markdown
+from markdown.extensions import Extension
+from markdown.preprocessors import Preprocessor
 from flask import current_app, session
 from flask.json.provider import JSONProvider
 from flask_login import UserMixin
@@ -15,10 +17,41 @@ from models.exceptions import UnauthorizedAccessError
 
 db = SQLAlchemy()
 
+class MonsterBlockExtension(Extension):
+    def extendMarkdown(self, md):
+        md.preprocessors.register(MonsterBlockPreProcessor(md), "monster_block", 175)
+
+class MonsterBlockPreProcessor(Preprocessor):
+    def run(self, lines):
+        new_lines = []
+        inside_monster_block = False
+        monster_content = []
+
+        for line in lines:
+            if line.strip() == ":::monster":
+                inside_monster_block = True
+                monster_content = []
+            elif line.strip() == ":::" and inside_monster_block:
+                inside_monster_block = False
+                new_lines.append(self.render_monster_block(monster_content))
+            elif inside_monster_block:
+                monster_content.append(line)
+            else:
+                new_lines.append(line)
+
+        return new_lines
+
+    def render_monster_block(self, content):
+        # Convert the content into styled HTML
+        html = '<div class="monster-block">'
+        html += markdown.markdown("\n".join(content), extensions=["tables"])
+        html += "</div>"
+        return html
+
 def render_markdown(text: str) -> str:
     if not text:
         return ""
-    return markdown.markdown(text, extensions=["tables", "sane_lists", "toc"])
+    return markdown.markdown(text, extensions=["tables", "sane_lists", "toc", MonsterBlockExtension()])
 
 class User(UserMixin):
     id: str

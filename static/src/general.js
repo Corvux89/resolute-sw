@@ -155,7 +155,7 @@ if ($("#power-table").length) {
         },
         pageLength: 500,
         columns: columns,
-        order: [[0, 'asc']],
+        order: [[1, 'asc'], [0, 'asc']],
         dom: 'rti',
         scrollCollapse: true,
         scrollY: "75vh",
@@ -428,7 +428,6 @@ if ($("#class-table").length) {
                         return "";
                     if (type == 'sort')
                         return Number(data);
-                    console.log(type);
                     return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">d${data}</a>`;
                 }
             },
@@ -932,9 +931,11 @@ if ($("#item-table").length) {
             {
                 title: "Rarity",
                 data: "rarity",
-                render: function (data) {
+                render: function (data, type) {
                     if (!data)
                         return '';
+                    if (type == 'sort')
+                        return data.id;
                     return data.value;
                 }
             },
