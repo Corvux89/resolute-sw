@@ -358,5 +358,5 @@ body, .card{
 }
 
 div.dt-scroll-body thead tr th {
-    text-align: center !important; /* Center the text in table headers */
+    text-align: center; /* Center the text in table headers */
 }
