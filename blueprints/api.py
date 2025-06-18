@@ -410,9 +410,12 @@ def update_content(key):
     if not content:
         raise NotFound("Content not found")
 
+    content = db.session.merge(content)
+
     content.content = payload.get("content")
 
     db.session.commit()
+    current_app.cache.update(db.session, Content)
 
     return jsonify(200)
 

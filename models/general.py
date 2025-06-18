@@ -105,7 +105,7 @@ def render_markdown(text: str, add_extension: list = []) -> str:
 
     allowed_tags = frozenset(
         set(bleach.sanitizer.ALLOWED_TAGS)
-        | {"div", "span", "table", "thead", "tbody", "tr", "th", "td", "p", "h1", "h2", "h3", "h4", "h5", "h6"}
+        | {"div", "span", "table", "thead", "tbody", "tr", "th", "td", "p", "h1", "h2", "h3", "h4", "h5", "h6", "br"}
     )
     allowed_attributes = {"*": ["class", "id", "data-*"], "a": ["href", "title"]}
 
