@@ -13,7 +13,7 @@
                 <text-input label-text="Image URL" custom-id="class-image" value="{{ primary_class.image_url if primary_class else '' }}"></text-input>
             </div>
             <div class="col-6 mb-2">
-                <select-input custom-id="class-source" custom-label="Content Source" options='{{ options['content-source']|tojson }}' selected="{{ primary_class.source.id if primary_class else '6' }}"></select-input>
+                <select-input custom-id="class-source" custom-label="Content Source" options='{{ options['content-source']|tojson }}' selected="{{ primary_class.source.id if primary_class and primary_class.source else '6' }}"></select-input>
             </div>
         </div>
         <div class="row mb-2">

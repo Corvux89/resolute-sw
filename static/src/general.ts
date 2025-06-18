@@ -12,6 +12,19 @@ function boolColumn(data, type){
     }
 }
 
+$(document).on("click", ".info-link", function() {
+    console.log('here')
+    const name = $(this).data("name"); // Get the name from the data attribute
+    const text = $(this).data("text"); // Get the text from the data attribute
+
+    // Populate the modal title and body
+    $("#info-modal .modal-title").text(name);
+    $("#info-modal .modal-body").html(text);
+
+    // Show the modal
+    $("#info-modal").modal("show");
+});
+
 // Generic Content
 if ($("#content-edit-form").length){
     
@@ -190,6 +203,9 @@ if ($("#power-table").length){
         ajax: {
             url: '/api/powers',
             dataSrc: '',
+            error: function(xhr){
+                ToastError(`Failed ${xhr.responseText?.toString()}`)
+            },
             data: function(d) {
                 d["type"] =  window.location.pathname.includes("tech_powers") ? "tech" : "force"
             }
@@ -348,7 +364,10 @@ if ($("#species-table").length){
     const table = $(tableName).DataTable({
         ajax: {
             url: '/api/species',
-            dataSrc: ''
+            dataSrc: '',
+            error: function(xhr){
+                ToastError(`Failed ${xhr.responseText?.toString()}`)
+            },
         },
         pageLength: 500,
         columns: [
@@ -471,7 +490,10 @@ if ($("#class-table").length){
     const table = $(tableName).DataTable({
         ajax: {
             url: '/api/classes',
-            dataSrc: ''
+            dataSrc: '',
+            error: function(xhr){
+                ToastError(`Failed ${xhr.responseText?.toString()}`)
+            },
         },
         pageLength: 500,
         columns: [
@@ -616,7 +638,10 @@ if ($("#archetype-table").length){
     const table = $(tableName).DataTable({
         ajax: {
             url: '/api/archetypes',
-            dataSrc: ''
+            dataSrc: '',
+            error: function(xhr){
+                ToastError(`Failed ${xhr.responseText?.toString()}`)
+            },
         },
         pageLength: 500,
         columns: [
@@ -843,6 +868,9 @@ if ($("#equipment-table").length){
     const table = $(tableName).DataTable({
         ajax: {
             url: 'api/equipment',
+            error: function(xhr){
+                ToastError(`Failed ${xhr.responseText?.toString()}`)
+            },
             dataSrc: '',
             data: function(d){
                 
@@ -1006,6 +1034,9 @@ if ($("#item-table").length){
         ajax: {
             url: 'api/enhanced_items',
             dataSrc: '',
+            error: function(xhr){
+                ToastError(`Failed ${xhr.responseText?.toString()}`)
+            },
             data: function(d){
                 d["type"] = window.location.pathname.replace("/enhanced_", "").replace("_", " ")
             }
@@ -1229,6 +1260,9 @@ if ($("#feat-table").length){
          ajax: {
             url: 'api/feats',
             dataSrc: '',
+            error: function(xhr){
+                ToastError(`Failed ${xhr.responseText?.toString()}`)
+            },
         },
         pageLength: 1000,
         order: [[0, 'asc']],
@@ -1402,3 +1436,60 @@ $(document).on('click', '#feat-delete-confirmed', function(){
         
     })
 })
+
+// Backgrounds
+if ($("#background-table").length){
+    const params = new URLSearchParams(window.location.search);
+    const tableName = "#background-table"
+
+    destroyTable(tableName)
+
+    const table = $(tableName).DataTable({
+        ajax: {
+            url: `/api/backgrounds`,
+            dataSrc: '',
+            error: function(xhr){
+                ToastError(`Failed ${xhr.responseText?.toString()}`)
+            }
+        },
+        pageLength: 500,
+         order: [[0, 'asc']],
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true,
+        columns: [
+            {
+                title: "Name",
+                data: "name"
+            },
+            {
+                title: "Skill Proficiency",
+                data: "skills",
+                render: function(data, type){
+                    const validSkills = [
+                        "Athletics", "Acrobatics", "Sleight of Hand", "Stealth", "Investigation", 
+                        "Lore", "Nature", "Piloting", "Technology", "Animal Handling", "Insight", 
+                        "Medicine", "Perception", "Survival", "Deception", "Intimidation", 
+                        "Performance", "Persuasion"
+                    ]
+                    if (!data) return ''
+                    if (type == "filter"){
+                        const regex = new RegExp(validSkills.join("|"), "gi");
+                        return data.match(regex) || []
+                    }
+                    return data
+                }
+            }
+        ]
+    })
+
+    if (params.has('name')){
+        $("#filter-search").val(params.get('name'))
+        table.column(0).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton()
+    }
+
+    setupTableFilters(tableName, [0])
+}

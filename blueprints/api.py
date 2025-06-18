@@ -2,7 +2,7 @@ from typing import Optional, Union
 from urllib.parse import unquote
 from flask import Blueprint, current_app, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import and_, asc, func, or_
+from sqlalchemy import and_, func
 
 from constants import DISCORD_GUILD_ID
 from helpers.G0T0 import trigger_compendium_reload, trigger_guild_reload
@@ -13,23 +13,18 @@ from models.G0T0 import (
     Activity,
     ActivityPoints,
     Archetype,
+    Background,
     BotMessage,
     Character,
     CharacterClass,
     CodeConversion,
-    ContentSource,
     EnhancedItem,
-    EnhancedItemSubtype,
-    EnhancedItemType,
     Equipment,
-    EquipmentCategory,
-    EquipmentSubCategory,
     Feat,
     G0T0Guild,
     LevelCost,
     Player,
     Power,
-    PowerType,
     PrimaryClass,
     RefMessage,
     Species,
@@ -43,7 +38,7 @@ api_blueprint = Blueprint("api", __name__)
 
 @api_blueprint.get("/guild")
 def get_guild():
-    guild = _get_guild()
+    guild = current_app.cache.fetch(G0T0Guild)
     return jsonify(guild)
 
 
@@ -51,7 +46,7 @@ def get_guild():
 @is_admin
 def update_guild():
     db: SQLAlchemy = current_app.config.get("DB")
-    guild = _get_guild()
+    guild = current_app.cache.fetch(G0T0Guild)
     update_data = request.get_json()
 
     # Max Level Validation
@@ -109,6 +104,7 @@ def update_guild():
                 )
 
     db.session.commit()
+    current_app.cache.update(db.session, G0T0Guild)
     trigger_guild_reload()
     return jsonify(200)
 
@@ -148,6 +144,7 @@ def create_message():
 
     db.session.add(message)
     db.session.commit()
+    current_app.cache.update(db.session, RefMessage)
 
     message = _get_message(message.message_id, True)
 
@@ -180,6 +177,7 @@ def update_message(message_id: int):
             )
 
         db.session.commit()
+        current_app.cache.update(db.session, RefMessage)
 
     except AttributeError:
         raise BadRequest()
@@ -200,6 +198,7 @@ def delete_message(message_id: int):
 
         db.session.delete(message)
         db.session.commit()
+        current_app.cache.update(db.session, RefMessage)
 
     except:
         raise BadRequest("Something went wrong")
@@ -271,6 +270,7 @@ def update_activities():
             activity.credit_ratio = act.credit_ratio
 
         db.session.commit()
+        current_app.cache.update(db.session, Activity)
         trigger_compendium_reload()
     except:
         db.session.rollback()
@@ -306,6 +306,7 @@ def update_activity_points():
             point.points = p.points
 
         db.session.commit()
+        current_app.cache.update(db.session, ActivityPoints)
         trigger_compendium_reload()
     except:
         db.session.rollback()
@@ -341,6 +342,7 @@ def update_code_conversion():
             conversion.value = cc.value
 
         db.session.commit()
+        current_app.cache.update(db.session, CodeConversion)
         trigger_compendium_reload()
     except:
         db.session.rollback()
@@ -376,6 +378,7 @@ def update_level_costs():
             cost.cc = c.cc
 
         db.session.commit()
+        current_app.cache.update(db.session, LevelCost)
         trigger_compendium_reload()
 
     except:
@@ -390,8 +393,12 @@ def update_level_costs():
 def update_content(key):
     db: SQLAlchemy = current_app.config.get("DB")
     payload = request.get_json()
+    content: Content = next(
+        (c for c in current_app.cache.fetch(Content) if c.key == key), None
+    )
 
-    content: Content = db.session.query(Content).filter(Content.key == key).first()
+    if not content:
+        raise NotFound("Content not found")
 
     content.content = payload.get("content")
 
@@ -401,758 +408,586 @@ def update_content(key):
 
 
 @api_blueprint.get("/powers")
-def powers(type: str = None):
-    db: SQLAlchemy = current_app.config.get("DB")
+def powers():
+    powers = current_app.cache.fetch(Power)
+    try:
+        filter_map = {
+            "level": lambda p, value: p.level == int(value),
+            "type": lambda p, value: (
+                value.lower() == p.type.value.lower() if p.type else None
+            ),
+            "name": lambda p, value: value.lower() in p.name.lower(),
+            "prereq": lambda p, value: value.lower() in p.pre_requisite.lower(),
+            "casttime": lambda p, value: value.lower() in p.casttime.lower(),
+            "range": lambda p, value: value.lower() in p.range.lower(),
+            "description": lambda p, value: value.lower() in p.description.lower(),
+        }
 
-    query = db.session.query(Power)
-
-    if request.args.get("type"):
-        power_type: PowerType = (
-            db.session.query(PowerType)
-            .filter(func.lower(PowerType.value) == request.args.get("type").lower())
-            .first()
-        )
-        if not power_type:
-            raise NotFound("Power Type not found")
-        query = query.filter(Power._type == power_type.id)
-
-    if request.args.get("level"):
-        query = query.filter(Power.level == request.args.get("level"))
-
-    if request.args.get("source"):
-        source: ContentSource = (
-            db.session.query(ContentSource)
-            .filter(
-                or_(
-                    func.lower(ContentSource.abbreviation)
-                    == request.args.get("source").lower(),
-                    ContentSource.name.ilike(f"%{request.args.get('source').lower()}%"),
-                )
-            )
-            .first()
-        )
-        if not source:
-            raise NotFound("Content source not found")
-
-        query = query.filter(Power._source == source.id)
-
-    filter_map = {
-        "name": Power.name,
-        "prereq": Power.pre_requisite,
-        "casttime": Power.casttime,
-        "range": Power.range,
-        "description": Power.description,
-    }
-
-    for arg, column in filter_map.items():
-        if value := request.args.get(arg):
-            query = query.filter(column.ilike(f"%{value.lower()}%"))
-
-    powers = query.all()
+        powers = filter_objects(filter_map, powers)
+    except Exception as e:
+        raise BadRequest(str(e))
 
     if not powers:
-        raise NotFound("No power found")
-
+        raise NotFound("Power(s) not found")
     return jsonify(powers)
+
 
 @api_blueprint.post("/powers")
 @is_admin
 def new_power():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
-    try:
-        power: Power = Power.from_json(data)
-        db.session.add(power)
-        db.session.commit()
-    except:
-        raise BadRequest()
+    power = create_object(Power)
+    return jsonify(power)
 
-    return jsonify(200)
 
-@api_blueprint.patch('/powers')
+@api_blueprint.patch("/powers")
 @is_admin
 def update_power():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
-    try:
-        # 1. Require an ID in the payload
-        power_id = data.get("id")
-        if not power_id:
-            raise BadRequest("Missing power id for update.")
+    power = update_object(
+        Power,
+        [
+            "name",
+            "pre_requisite",
+            "casttime",
+            "range",
+            "description",
+            "concentration",
+            "level",
+            "duration",
+        ],
+        ["type", "source", "alignment"],
+    )
 
-        # 2. Fetch the existing Power
-        power: Power = db.session.query(Power).filter(Power.id == power_id).first()
-        if not power:
-            raise NotFound("Power not found.")
+    return jsonify(power), 200
 
-        # 3. Update fields (handle nested objects for FKs)
-        for field in [
-            "name", "pre_requisite", "casttime", "range", "description",
-            "concentration", "level", "duration"
-        ]:
-            if field in data:
-                setattr(power, field, data[field])
 
-        # Foreign keys (handle nested objects)
-        if "type" in data and data["type"]:
-            power._type = data["type"].get("id")
-        if "source" in data and data["source"]:
-            power._source = data["source"].get("id")
-        if "alignment" in data and data["alignment"]:
-            power._alignment = data["alignment"].get("id")
-
-        db.session.commit()
-    except:
-        raise BadRequest()
-    return jsonify(200)
-
-@api_blueprint.delete('/powers/<power_id>')
+@api_blueprint.delete("/powers/<power_id>")
 @is_admin
 def delete_power(power_id):
-    db: SQLAlchemy = current_app.config.get("DB")
-    power: Power = db.session.query(Power).filter(Power.id == power_id).first()
+    return delete_object(Power, power_id)
 
-    if not power:
-        raise NotFound()
-    
-    db.session.delete(power)
-    db.session.commit()
 
-    return jsonify(200)
-
-@api_blueprint.get('/species')
+@api_blueprint.get("/species")
 def get_species():
-    db: SQLAlchemy = current_app.config.get("DB")
+    species = current_app.cache.fetch(Species)
+    try:
+        filter_map = {
+            "name": lambda s, value: value.lower() in s.value.lower(),
+            "size": lambda s, value: value.lower() in s.size.lower(),
+        }
 
-    query = db.session.query(Species)
-
-    if request.args.get("source"):
-        source: ContentSource = (
-            db.session.query(ContentSource)
-            .filter(
-                or_(
-                    func.lower(ContentSource.abbreviation)
-                    == request.args.get("source").lower(),
-                    ContentSource.name.ilike(f"%{request.args.get('source').lower()}%"),
-                )
-            )
-            .first()
-        )
-        if not source:
-            raise NotFound("Content source not found")
-
-        query = query.filter(Species._source == source.id)
-
-    filter_map = {
-        "name": Species.value,
-        "size": Species.size,
-    }
-
-    for arg, column in filter_map.items():
-        if value := request.args.get(arg):
-            query = query.filter(column.ilike(f"%{value.lower()}%"))
-
-    species = query.all()
+        species = filter_objects(filter_map, species)
+    except Exception as e:
+        raise BadRequest(str(e))
 
     if not species:
         raise NotFound("No species found")
-    
+
     return jsonify(species)
 
-@api_blueprint.post('/species')
+
+@api_blueprint.post("/species")
 @is_admin
 def new_species():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    species = create_object(Species)
+    return jsonify(species), 200
 
-    try:
-        species: Species = Species.from_json(data)
-        db.session.add(species)
-        db.session.commit()
-    except Exception as e:
-        raise BadRequest()
-    
-    return jsonify(200)
 
-@api_blueprint.patch('/species')
+@api_blueprint.patch("/species")
 @is_admin
 def update_species():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    species = update_object(
+        Species,
+        [
+            "value",
+            "skin_options",
+            "hair_options",
+            "eye_options",
+            "distinctions",
+            "height_average",
+            "height_mod",
+            "weight_average",
+            "weight_mod",
+            "homeworld",
+            "flavortext",
+            "language",
+            "image_url",
+            "size",
+            "traits",
+        ],
+        ["source"],
+    )
+    return jsonify(species), 200
 
-    try:
-        species_id = data.get('id')
-        if not species_id:
-            raise BadRequest("Missing Species id for update")
-        
-        species: Species = db.session.query(Species).filter(Species.id == species_id).first()
 
-        if not species:
-            raise NotFound("Species not found")
-        
-        for field in ["value","skin_options", "hair_options", "eye_options", "distinctions", "height_average", "height_mod", 
-                      "weight_average", "weight_mod", "homeworld", "flavortext", "language", "image_url", "size", "traits"]:
-            if field in data:
-                setattr(species, field, data[field])
-
-        if "source" in data and data["source"]:
-            species._source = data["source"].get("id")
-
-        db.session.commit()
-    except NotFound:
-        raise NotFound()
-    except Exception as e:
-        raise BadRequest()
-    
-    return jsonify(200)
-
-@api_blueprint.delete('/species/<species_id>')
+@api_blueprint.delete("/species/<species_id>")
 @is_admin
 def delete_species(species_id):
-    db: SQLAlchemy = current_app.config.get("DB")
-    species: Species = db.session.query(Species).filter(Species.id == species_id).first()
+    return delete_object(Species, species_id)
 
-    if not species:
-        raise NotFound()
-    
-    if db.session.query(Character).filter(and_(
-        Character.active == True,
-        Character._species == species.id
-    )).count() > 0:
-        raise BadRequest("Current active characters have that species set")
-    
-    db.session.delete(species)
-    db.session.commit()
 
-    return jsonify(200)
-
-@api_blueprint.get('/classes')
+@api_blueprint.get("/classes")
 def get_classes():
-    db: SQLAlchemy = current_app.config.get("DB")
-    query = db.session.query(PrimaryClass)
+    classes = current_app.cache.fetch(PrimaryClass)
 
-    if request.args.get("source"):
-        source: ContentSource = (
-            db.session.query(ContentSource)
-            .filter(
-                or_(
-                    func.lower(ContentSource.abbreviation)
-                    == request.args.get("source").lower(),
-                    ContentSource.name.ilike(f"%{request.args.get('source').lower()}%"),
-                )
-            )
-            .first()
-        )
-        if not source:
-            raise NotFound("Content source not found")
+    try:
+        filter_map = {
+            "name": lambda c, value: value.lower() in c.value.lower(),
+        }
 
-        query = query.filter(PrimaryClass._source == source.id)
-
-    filter_map = {
-        "name": PrimaryClass.value,
-    }
-
-    for arg, column in filter_map.items():
-        if value := request.args.get(arg):
-            query = query.filter(column.ilike(f"%{value.lower()}%"))
-
-    classes = query.all()
+        classes = filter_objects(filter_map)
+    except Exception as e:
+        raise BadRequest(str(e))
 
     if not classes:
         raise NotFound("No Classes found")
     return jsonify(classes)
 
-@api_blueprint.post('/classes')
+
+@api_blueprint.post("/classes")
 @is_admin
 def new_class():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    prim_class = create_object(PrimaryClass)
+    return jsonify(prim_class), 200
 
-    try:
-        prim_class: PrimaryClass = PrimaryClass.from_json(data)
-        db.session.add(prim_class)
-        db.session.commit()
-    except Exception as e:
-        raise BadRequest()
-    
-    return jsonify(200)
-    
-@api_blueprint.patch('/classes')
+
+@api_blueprint.patch("/classes")
 @is_admin
 def update_class():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    prim_class = update_object(
+        PrimaryClass,
+        [
+            "value",
+            "summary",
+            "primary_ability",
+            "flavortext",
+            "level_changes",
+            "hit_die",
+            "level_1_hp",
+            "higher_hp",
+            "armor_prof",
+            "weapon_prof",
+            "tool_prof",
+            "saving_throws",
+            "skill_choices",
+            "starting_equipment",
+            "features",
+            "archetype_flavor",
+            "image_url",
+        ],
+        ["source", "caster_type"],
+    )
+    return jsonify(prim_class), 200
 
-    try:
-        if not (class_id := data.get('id')):
-            raise BadRequest()
-        
-        prim_class: PrimaryClass = db.session.query(PrimaryClass).filter(PrimaryClass.id == class_id).first()
 
-        if not prim_class:
-            raise NotFound()
-        
-        for field in ["value", "summary", "primary_ability", "flavortext", "level_changes", "hit_die", "level_1_hp", "higher_hp", "armor_prof",
-                      "weapon_prof", "tool_prof", "saving_throws", "skill_choices", "starting_equipment", "features", "archetype_flavor", "image_url"]:
-            if field in data:
-                setattr(prim_class, field, data[field])
-
-        if "source" in data and data["source"]:
-            prim_class._source = data["source"].get('id')
-        if "caster_type" in data and data["caster_type"]:
-            prim_class._caster_type = data["caster_type"].get('id')
-
-        db.session.commit()
-    except NotFound:
-        raise NotFound()
-    except Exception as e:
-        raise BadRequest()
-    
-    return jsonify(200)
-
-@api_blueprint.delete('/classes/<class_id>')
+@api_blueprint.delete("/classes/<class_id>")
 @is_admin
 def delete_class(class_id):
     db: SQLAlchemy = current_app.config.get("DB")
-    prim_class: PrimaryClass = db.session.query(PrimaryClass).filter(PrimaryClass.id == class_id).first()
+    prim_class = current_app.cache.fetch(PrimaryClass, class_id)
 
     if not prim_class:
-        raise NotFound()
-    
-    if (db.session.query(CharacterClass)
-        .join(Character, CharacterClass.character_id == Character.id)
-        .filter(and_(
-            CharacterClass.active == True,
-            Character.active == True,
-            CharacterClass._primary_class == class_id
-        )).count() > 0
-        ):
-        raise BadRequest("Current active character have that class set")
-    
-    db.session.delete(prim_class)
-    db.session.commit()
+        raise NotFound("Class not found")
 
-    return jsonify(200)
+    if (
+        db.session.query(CharacterClass)
+        .join(Character, CharacterClass.character_id == Character.id)
+        .filter(
+            and_(
+                CharacterClass.active == True,
+                Character.active == True,
+                CharacterClass._primary_class == class_id,
+            )
+        )
+        .count()
+        > 0
+    ):
+        raise BadRequest("Current active character have that class set")
+
+    return delete_object(PrimaryClass, class_id)
+
 
 @api_blueprint.get("/archetypes")
 def get_archetypes():
-    db: SQLAlchemy = current_app.config.get("DB")
-    query = db.session.query(Archetype)
+    archetypes = current_app.cache.fetch(Archetype)
 
-    if request.args.get("source"):
-        source: ContentSource = (
-            db.session.query(ContentSource)
-            .filter(
-                or_(
-                    func.lower(ContentSource.abbreviation)
-                    == request.args.get("source").lower(),
-                    ContentSource.name.ilike(f"%{request.args.get('source').lower()}%"),
-                )
-            )
-            .first()
-        )
-        if not source:
-            raise NotFound("Content source not found")
+    try:
+        filter_map = {
+            "name": lambda a, value: value.lower() in a.value.lower(),
+            "class": lambda a, value: value.lower() in a.parent_name.lower(),
+            "caster": lambda a, value: (
+                value.lower() in a.caster_type.value.lower() if a.caster_type else False
+            ),
+        }
 
-        query = query.filter(Archetype._source == source.id)
-
-    if request.args.get('class'):
-        prim_class: PrimaryClass = (
-            db.session.query(PrimaryClass)
-            .filter(
-                PrimaryClass.value.ilike(f"%{request.args.get('class').lower()}%")
-            ).first()
-        )
-
-        if not prim_class:
-            raise NotFound(f"Primary class '{request.args.get('class')}' not found")
-        
-        query = query.filter(Archetype.parent == prim_class.id) 
-
-    if request.args.get('caster'):
-        caster_type: PowerType = (
-            db.session.query(PowerType)
-            .filter(
-                PowerType.value.ilike(f"%{request.args.get('caster').lower()}%")
-                ).first()
-            )
-        
-        if not caster_type:
-            raise NotFound("Caster type not found")
-        
-        query = query.filter(Archetype._caster_type == caster_type.id)
-
-
-    filter_map = {
-        "name": Archetype.value,
-    }
-
-    for arg, column in filter_map.items():
-        if value := request.args.get(arg):
-            query = query.filter(column.ilike(f"%{value.lower()}%"))
-
-    archetypes = query.all()
-
+        archetypes = filter_objects(filter_map, archetypes)
+    except Exception as e:
+        raise BadRequest(str(e))
     if not archetypes:
-        raise NotFound()
-    
+        raise NotFound("Archetype not found")
+
     return jsonify(archetypes)
 
-@api_blueprint.post('/archetypes')
+
+@api_blueprint.post("/archetypes")
 @is_admin
 def new_archetype():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    arch = create_object(Archetype)
+    return jsonify(arch), 200
 
-    try:
-        arch: Archetype = Archetype.from_json(data)
-        db.session.add(arch)
-        db.session.commit()
-    except Exception as e:
-        raise BadRequest(e)
-    
-    return jsonify(200)
 
-@api_blueprint.patch('/archetypes')
+@api_blueprint.patch("/archetypes")
 @is_admin
 def update_archetypes():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    arch = update_object(
+        Archetype,
+        ["value", "level_table", "image_url", "flavortext"],
+        ["caster_type", "source"],
+    )
+    return jsonify(arch), 200
 
-    try:
-        if not (a_id := data.get('id')):
-            raise BadRequest("No object ID specified")
-        
-        arch = db.session.query(Archetype).filter(Archetype.id == a_id).first()
 
-        if not arch:
-            raise NotFound("Archetype not found")
-        
-        for field in ["value", "level_table", "image_url", "flavortext"]:
-            if field in data:
-                setattr(arch, field, data[field])
-
-        if "source" in data and data["source"]:
-            arch._source = data["source"].get('id')
-        if "caster_type" in data and data["caster_type"]:
-            arch._caster_type = data["caster_type"].get('id')
-
-        db.session.commit()        
-    except NotFound as e:
-        raise NotFound(e)
-    except Exception as e:
-        raise BadRequest(e)
-    
-    return jsonify(200)
-
-@api_blueprint.delete('/archetypes/<arch_id>')
+@api_blueprint.delete("/archetypes/<arch_id>")
 @is_admin
 def delete_archetype(arch_id):
     db: SQLAlchemy = current_app.config.get("DB")
-    arch: Archetype = db.session.query(Archetype).filter(Archetype.id == arch_id).first()
+    arch = current_app.cache.fetch(Archetype, arch_id)
 
     if not arch:
-        raise NotFound()
-    
-    if (db.session.query(CharacterClass)
+        raise NotFound("Archetype not found")
+
+    if (
+        db.session.query(CharacterClass)
         .join(Character, CharacterClass.character_id == Character.id)
-        .filter(and_(
-            CharacterClass.active == True,
-            Character.active == True,
-            CharacterClass._archetype == arch_id
-        )).count() > 0
-        ):
-        raise BadRequest("Current active character(s) have that archetype set")
-    
-    db.session.delete(arch)
-    db.session.commit()
-
-    return jsonify(200)
-
-@api_blueprint.get('/equipment')
-def get_equipment():
-    db: SQLAlchemy = current_app.config.get("DB")
-    query = db.session.query(Equipment)
-
-    if request.args.get('type'):
-        if request.args.get('type') == "adventuring":
-            query = query.filter(~Equipment._category.in_([3,4]))
-        else:
-            equip_type: EquipmentCategory = (
-                db.session.query(EquipmentCategory)
-                .filter(func.lower(EquipmentCategory.value) == unquote(request.args.get('type')).lower())
-                .first()
+        .filter(
+            and_(
+                CharacterClass.active == True,
+                Character.active == True,
+                CharacterClass._archetype == arch_id,
             )
+        )
+        .count()
+        > 0
+    ):
+        raise BadRequest("Current active character(s) have that archetype set")
 
-            if not equip_type:
-                raise NotFound("Equipment type not found")
-            query = query.filter(Equipment._category == equip_type.id)
+    return delete_object(Archetype, arch_id)
 
-    equipment = query.all()
+
+@api_blueprint.get("/equipment")
+def get_equipment():
+    equipment = current_app.cache.fetch(Equipment)
+
+    try:
+        filter_map = {
+            "type": lambda e, value: (
+                value.lower() == e.category.value.lower()
+                if e.category and value.lower() != "adventuring"
+                else (
+                    e.category.id not in [3, 4]
+                    if e.category and value.lower() == "adventuring"
+                    else False
+                )
+            )
+        }
+
+        equipment = filter_objects(filter_map, equipment)
+    except Exception as e:
+        raise BadRequest(str(e))
 
     if not equipment:
-        raise NotFound()
-    
+        raise NotFound("Equipment not found")
+
     return jsonify(equipment)
 
-@api_blueprint.post('/equipment')
+
+@api_blueprint.post("/equipment")
 @is_admin
 def new_equipment():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    equipment = create_object(Equipment)
+    return jsonify(equipment), 200
 
-    try:
-       equipment: Equipment = Equipment.from_json(data)
-       db.session.add(equipment) 
-       db.session.commit()
-    except Exception as e:
-        raise BadRequest()
 
-    return jsonify(200)
-
-@api_blueprint.patch('/equipment')
+@api_blueprint.patch("/equipment")
 @is_admin
 def update_equipment():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    equipment = update_object(
+        Equipment,
+        [
+            "name",
+            "description",
+            "cost",
+            "weight",
+            "dmg_number_of_die",
+            "dmg_die_type",
+            "dmg_type",
+            "properties",
+            "ac",
+            "stealth_dis",
+        ],
+        ["source", "sub_category"],
+    )
+    return jsonify(equipment), 200
 
-    try:
-        if not (a_id := data.get('id')):
-            raise BadRequest("No object ID specified")
-        
-        equipment: Equipment = db.session.query(Equipment).filter(Equipment.id == a_id).first()
 
-        if not equipment:
-            raise NotFound("Equipment not found")
-        
-        for field in ["name", "description", "cost", "weight", "dmg_number_of_die", "dmg_die_type",
-                      "dmg_type", "properties", "ac", "stealth_dis"]:
-            if field in data:
-                setattr(equipment, field, data[field])
-
-        if "source" in data and data["source"]:
-            equipment._source = data["source"].get('id')
-        if "sub_category" in data and data["sub_category"]:
-            sub_category = db.session.query(EquipmentSubCategory).filter(EquipmentSubCategory.id == data["sub_category"].get('id')).first()
-
-            if sub_category.parent != equipment._category:
-                raise BadRequest()
-            equipment._sub_category = sub_category.id
-
-        db.session.commit()        
-    except NotFound as e:
-        raise NotFound(e)
-    except Exception as e:
-        raise BadRequest(e)
-    
-    return jsonify(200)
-
-@api_blueprint.delete('/equipment/<equip_id>')
+@api_blueprint.delete("/equipment/<equip_id>")
 @is_admin
 def delete_equipment(equip_id):
-    db: SQLAlchemy = current_app.config.get("DB")
-    equipment: Equipment = db.session.query(Equipment).filter(Equipment.id == equip_id).first()
+    return delete_object(Equipment, equip_id)
 
-    if not equipment:
-        raise NotFound()
-    
-    db.session.delete(equipment)
-    db.session.commit()
 
-    return jsonify(200)
-
-@api_blueprint.get('/enhanced_items')
+@api_blueprint.get("/enhanced_items")
 def get_enhanced_items():
-    db: SQLAlchemy = current_app.config.get("DB")
-    query = db.session.query(EnhancedItem)
+    items = current_app.cache.fetch(EnhancedItem)
 
-    if request.args.get('type'):
-        if request.args.get('type').lower() == 'other':
-            query = query.filter(~EnhancedItem._type.in_([3,7,5,4]))
-        else:
-            i_type: EnhancedItemType = (
-                db.session.query(EnhancedItemType)
-                .filter(func.lower(EnhancedItemType.value) == unquote(request.args.get('type')).lower())
-                .first()
-            )
+    try:
+        filter_map = {
+            "type": lambda i, value: (
+                value.lower() == i.type.value.lower()
+                if i.type and value.lower() != "other"
+                else (
+                    i.type.id not in [3, 7, 5, 4]
+                    if i.type and value.lower() == "other"
+                    else False
+                )
+            ),
+            "name": lambda i, value: value.lower() in i.name.lower(),
+            "prereq": lambda i, value: value.lower() in i.prerequisite.lower(),
+        }
 
-            if not i_type:
-                raise NotFound("Enhanced Item Type no found")
-            query = query.filter(EnhancedItem._type == i_type.id)
-
-    filter_map = {
-        "name": EnhancedItem.name,
-        "prereq": EnhancedItem.prerequisite,
-    }
-
-    for arg, column in filter_map.items():
-        if value := request.args.get(arg):
-            query = query.filter(column.ilike(f"%{value.lower()}%"))
-
-    items = query.all()
+        items = filter_objects(filter_map, items)
+    except Exception as e:
+        raise BadRequest(e)
 
     if not items:
-        raise NotFound()
-    
-    return jsonify(items)
+        raise NotFound("Enhanced Items not found")
 
-@api_blueprint.post('/enhanced_items')
+    return jsonify(items), 200
+
+
+@api_blueprint.post("/enhanced_items")
 @is_admin
 def new_enhanced_item():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    item = create_object(EnhancedItem)
+    return jsonify(item), 200
 
-    try:
-        e_item: EnhancedItem = EnhancedItem.from_json(data)
-        db.session.add(e_item)
-        db.session.commit()
-    except Exception as e:
-        raise BadRequest()
-    
-    return jsonify(200)
 
-@api_blueprint.patch('/enhanced_items')
+@api_blueprint.patch("/enhanced_items")
 @is_admin
 def update_enhanced_item():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    item = update_object(
+        EnhancedItem,
+        ["name", "attunement", "text", "prerequisite", "subtype_ft", "cost"],
+        ["source", "subtype", "rarity"],
+    )
+    return jsonify(item), 200
 
-    try:
-        if not (a_id := data.get('id')):
-            raise BadRequest("No object ID specified")
-        
-        e_item = db.session.query(EnhancedItem).filter(EnhancedItem.id == a_id).first()
 
-        if not e_item:
-            raise NotFound("Equipment not found")
-        
-        for field in ["name", "attunement", "text", "prerequisite", "subtype_ft", "cost"]:
-            if field in data:
-                setattr(e_item, field, data[field])
-
-        if "source" in data and data["source"]:
-            e_item._source = data["source"].get('id')
-        if "subtype" in data and data["subtype"]:
-            subtype: EnhancedItemSubtype = db.session.query(EnhancedItemSubtype).filter(EnhancedItemSubtype.id == data["subtype"].get('id')).first()
-
-            if not subtype or (subtype and subtype.parent != e_item.type.id):
-                raise BadRequest("Subtype is not valid")
-            
-            e_item._subtype = subtype.id
-        if "rarity" in data and data["rarity"]:
-            e_item._rarity = data["rarity"].get('id')
-
-        db.session.commit()        
-    except NotFound as e:
-        raise NotFound(e)
-    except Exception as e:
-        raise BadRequest(e)
-    
-    return jsonify(200)
-
-@api_blueprint.delete('/enhanced_items/<e_id>')
+@api_blueprint.delete("/enhanced_items/<e_id>")
 @is_admin
 def delete_enhanced_item(e_id):
-    db: SQLAlchemy = current_app.config.get("DB")
-    e_item: EnhancedItem = db.session.query(EnhancedItem).filter(EnhancedItem.id == e_id).first()
+    return delete_object(EnhancedItem, e_id)
 
-    if not e_item:
-        raise NotFound()
-    
-    db.session.delete(e_item)
-    db.session.commit()
 
-    return jsonify(200)
-
-@api_blueprint.get('/feats')
+@api_blueprint.get("/feats")
 def get_feats():
-    db: SQLAlchemy = current_app.config.get("DB")
-    query = db.session.query(Feat)
+    feats = current_app.cache.fetch(Feat)
 
-    feats = query.all()
+    try:
+        filter_map = {
+            "name": lambda f, value: value.lower() in f.name.lower(),
+            "prereq": lambda f, value: value.lower() in f.prerequisite.lower(),
+        }
+
+        feats = filter_objects(filter_map, feats)
+    except Exception as e:
+        raise BadRequest(str(e))
 
     if not feats:
-        raise NotFound()
-    
-    filter_map = {
-        "name": Feat.name,
-        "prereq": Feat.prerequisite,
-    }
+        raise NotFound("Feats not found")
 
-    for arg, column in filter_map.items():
-        if value := request.args.get(arg):
-            query = query.filter(column.ilike(f"%{value.lower()}%"))
-    
     return jsonify(feats)
 
-@api_blueprint.post('/feats')
+
+@api_blueprint.post("/feats")
 @is_admin
 def new_feat():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    feat = create_object(Feat)
+    return jsonify(feat), 200
 
-    try:
-        feat: Feat = Feat.from_json(data)
-        db.session.add(feat)
-        db.session.commit()
-    except Exception as e:
-        raise BadRequest()
-    
-    return jsonify(200)
 
-@api_blueprint.patch('/feats')
+@api_blueprint.patch("/feats")
 @is_admin
 def update_feat():
-    db: SQLAlchemy = current_app.config.get("DB")
-    data = request.get_json()
+    feat = update_object(
+        Feat, ["name", "prerequisite", "text", "attributes"], ["source"]
+    )
+    return jsonify(feat), 200
 
-    try:
-        if not (a_id := data.get('id')):
-            raise BadRequest("No object ID specified")
-        
-        feat: Feat = db.session.query(Feat).filter(Feat.id == a_id).first()
 
-        if not feat:
-            raise NotFound("Feat not found")
-        
-        for field in ["name", "prerequisite", "text", "attributes"]:
-            if field in data:
-                setattr(feat, field, data[field])
-
-        if "source" in data and data["source"]:
-            feat._source = data["source"].get('id')
-
-        db.session.commit()        
-    except NotFound as e:
-        raise NotFound(e)
-    except Exception as e:
-        raise BadRequest(e)
-    
-    return jsonify(200)
-
-@api_blueprint.delete('/feats/<f_id>')
+@api_blueprint.delete("/feats/<f_id>")
 @is_admin
 def delete_feat(f_id):
-    db: SQLAlchemy = current_app.config.get("DB")
-    feat: Feat = db.session.query(Feat).filter(Feat.id == f_id).first()
+    return delete_object(Feat, f_id)
 
-    if not feat:
-        raise NotFound()
-    
-    db.session.delete(feat)
-    db.session.commit()
 
-    return jsonify(200)
+@api_blueprint.get("/backgrounds")
+def get_backgrounds():
+    backgrounds = current_app.cache.fetch(Background)
 
+    try:
+        filter_map = {
+            "name": lambda b, value: (
+                value.lower() in b.name.lower() if b.name else False
+            )
+        }
+
+        backgrounds = filter_objects(filter_map, backgrounds)
+    except Exception as e:
+        raise BadRequest(str(e))
+
+    if not backgrounds:
+        raise NotFound("Backgrounds not found")
+
+    return jsonify(backgrounds)
+
+
+@api_blueprint.post("/backgrounds")
+@is_admin
+def new_background():
+    background = create_object(Background)
+    return jsonify(background), 200
+
+
+@api_blueprint.patch("/backgrounds")
+@is_admin
+def update_background():
+    background = update_object(
+        Background,
+        [
+            "name",
+            "flavortext",
+            "flavor_name",
+            "flavor_description",
+            "skills",
+            "tools",
+            "languages",
+            "equipment",
+            "suggested_characteristics",
+            "feature_name",
+            "feature_text",
+            "feats",
+            "personality",
+            "ideal",
+            "flaw",
+            "bond",
+        ],
+        ["source"],
+    )
+    return jsonify(background), 200
+
+
+@api_blueprint.delete("/backgrounds/<id>")
+@is_admin
+def delete_backgrounds(id):
+    return delete_object(Background, id)
 
 
 # --------------------------- #
 # Private Methods
 # --------------------------- #
-def _get_level_costs() -> list[LevelCost]:
+
+
+def filter_objects(filter_map: {}, objects: []) -> []:
+    for arg, filter_func in filter_map.items():
+        if raw_value := request.args.get(arg):
+            value = unquote(raw_value)
+            objects = [p for p in objects if filter_func(p, value)]
+
+    return objects
+
+
+def create_object(model_class):
     db: SQLAlchemy = current_app.config.get("DB")
-    costs: list[LevelCost] = (
-        db.session.query(LevelCost).order_by(asc(LevelCost.id)).all()
+    if not request:
+        raise BadRequest()
+
+    data = request.get_json()
+    try:
+        obj = model_class.from_json(data)
+        db.session.add(obj)
+        db.session.commit()
+        if current_app.cache.contains(model_class):
+            current_app.cache.update(db.session, model_class)
+        return obj
+    except Exception as e:
+        db.session.rollback()
+        raise BadRequest(str(e))
+
+
+def delete_object(model_class, id):
+    db: SQLAlchemy = current_app.config.get("DB")
+    try:
+        if not id:
+            raise BadRequest("Missing Object ID")
+
+        obj = current_app.cache.fetch(model_class, id)
+
+        if not obj:
+            raise NotFound(f"{model_class.__name__} not found")
+
+        db.session.delete(obj)
+        db.session.commit()
+
+        if current_app.cache.contains(model_class):
+            current_app.cache.update(db.session, model_class)
+
+        return jsonify(200)
+
+    except Exception as e:
+        raise BadRequest(str(e))
+
+
+def update_object(model_class, update_fields: [] = [], fk_fields: [] = []):
+    db: SQLAlchemy = current_app.config.get("DB")
+    all_fields = update_fields + fk_fields
+    if not request:
+        raise BadRequest()
+
+    data = request.get_json()
+
+    try:
+        object_id = data.get("id")
+
+        if not object_id:
+            raise NotFound(f"Missing object id")
+
+        obj = current_app.cache.fetch(model_class, object_id)
+        if not obj:
+            raise NotFound(f"{model_class.__name__} not found.")
+
+        obj = db.session.merge(obj)
+
+        for field in all_fields:
+            if field in data:
+                if field in update_fields:
+                    setattr(obj, field, data[field])
+                elif field in fk_fields:
+                    setattr(obj, f"_{field}", data[field].get("id"))
+
+        db.session.commit()
+        if current_app.cache.contains(model_class):
+            current_app.cache.update(db.session, model_class)
+
+        return obj
+
+    except Exception as e:
+        db.session.rollback()
+        raise BadRequest(str(e))
+
+
+def _get_level_costs() -> list[LevelCost]:
+    costs: list[LevelCost] = sorted(
+        current_app.cache.fetch(LevelCost), key=lambda c: c.id
     )
 
     if not costs:
@@ -1162,9 +997,8 @@ def _get_level_costs() -> list[LevelCost]:
 
 
 def _get_code_conversion() -> list[CodeConversion]:
-    db: SQLAlchemy = current_app.config.get("DB")
-    points: list[CodeConversion] = (
-        db.session.query(CodeConversion).order_by(asc(CodeConversion.id)).all()
+    points: list[CodeConversion] = sorted(
+        current_app.cache.fetch(CodeConversion), key=lambda c: c.id
     )
 
     if not points:
@@ -1174,9 +1008,8 @@ def _get_code_conversion() -> list[CodeConversion]:
 
 
 def _get_activity_points() -> list[ActivityPoints]:
-    db: SQLAlchemy = current_app.config.get("DB")
-    points: list[ActivityPoints] = (
-        db.session.query(ActivityPoints).order_by(asc(ActivityPoints.id)).all()
+    points: list[ActivityPoints] = sorted(
+        current_app.cache.fetch(ActivityPoints), key=lambda a: a.id
     )
 
     if not points:
@@ -1186,10 +1019,8 @@ def _get_activity_points() -> list[ActivityPoints]:
 
 
 def _get_activities() -> list[Activity]:
-    db: SQLAlchemy = current_app.config.get("DB")
-
-    activities: list[Activity] = (
-        db.session.query(Activity).order_by(asc(Activity.id)).all()
+    activities: list[Activity] = sorted(
+        current_app.cache.fetch(Activity), key=lambda a: a.id
     )
 
     if not activities:
@@ -1202,13 +1033,10 @@ def _get_message(
     message_id: int = None, full_load: bool = False
 ) -> Optional[Union[BotMessage, RefMessage, list[RefMessage]]]:
     db: SQLAlchemy = current_app.config.get("DB")
-
-    query = db.session.query(RefMessage).filter(
-        RefMessage._guild_id == DISCORD_GUILD_ID
-    )
+    messages = current_app.cache.fetch(RefMessage)
 
     if message_id:
-        message = query.filter(RefMessage._message_id == message_id).first()
+        message = next((m for m in messages if m._message_id == message_id), None)
 
         if not message:
             raise NotFound("Message not found")
@@ -1221,6 +1049,7 @@ def _get_message(
             if "id" not in discord_message:
                 db.session.delete(message)
                 db.session.commit()
+                current_app.cache.update(db.session, RefMessage)
                 raise NotFound("Discord message not found")
 
             else:
@@ -1243,23 +1072,6 @@ def _get_message(
         else:
             m = message
     else:
-        m = query.all()
+        m = messages
 
     return m
-
-
-def _get_guild() -> G0T0Guild:
-    db: SQLAlchemy = current_app.config.get("DB")
-    try:
-        guild: G0T0Guild = (
-            db.session.query(G0T0Guild)
-            .filter(G0T0Guild._id == int(DISCORD_GUILD_ID))
-            .first()
-        )
-
-        if not guild:
-            raise NotFound("Guild not found")
-
-        return guild
-    except:
-        raise BadRequest()

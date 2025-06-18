@@ -1,0 +1,74 @@
+<custom-modal title="Background" custom-id="background-edit-form" {% if background %}data-id="{{ background.id }}" data-parent="{{ background.parent }}" {% endif %}>
+    <div class="container">
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input 
+                custom-id="background-name" 
+                label-text="Background Name" 
+                value="{{background.name if background else ''}}">
+                </text-input>
+            </div>
+            <div class="col-6 mb-2">
+                <select-input custom-id="background-source" custom-label="Content Source" options='{{ options['content-source']|tojson }}' selected="{{ background.source.id if background and background.source else '6' }}"></select-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-3">
+                <text-input
+                custom-id="background-skills"
+                label-text="Skill Proficiencies",
+                value="{{background.skills if background else ''}}">
+                </text-input>
+            </div>
+            <div class="col-6 mb-3">
+                <text-input
+                custom-id="background-tools"
+                label-text="Tool Proficiencies",
+                value="{{background.tools if background else ''}}">
+                </text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-3">
+                <text-input
+                custom-id="background-languages"
+                label-text="Languages",
+                value="{{background.languages if background else ''}}">
+                </text-input>
+            </div>
+            <div class="col-6 mb-3">
+                <text-input
+                custom-id="background-equipment"
+                label-text="Equipment",
+                value="{{background.equipment if background else ''}}">
+                </text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label for="background-flavortext" class="form-label fw-bold">Flavortext</label>
+            <textarea id="background-flavortext" value="" spellcheck="true" class="form-control">{{ background.flavortext if primary_class else ''}}</textarea>
+        </div>
+        <div class="row mb-2">
+            <div class="col mb-3">
+                <button type="button" class="btn btn-primary float-end m-3" id="background-submit" data-bs-dismiss="modal">
+                    Submit
+                </button>
+                <button type="button" class="btn btn-danger float-end m-3" id="background-delete" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#delete-confirm-modal">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</custom-modal>
+
+<custom-modal title="Confirm Delete" custom-id="delete-confirm-modal">
+    <div class="container">
+        <div class="row mb-2">
+            Are you sure you want to delete this background?
+        </div>
+        <div class="row-mb-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-id="" id="background-delete-confirmed">Delete</button>
+        </div>
+    </div>
+</custom-modal>

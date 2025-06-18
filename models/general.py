@@ -1,6 +1,8 @@
 import datetime
 import json
 import uuid
+from xml.etree.ElementTree import Element
+import bleach
 import markdown
 from markdown.extensions import Extension
 from markdown.preprocessors import Preprocessor
@@ -9,7 +11,7 @@ from flask.json.provider import JSONProvider
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 import requests
-from sqlalchemy import inspect
+from sqlalchemy import func, inspect
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm.decl_api import registry
 from constants import DISCORD_ADMINS, DISCORD_GUILD_ID
@@ -17,9 +19,11 @@ from models.exceptions import UnauthorizedAccessError
 
 db = SQLAlchemy()
 
+
 class MonsterBlockExtension(Extension):
     def extendMarkdown(self, md):
         md.preprocessors.register(MonsterBlockPreProcessor(md), "monster_block", 175)
+
 
 class MonsterBlockPreProcessor(Preprocessor):
     def run(self, lines):
@@ -42,16 +46,73 @@ class MonsterBlockPreProcessor(Preprocessor):
         return new_lines
 
     def render_monster_block(self, content):
-        # Convert the content into styled HTML
         html = '<div class="monster-block">'
         html += markdown.markdown("\n".join(content), extensions=["tables"])
         html += "</div>"
         return html
 
-def render_markdown(text: str) -> str:
+
+class FeatureHyperlinkPattern(markdown.inlinepatterns.Pattern):
+    def __init__(self, *args, **kwargs):
+        super().__init__(r"\[\[(.*?)\]\]", *args, **kwargs)
+
+    def handleMatch(self, m):
+        from models.G0T0 import Feat
+
+        raw_text = m.group(0)  # Get the full match
+        text = raw_text.strip("[]")  # Extract text manually
+
+        feat: Feat = next(
+            (
+                f
+                for f in current_app.cache.fetch(Feat)
+                if f.name.lower() == text.lower()
+            ),
+            None,
+        )
+
+        if feat:
+            el = Element("span")
+            el.set("class", "info-link")
+            el.set("data-name", feat.name)
+            el.set("data-text", feat.html_text)
+            el.text = text
+            return el
+        else:
+            print(f"No feat found for: '{text}'")  # Debugging statement
+            # Return plain text if no matching database item is found
+            return markdown.util.AtomicString(text)
+
+
+class FeatureHyperlinkExtension(Extension):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def extendMarkdown(self, md):
+        md.inlinePatterns.register(FeatureHyperlinkPattern(), "hyperlink", 175)
+
+
+def render_markdown(text: str, add_extension: list = []) -> str:
     if not text:
         return ""
-    return markdown.markdown(text, extensions=["tables", "sane_lists", "toc", MonsterBlockExtension()])
+
+    extensions = ["tables", "sane_lists", "toc", MonsterBlockExtension()]
+
+    if add_extension:
+        extensions += add_extension
+
+    render = markdown.markdown(text, extensions=extensions)
+
+    allowed_tags = frozenset(
+        set(bleach.sanitizer.ALLOWED_TAGS)
+        | {"div", "span", "table", "thead", "tbody", "tr", "th", "td"}
+    )
+    allowed_attributes = {"*": ["class", "id", "data-*"], "a": ["href", "title"]}
+
+    return bleach.clean(
+        render, tags=allowed_tags, attributes=allowed_attributes, strip=True
+    )
+
 
 class User(UserMixin):
     id: str
@@ -73,22 +134,30 @@ class User(UserMixin):
     def is_admin(self):
         from models.G0T0 import G0T0Guild
         from models.discord import DiscordMember
-        db: SQLAlchemy = current_app.config.get("DB")
-        guild = db.session.query(G0T0Guild).filter(G0T0Guild._id == DISCORD_GUILD_ID).first()
-        member: DiscordMember = current_app.discord.fetch_members(self.id)
-        admin_role = current_app.discord.fetch_roles(guild.admin_role)        
 
-        return str(self.id) in set(str(admin) for admin in DISCORD_ADMINS) or admin_role.id in member.roles
-    
+        db: SQLAlchemy = current_app.config.get("DB")
+        guild = (
+            db.session.query(G0T0Guild)
+            .filter(G0T0Guild._id == DISCORD_GUILD_ID)
+            .first()
+        )
+        member: DiscordMember = current_app.discord.fetch_members(self.id)
+        admin_role = current_app.discord.fetch_roles(guild.admin_role)
+
+        return (
+            str(self.id) in set(str(admin) for admin in DISCORD_ADMINS)
+            or admin_role.id in member.roles
+        )
+
     @property
     def is_beta_tester(self):
         from models.discord import DiscordMember
+
         member: DiscordMember = current_app.discord.fetch_members(self.id)
-        
-        if beta_role := current_app.discord.fetch_roles(name="Beta Testing"):   
+
+        if beta_role := current_app.discord.fetch_roles(name="Beta Testing"):
             return beta_role.id in member.roles or self.is_admin
         return False
-        
 
     @property
     def avatar_url(self):
@@ -189,6 +258,7 @@ class IntAttributeMixin:
         except (ValueError, TypeError):
             setattr(self, attr_name, None)
 
+
 class Content(db.Model):
     __tablename__ = "web_content"
     key: Mapped[str] = mapped_column(primary_key=True)
@@ -198,6 +268,7 @@ class Content(db.Model):
     @property
     def html_content(self):
         return render_markdown(self.content)
+
 
 class SearchResult(BaseModel):
     url: str

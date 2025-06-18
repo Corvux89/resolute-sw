@@ -1,0 +1,115 @@
+{% extends "template.html" %}{% block body %}
+
+{% if current_user.is_admin %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+{% endif %}
+
+<div class="container background-detail-page">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <h3 class="text-primary class-detail-title fw-bold">
+                {{ background.name|upper }}
+                {% if current_user.is_admin %}
+                <button type="button"
+                id="edit-background-btn-{{ background.id }}"
+                class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
+                data-background-id="{{ background.id }}"
+                title="Edit Background"
+                data-bs-toggle="modal"
+                data-bs-target="#background-edit-form">
+                    <i class="fa fa-pencil"></i>
+                </button>
+                {% endif %}
+            </h3>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="class-flavor-wrap">
+                <div class="class-flavor-text">
+                    {{ background.html_flavortext|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if background.skills %}
+            <p class="mb-0"><strong>Skill Proficiencies:</strong> {{ background.skills }}</p>
+            {% endif %}
+            {% if background.languages %}
+            <p class="mb-0"><strong>Languages:</strong> {{ background.languages }}</p>
+            {% endif %}
+            {% if background.tools %}
+            <p class="mb-0"><strong>Tool Proficiencies:</strong> {{ background.tools }}</p>
+            {% endif %}
+            {% if background.equipment %}
+            <p class="mb-0"><strong>Equipment:</strong> {{ background.equipment }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% if background.flavor_name and background.flavor_description %}
+    <div class="row mb-4">
+        <div class col-12">
+            <h3 class="border-bottom border-info">{{ background.flavor_name }}</h3>
+            <div class="custom-table-wrapper">
+                {{ background.html_flavor_description|safe }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if background.feature_name %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="border-bottom border-info">Feature: {{ background.feature_name }}</h3>            
+            <p>{{ background.feature_text }}</p>
+        </div>
+    </div>
+    {% endif %} 
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="border-bottom border-info">Background Feat</h3>
+            <div>
+                <p>As a further embodiment of the experience and training of your background, you can choose from the following feats:</p>
+                <div class="custom-table-wrapper">
+                {{ background.html_feats|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-0">
+        <div class="col-12">
+            <h3 class="border-bottom border-info">Suggested Characteristics</h3>
+            <p>{{ background.suggested_characteristics }}</p>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="custom-table-wrapper">
+                {{ background.html_personality|safe }}
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="custom-table-wrapper">
+                {{ background.html_ideal|safe }}
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="custom-table-wrapper">
+                {{ background.html_flaw|safe }}
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="custom-table-wrapper">
+                {{ background.html_bond|safe }}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_admin %}
+{% include '/backgrounds/background_modal.html' %}
+{% endif %}
+
+{% endblock %}

@@ -69,7 +69,6 @@ def callback(provider):
         session["OAUTH2_TOKEN"] = access_token
         user = current_app.discord.fetch_user()
 
-        
         if member := current_app.discord.fetch_members(user.id):
             login_user(user)
             data = jwt.decode(

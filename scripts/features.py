@@ -6,19 +6,11 @@ request = requests.get("https://sw5eapi.azurewebsites.net/api/feat")
 
 data = request.json()
 
-output = [
-    [
-        "id",
-        "name",
-        "prerequisite",
-        "text",
-        "source",
-        "attributes"
-    ]
-]
+output = [["id", "name", "prerequisite", "text", "source", "attributes"]]
 
 for obj in data:
-    def get_value(key: str, default: str = None): 
+
+    def get_value(key: str, default: str = None):
         val = obj.get(key)
 
         if val == "None" or not val:
@@ -29,16 +21,13 @@ for obj in data:
 
     attr_string = ", ".join(atrributes)
 
-
-            
-    
     line = [
         uuid.uuid4(),
         get_value("name"),
         get_value("prerequisite"),
         get_value("text"),
         get_value("contentSourceEnum"),
-        f"{{{attr_string}}}"
+        f"{{{attr_string}}}",
     ]
 
     output.append(line)

@@ -15,9 +15,9 @@ from models.general import BaseModel, IntAttributeMixin, User
 class MemberAttributeMixin:
     def get_member_attribute(self, member_id: str):
         member = current_app.discord.fetch_members(member_id)
-        
+
         if member:
-            return member.__dict__        
+            return member.__dict__
         return None
 
 
@@ -86,6 +86,7 @@ class DiscordRole(BaseModel, IntAttributeMixin):
     @id.setter
     def id(self, value):
         self.set_int_attribute("_id", value)
+
 
 class DiscordMember:
     nick: str = None
@@ -228,30 +229,36 @@ class DiscordBot(ABC):
 
         if role_id:
             return next((r for r in self._roles.get("roles") if r.id == role_id), None)
-        
-        elif kwargs.get('name'):
-            return next((r for r in self._roles.get("roles") if r.name == kwargs.get('name')), None)
+
+        elif kwargs.get("name"):
+            return next(
+                (r for r in self._roles.get("roles") if r.name == kwargs.get("name")),
+                None,
+            )
 
         return self._roles.get("roles", [])
-    
+
     def fetch_members(
-            self, member_id: str = None
+        self, member_id: str = None
     ) -> typing.Union[typing.Optional[DiscordMember], list[DiscordMember]]:
         current_time = time.time()
 
-        if not self._members.get('members') or (
-            current_time - self._roles.get('timestamp',0) > CACHE_TIMEOUT
+        if not self._members.get("members") or (
+            current_time - self._roles.get("timestamp", 0) > CACHE_TIMEOUT
         ):
-            members = self.request(
-            f"/guilds/{DISCORD_GUILD_ID}/members?limit={LIMIT}"
-        )
-            
+            members = self.request(f"/guilds/{DISCORD_GUILD_ID}/members?limit={LIMIT}")
+
             self._members["members"] = [DiscordMember(**m) for m in members]
             self._members["timestamp"] = current_time
 
         if member_id:
-            return next((m for m in self._members.get('members') if m.user and m.user.id == member_id), None)
-        
-        return self._members.get('members', [])
+            return next(
+                (
+                    m
+                    for m in self._members.get("members")
+                    if m.user and m.user.id == member_id
+                ),
+                None,
+            )
 
-        
+        return self._members.get("members", [])

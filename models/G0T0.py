@@ -11,10 +11,11 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.dialects.postgresql import ARRAY
 
 from constants import DISCORD_GUILD_ID
-from models.general import BaseModel, db, render_markdown
+from models.general import BaseModel, FeatureHyperlinkExtension, db, render_markdown
 
 
 db = SQLAlchemy()
+
 
 class ContentSource(db.Model, BaseModel):
     __tablename__ = "c_content_source"
@@ -22,20 +23,24 @@ class ContentSource(db.Model, BaseModel):
     name: Mapped[str]
     abbreviation: Mapped[str]
 
+
 class Rarity(db.Model, BaseModel):
     __tablename__ = "c_rarity"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
+
 
 class PowerType(db.Model, BaseModel):
     __tablename__ = "c_power_type"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
 
+
 class EquipmentCategory(db.Model, BaseModel):
     __tablename__ = "c_equipment_category"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
+
 
 class EquipmentSubCategory(db.Model, BaseModel):
     __tablename__ = "c_equipment_subcategory"
@@ -43,16 +48,19 @@ class EquipmentSubCategory(db.Model, BaseModel):
     value: Mapped[str]
     parent: Mapped[int]
 
+
 class EnhancedItemType(db.Model, BaseModel):
     __tablename__ = "c_enhanced_type"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
+
 
 class EnhancedItemSubtype(db.Model, BaseModel):
     __tablename__ = "c_enhanced_subtype"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
     parent: Mapped[str]
+
 
 class Activity(db.Model, BaseModel):
     __tablename__ = "c_activity"
@@ -139,8 +147,8 @@ class PrimaryClass(db.Model, BaseModel):
         "source", ForeignKey("c_content_source.id"), nullable=True
     )
 
-    _source_record = relationship("ContentSource")
-    _caster_type_record = relationship("PowerType")
+    source = relationship("ContentSource", lazy="joined")
+    caster_type = relationship("PowerType", lazy="joined")
 
     @classmethod
     def from_json(cls, json):
@@ -169,44 +177,38 @@ class PrimaryClass(db.Model, BaseModel):
     @property
     def html_flavortext(self):
         return render_markdown(self.flavortext)
-    
+
     @property
     def html_features(self):
         return render_markdown(self.features)
-    
+
     @property
     def html_level_table(self):
         return render_markdown(self.level_changes)
-    
+
     @property
     def html_starting_equip(self):
         return render_markdown(self.starting_equipment)
-    
-    @property
-    def source(self):
-        return self._source_record
-    
-    @property
-    def caster_type(self):
-        return self._caster_type_record
 
 
 class Archetype(db.Model, BaseModel):
     __tablename__ = "c_character_archetype"
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
-    parent: Mapped[int]= mapped_column(ForeignKey("c_character_class.id"))
+    parent: Mapped[int] = mapped_column(ForeignKey("c_character_class.id"))
     flavortext: Mapped[str]
     level_table: Mapped[str]
     image_url: Mapped[str]
-    _caster_type: Mapped[int] = mapped_column("caster_type", ForeignKey("c_power_type.id"))
+    _caster_type: Mapped[int] = mapped_column(
+        "caster_type", ForeignKey("c_power_type.id")
+    )
     _source: Mapped[int] = mapped_column("source", ForeignKey("c_content_source.id"))
 
     _parent_class = relationship("PrimaryClass", foreign_keys=[parent], lazy="joined")
 
-    caster_type = relationship("PowerType")
-    
-    source = relationship("ContentSource")
+    caster_type = relationship("PowerType", lazy="joined")
+
+    source = relationship("ContentSource", lazy="joined")
 
     @classmethod
     def from_json(cls, json):
@@ -224,14 +226,15 @@ class Archetype(db.Model, BaseModel):
     @property
     def parent_name(self):
         return self._parent_class.value if self._parent_class else None
-    
+
     @property
     def html_flavortext(self):
         return render_markdown(self.flavortext)
-    
+
     @property
     def html_level_table(self):
         return render_markdown(self.level_table)
+
 
 class Species(db.Model, BaseModel):
     __tablename__ = "c_character_species"
@@ -251,59 +254,40 @@ class Species(db.Model, BaseModel):
     language: Mapped[str]
     image_url: Mapped[str]
     size: Mapped[str]
-    _source: Mapped[int] = mapped_column("source", ForeignKey("c_content_source.id"), nullable=True)
+    _source: Mapped[int] = mapped_column(
+        "source", ForeignKey("c_content_source.id"), nullable=True
+    )
 
-    _source_record = relationship(ContentSource)
+    source = relationship(ContentSource, lazy="joined")
 
     @classmethod
     def from_json(cls, json):
-        return cls (
-            value = json.get('value'), 
-            skin_options = json.get('skin_options', ''),
-            hair_options = json.get('hair_options', ''),
-            eye_options = json.get('eye_options', ''),
-            distinctions = json.get('distinctions', ''),
-            height_average = json.get('height_average', ''),
-            height_mod = json.get('height_mod', ''),
-            weight_average = json.get('weight_average', ''),
-            weight_mod = json.get('weight_mod', ''),
-            homeworld = json.get('homeworld', ''),
-            flavortext = json.get('flavortext', ''),
-            traits = json.get('traits', ''),
-            language = json.get('language', ''),
-            image_url = json.get('image_url', ''),
-            size = json.get('size', ''),
-            _source = json.get('source', {}).get('id')
+        return cls(
+            value=json.get("value"),
+            skin_options=json.get("skin_options", ""),
+            hair_options=json.get("hair_options", ""),
+            eye_options=json.get("eye_options", ""),
+            distinctions=json.get("distinctions", ""),
+            height_average=json.get("height_average", ""),
+            height_mod=json.get("height_mod", ""),
+            weight_average=json.get("weight_average", ""),
+            weight_mod=json.get("weight_mod", ""),
+            homeworld=json.get("homeworld", ""),
+            flavortext=json.get("flavortext", ""),
+            traits=json.get("traits", ""),
+            language=json.get("language", ""),
+            image_url=json.get("image_url", ""),
+            size=json.get("size", ""),
+            _source=json.get("source", {}).get("id"),
         )
 
     @property
     def html_flavortext(self):
         return render_markdown(self.flavortext)
-    
+
     @property
     def html_traits(self):
         return render_markdown(self.traits)
-    
-    @property
-    def source(self) -> ContentSource:
-        return self._source_record
-
-class Store(db.Model, BaseModel, IntAttributeMixin):
-    __tablename__ = "store"
-    _sku: Mapped[int] = mapped_column("sku", primary_key=True)
-    user_cost: Mapped[float]
-
-    def __init__(self, **kwargs):
-        self._sku = kwargs.get("sku")
-        self.user_cost = kwargs.get("user_cost", 0)
-
-    @property
-    def sku(self):
-        return str(self._sku)
-
-    @sku.setter
-    def sku(self, value):
-        self.set_int_attribute("sku", value)
 
 
 class G0T0Guild(db.Model, BaseModel, IntAttributeMixin):
@@ -585,7 +569,7 @@ class RefMessage(db.Model, BaseModel, IntAttributeMixin):
 
     @property
     def channel_name(self):
-        channel = current_app.discord.fetch_channels(self.channel_id) 
+        channel = current_app.discord.fetch_channels(self.channel_id)
         return channel.name
 
     @property
@@ -639,17 +623,9 @@ class Character(db.Model, BaseModel):
         primaryjoin="and_(Character.id == CharacterClass.character_id, CharacterClass.active == True)",
     )
 
-    _species_record = relationship("Species", foreign_keys=[_species], lazy="joined")
+    species = relationship("Species", foreign_keys=[_species], lazy="joined")
 
-    _faction_record = relationship("Faction")
-
-    @property
-    def faction(self):
-        return self._faction_record
-
-    @property
-    def species(self):
-        return self._species_record
+    faction = relationship("Faction")
 
     @property
     def player_id(self):
@@ -674,23 +650,13 @@ class CharacterClass(db.Model, BaseModel):
     )
     active: Mapped[bool]
 
-    _primary_class_record = relationship(
+    primary_class = relationship(
         "PrimaryClass",
         foreign_keys=[_primary_class],
         lazy="joined",
     )
 
-    _archetype_record = relationship(
-        "Archetype", foreign_keys=[_archetype], lazy="joined"
-    )
-
-    @property
-    def primary_class(self):
-        return self._primary_class_record
-
-    @property
-    def archetype(self):
-        return self._archetype_record
+    archetype = relationship("Archetype", foreign_keys=[_archetype], lazy="joined")
 
 
 class Player(db.Model, BaseModel, MemberAttributeMixin):
@@ -768,9 +734,9 @@ class Log(db.Model, BaseModel, IntAttributeMixin, MemberAttributeMixin):
     invalid: Mapped[bool]
     created_ts: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
 
-    _activity_record = relationship("Activity")
-    _faction_record = relationship("Faction")
-    _character_record = relationship("Character")
+    activity = relationship("Activity")
+    faction = relationship("Faction")
+    character = relationship("Character")
 
     def __init__(self, **kwargs):
         self.id = kwargs.get("id")
@@ -788,22 +754,6 @@ class Log(db.Model, BaseModel, IntAttributeMixin, MemberAttributeMixin):
         self.created_ts = kwargs.get("created_ts")
 
     @property
-    def activity(self):
-        return self._activity_record
-
-    @activity.setter
-    def activity(self, value):
-        self.set_int_attribute("_activity", value)
-
-    @property
-    def faction(self):
-        return self._faction_record
-
-    @faction.setter
-    def faction(self, value):
-        self.set_int_attribute("_faction", value)
-
-    @property
     def guild_id(self):
         return self._guild_id
 
@@ -818,10 +768,6 @@ class Log(db.Model, BaseModel, IntAttributeMixin, MemberAttributeMixin):
     @property
     def author(self):
         return self.get_member_attribute(str(self._author))
-
-    @property
-    def character(self):
-        return self._character_record
 
     @property
     def player_id(self):
@@ -856,6 +802,7 @@ class PowerAlignment(db.Model, BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
 
+
 class Power(db.Model, BaseModel):
     __tablename__ = "powers"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
@@ -877,62 +824,57 @@ class Power(db.Model, BaseModel):
     level: Mapped[int]
     duration: Mapped[str]
 
-    _type_record = relationship("PowerType")
-    _source_record = relationship("ContentSource")
-    _alignment_record = relationship("PowerAlignment")
+    type = relationship("PowerType", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+    alignment = relationship("PowerAlignment", lazy="joined")
 
     @classmethod
     def from_json(cls, json):
-        return cls (
-            name = json.get('name'),
-            pre_requisite=json.get('pre_requisite'),
-            _type=json.get('type', {}).get('id'),
-            casttime=json.get('casttime'),
-            range=json.get('range'),
-            _source=json.get('source', {}).get('id'),
-            description=json.get('description'),
-            concentration=json.get('concentration'),
-            _alignment=json.get('alignment', {}).get('id'),
-            level=json.get('level'),
-            duration=json.get('duration')
+        return cls(
+            name=json.get("name"),
+            pre_requisite=json.get("pre_requisite"),
+            _type=json.get("type", {}).get("id"),
+            casttime=json.get("casttime"),
+            range=json.get("range"),
+            _source=json.get("source", {}).get("id"),
+            description=json.get("description"),
+            concentration=json.get("concentration"),
+            _alignment=json.get("alignment", {}).get("id"),
+            level=json.get("level"),
+            duration=json.get("duration"),
         )
-
-    @property
-    def type(self) -> PowerType:
-        return self._type_record
-
-    @property
-    def source(self) -> ContentSource:
-        return self._source_record
-
-    @property
-    def alignment(self) -> PowerAlignment:
-        return self._alignment_record
 
     @property
     def html_desc(self):
         return render_markdown(self.description)
-    
+
+
 class Equipment(db.Model, BaseModel):
     __tablename__ = "equipment"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str]
-    _source: Mapped[int] = mapped_column("source", ForeignKey("c_content_source.id"), nullable=True)
+    _source: Mapped[int] = mapped_column(
+        "source", ForeignKey("c_content_source.id"), nullable=True
+    )
     description: Mapped[str]
     cost: Mapped[int]
     weight: Mapped[int]
-    _category: Mapped[int] = mapped_column("category", ForeignKey("c_equipment_category.id"))
+    _category: Mapped[int] = mapped_column(
+        "category", ForeignKey("c_equipment_category.id")
+    )
     dmg_number_of_die: Mapped[int]
     dmg_die_type: Mapped[int]
     dmg_type: Mapped[str]
-    _sub_category: Mapped[int] = mapped_column("sub_category", ForeignKey("c_equipment_subcategory.id"), nullable=True)
+    _sub_category: Mapped[int] = mapped_column(
+        "sub_category", ForeignKey("c_equipment_subcategory.id"), nullable=True
+    )
     properties: Mapped[str]
     ac: Mapped[str]
     stealth_dis: Mapped[bool]
 
-    sub_category = relationship("EquipmentSubCategory")
-    source = relationship("ContentSource")
-    category = relationship("EquipmentCategory")
+    sub_category = relationship("EquipmentSubCategory", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+    category = relationship("EquipmentCategory", lazy="joined")
 
     @classmethod
     def from_json(cls, json):
@@ -947,30 +889,39 @@ class Equipment(db.Model, BaseModel):
             dmg_number_of_die=json.get("dmg_number_of_die", 0),
             dmg_die_type=json.get("dmg_die_type", 0),
             dmg_type=json.get("dmg_type", ""),
-            _sub_category=json.get('sub_category', {}).get('id'),
+            _sub_category=json.get("sub_category", {}).get("id"),
             properties=json.get("properties", ""),
             ac=json.get("ac", ""),
             stealth_dis=json.get("stealth_dis", False),
         )
-    
+
+
 class EnhancedItem(db.Model, BaseModel):
     __tablename__ = "enhanced_items"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str]
-    _type: Mapped[int] = mapped_column("type", ForeignKey("c_enhanced_type.id"), nullable=True)
-    _rarity: Mapped[int] = mapped_column("rarity", ForeignKey("c_rarity.id"), nullable=True)
+    _type: Mapped[int] = mapped_column(
+        "type", ForeignKey("c_enhanced_type.id"), nullable=True
+    )
+    _rarity: Mapped[int] = mapped_column(
+        "rarity", ForeignKey("c_rarity.id"), nullable=True
+    )
     attunement: Mapped[bool]
     text: Mapped[str]
     prerequisite: Mapped[str]
     subtype_ft: Mapped[str]
-    _subtype: Mapped[int] = mapped_column("subtype", ForeignKey("c_enhanced_subtype.id"), nullable=True)
+    _subtype: Mapped[int] = mapped_column(
+        "subtype", ForeignKey("c_enhanced_subtype.id"), nullable=True
+    )
     cost: Mapped[int]
-    _source: Mapped[int] = mapped_column("source", ForeignKey("c_content_source.id"), nullable=True)
+    _source: Mapped[int] = mapped_column(
+        "source", ForeignKey("c_content_source.id"), nullable=True
+    )
 
-    type = relationship("EnhancedItemType")
-    rarity = relationship("Rarity")
-    subtype = relationship("EnhancedItemSubtype")
-    source = relationship("ContentSource")
+    type = relationship("EnhancedItemType", lazy="joined")
+    rarity = relationship("Rarity", lazy="joined")
+    subtype = relationship("EnhancedItemSubtype", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
 
     @property
     def html_text(self):
@@ -991,7 +942,8 @@ class EnhancedItem(db.Model, BaseModel):
             cost=json.get("cost", 0),
             _source=json.get("source", {}).get("id"),
         )
-    
+
+
 class Feat(db.Model, BaseModel):
     __tablename__ = "feats"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
@@ -1001,19 +953,73 @@ class Feat(db.Model, BaseModel):
     _source: Mapped[int] = mapped_column("source", ForeignKey("c_content_source.id"))
     attributes: Mapped[list[str]] = mapped_column("attributes", ARRAY(String))
 
-    source = relationship("ContentSource")
+    source = relationship("ContentSource", lazy="joined")
 
     @property
     def html_text(self):
         return render_markdown(self.text)
-    
+
     @classmethod
     def from_json(cls, json):
         return cls(
-            id=json.get('id', uuid.uuid4()),
-            name=json.get('name'),
-            prerequisite=json.get('prerequisite'),
-            text=json.get('text'),
-            _source=json.get('source', {}).get('id'),
-            attributes=json.get('attributes', [])
+            id=json.get("id", uuid.uuid4()),
+            name=json.get("name"),
+            prerequisite=json.get("prerequisite"),
+            text=json.get("text"),
+            _source=json.get("source", {}).get("id"),
+            attributes=json.get("attributes", []),
         )
+
+
+class Background(db.Model, BaseModel):
+    __tablename__ = "backgrounds"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    flavortext: Mapped[str]
+    flavor_name: Mapped[str]
+    flavor_description: Mapped[str]
+    skills: Mapped[str]
+    tools: Mapped[str]
+    languages: Mapped[str]
+    equipment: Mapped[str]
+    suggested_characteristics: Mapped[str]
+    feature_name: Mapped[str]
+    feature_text: Mapped[str]
+    feats: Mapped[str]
+    personality: Mapped[str]
+    ideal: Mapped[str]
+    flaw: Mapped[str]
+    bond: Mapped[str]
+    _source: Mapped[int] = mapped_column(
+        "source", ForeignKey("c_content_source.id"), nullable=True
+    )
+
+    source = relationship("ContentSource", lazy="joined")
+
+    @property
+    def html_flavor_description(self):
+        return render_markdown(self.flavor_description)
+
+    @property
+    def html_bond(self):
+        return render_markdown(self.bond)
+
+    @property
+    def html_flaw(self):
+        return render_markdown(self.flaw)
+
+    @property
+    def html_ideal(self):
+        return render_markdown(self.ideal)
+
+    @property
+    def html_flavortext(self):
+        return render_markdown(self.flavortext)
+
+    @property
+    def html_feats(self):
+        return render_markdown(self.feats, [FeatureHyperlinkExtension()])
+
+    @property
+    def html_personality(self):
+        return render_markdown(self.personality)

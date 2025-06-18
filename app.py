@@ -20,6 +20,7 @@ from constants import (
 )
 from helpers import get_csp
 from helpers.error_handlers import register_handlers
+from models.cache import ResoluteCache
 from models.discord import DiscordBot
 from models.exceptions import UnderConstruction
 from models.general import CustomJSONProvider, User
@@ -61,10 +62,13 @@ app.config["OAUTH2_PROVIDERS"] = {
 app.config["DB"] = db = SQLAlchemy(app)
 app.config["login"] = login = LoginManager(app)
 app.discord = DiscordBot(app)
+app.cache = ResoluteCache()
 
 
 @app.before_request
-def require_login():
+def before_request():
+    app.cache.initialize()
+
     # Allow unauthenticated access to login, static files, and OAuth callback
     allowed_routes = ["auth.login", "auth.callback", "static", "homepage"]
 

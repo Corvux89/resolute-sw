@@ -133,3 +133,31 @@ export interface Feat {
     text?: string
     html_text?: string
 }
+
+export interface Background {
+    id?: string,
+    name?: string,
+    flavortext?: string
+    html_flavortext?: string
+    flavor_name?: string
+    flavor_description?: string,
+    html_flavor_description?: string
+    skills?: string
+    tools?: string
+    languages?: string
+    equipment?: string
+    suggested_characteristics?: string
+    feature_name?: string
+    feature_text?: string
+    feats?: string
+    html_feats?: string
+    personality?: string
+    html_personality?: string
+    ideal?: string
+    html_idea?: string
+    flaw?: string
+    html_flaw?: string
+    bond?: string
+    html_bond?: string
+    source?: ContentSource
+}

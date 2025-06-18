@@ -120,6 +120,16 @@ body, .card{
     cursor: pointer;
 }
 
+.info-link{
+    cursor: pointer;
+    color: blue;
+    text-decoration: underline;
+}
+
+#info-modal p{
+    color: black;
+}
+
 .dropdown-menu .dropdown-submenu {
     display: none;
     position: absolute;
@@ -255,7 +265,7 @@ body, .card{
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 1rem;
-}
+}l
 
 /* Alternating row colors */
 .class-info-card .card-body table tbody tr:nth-child(even) {
@@ -359,4 +369,49 @@ body, .card{
 
 div.dt-scroll-body thead tr th {
     text-align: center; /* Center the text in table headers */
+}
+
+/* Wrapper for dynamically generated tables */
+.custom-table-wrapper table {
+    border-collapse: collapse;
+}
+
+.custom-table-wrapper table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+    color: black;
+}
+
+.custom-table-wrapper table tbody tr:nth-child(even) {
+    background-color: #e9e9e9;
+    color: black;
+}
+
+.custom-table-wrapper table td, .custom-table-wrapper table th {
+    padding: 8px;
+    text-align: left;
+}
+
+/* Nested table styling */
+.custom-table-wrapper table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0; /* Remove extra margin for nested tables */
+}
+
+.custom-table-wrapper table table tbody tr:nth-child(odd) {
+    background-color: #f0f0f0; /* Slightly different color for nested rows */
+}
+
+.custom-table-wrapper table table tbody tr:nth-child(even) {
+    background-color: #e0e0e0; /* Slightly different color for nested rows */
+}
+
+.custom-table-wrapper table table td, .custom-table-wrapper table table th {
+    padding: 6px; /* Adjust padding for nested tables */
+    font-size: 0.9em; /* Slightly smaller font for nested tables */
+    border: 1px solid #ccc; /* Lighter border for nested tables */
+}
+
+.background-detail-page h3, .background-detail-page p{
+    margin-left: 0;
 }

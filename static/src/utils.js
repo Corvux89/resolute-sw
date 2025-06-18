@@ -69,6 +69,9 @@ export function updateSubCategoryFields() {
         $("#item-subcategory-col").removeClass("d-none");
     }
 }
+function capitalizeFirstLetter(val) {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
 export function setupTableFilters(table_name, exceptions, initialFilters) {
     const table = $(table_name).DataTable();
     table.on("xhr", function () {
@@ -84,12 +87,20 @@ export function setupTableFilters(table_name, exceptions, initialFilters) {
                 try {
                     if (col.render) {
                         // @ts-expect-error This works...idk why typescript has issues with it
-                        const render = col.render(raw, 'filter', row).toString();
-                        if (render == null || render == undefined)
-                            return;
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = render;
-                        return tempDiv.textContent.split(",")[0] ?? "";
+                        const render = col.render(raw, 'filter', row);
+                        if (Array.isArray(render)) {
+                            // Return each array value as its own entry
+                            return render.map((item) => {
+                                const tempDiv = document.createElement('div');
+                                tempDiv.innerHTML = capitalizeFirstLetter(item);
+                                return tempDiv.textContent || ""; // Cleaned text content
+                            });
+                        }
+                        else {
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = render?.toString() || "";
+                            return tempDiv.textContent || ""; // Cleaned text content
+                        }
                     }
                     if (raw == null || raw == undefined)
                         return;
@@ -98,7 +109,7 @@ export function setupTableFilters(table_name, exceptions, initialFilters) {
                 catch {
                     return;
                 }
-            }).filter(v => v != null && v !== "")));
+            }).flat().filter(v => v != null && v !== ""))); // Flatten the array and filter out null/empty values
             values.sort((a, b) => a.localeCompare(b, undefined, { numberic: true, sensitivity: 'base' }));
             if (values.length == 0)
                 return;

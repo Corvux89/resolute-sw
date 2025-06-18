@@ -16,21 +16,23 @@ class_map = {
     7: "Operative",
     8: "Scholar",
     9: "Scout",
-    10: "Sentinel"
+    10: "Sentinel",
 }
 
+
 def level_table_markdown(json_data):
-    
+
     headers = json.loads(json_data["levelChangeHeadersJson"])
-    
+
     md = "| " + " | ".join(headers) + " |\n"
     md += "| " + " | ".join(["---"] * len(headers)) + " |\n"
-    
+
     for i in range(1, 21):
         row = json_data["levelChanges"][str(i)]
         md += "| " + " | ".join(str(row.get(h, "")) for h in headers) + " |\n"
 
     return md
+
 
 output = [
     [
@@ -53,13 +55,13 @@ output = [
         "archetype_flavor",
         "image_url",
         "caster_type",
-        "source"
+        "source",
     ]
 ]
 
 
-
 for c in data:
+
     def get_value(key: str):
         val = c.get(key)
 
@@ -67,41 +69,40 @@ for c in data:
             return None
         return val
 
-    class_id = next((k for k, v in class_map.items() if v == c.get('name')), None)
-    class_value = next((v for k, v in class_map.items() if v == c.get('name')), None)
+    class_id = next((k for k, v in class_map.items() if v == c.get("name")), None)
+    class_value = next((v for k, v in class_map.items() if v == c.get("name")), None)
 
     if not class_id:
         print(f"Class: {c.get('name')} not found")
         continue
 
-        
-    if get_value('imageUrls'):
-        image = get_value('imageUrls')[0]
+    if get_value("imageUrls"):
+        image = get_value("imageUrls")[0]
 
     line = [
-      class_id,
-      class_value,
-      get_value('summary'),
-      get_value('primaryAbility'),
-      get_value('flavorText'),
-      level_table_markdown(c),
-      get_value('hitDiceDieType')    ,
-      get_value('hitPointsAtFirstLevel'),
-      get_value('hitPointsAtHigherLevels'),
-      ", ".join(c.get('armorProficiencies', [])),
-      ", ".join(c.get('weaponProficiencies', [])),
-      ", ".join(c.get('toolProficiencies', [])),      
-      ", ".join(c.get('savingThrows', [])),
-      get_value('skillChoices'),
-      "\n".join(c.get('equipmentLines', [])),
-      get_value('classFeatureText'),
-      get_value('archetypeFlavorName'),
-      image,
-      get_value('casterTypeEnum') if get_value('casterTypeEnum') != 0 else None,
-      get_value('contentSourceEnum')
+        class_id,
+        class_value,
+        get_value("summary"),
+        get_value("primaryAbility"),
+        get_value("flavorText"),
+        level_table_markdown(c),
+        get_value("hitDiceDieType"),
+        get_value("hitPointsAtFirstLevel"),
+        get_value("hitPointsAtHigherLevels"),
+        ", ".join(c.get("armorProficiencies", [])),
+        ", ".join(c.get("weaponProficiencies", [])),
+        ", ".join(c.get("toolProficiencies", [])),
+        ", ".join(c.get("savingThrows", [])),
+        get_value("skillChoices"),
+        "\n".join(c.get("equipmentLines", [])),
+        get_value("classFeatureText"),
+        get_value("archetypeFlavorName"),
+        image,
+        get_value("casterTypeEnum") if get_value("casterTypeEnum") != 0 else None,
+        get_value("contentSourceEnum"),
     ]
 
-    output.append(line)     
+    output.append(line)
 
 with open("data.csv", "w", newline="", encoding="utf-8") as file:
     writer = csv.writer(file)
