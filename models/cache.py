@@ -43,9 +43,9 @@ class ResoluteCache(ABC):
     def __init__(self):
         self.cache = {}
 
-    def initialize(self):
+    def initialize(self, force: bool = False):
         db: SQLAlchemy = current_app.config.get("DB")
-        if not self.initialized:
+        if not self.initialized or force:
             # Objects
             self.update(db.session, G0T0Guild)
             self.update(db.session, RefMessage)

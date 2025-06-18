@@ -35,6 +35,16 @@ from sqlalchemy.orm import joinedload
 
 api_blueprint = Blueprint("api", __name__)
 
+@api_blueprint.post('/refresh_cache')
+@is_admin
+def refresh_cache():
+    try:
+        current_app.cache.initialize(True)
+    except Exception as e:
+        raise BadRequest(str(e))
+
+    return jsonify("Done")
+
 
 @api_blueprint.get("/guild")
 def get_guild():
