@@ -9,28 +9,7 @@ from helpers.G0T0 import trigger_compendium_reload, trigger_guild_reload
 from helpers.auth_helper import is_admin
 from models.general import Content
 from models.discord import DiscordChannel
-from models.G0T0 import (
-    Activity,
-    ActivityPoints,
-    Archetype,
-    Background,
-    BotMessage,
-    Character,
-    CharacterClass,
-    CodeConversion,
-    Customization,
-    EnhancedItem,
-    Equipment,
-    Feat,
-    G0T0Guild,
-    LevelCost,
-    Maneuver,
-    Player,
-    Power,
-    PrimaryClass,
-    RefMessage,
-    Species,
-)
+from models.G0T0 import *
 from models.exceptions import BadRequest, NotFound
 from sqlalchemy.orm import joinedload
 
@@ -974,13 +953,49 @@ def new_customization():
 @is_admin
 def update_customization():
     customization = update_object(Customization,
-                                  ["name", "text"])
+                                  ["name", "text"],
+                                  ["source"])
     return jsonify(customization), 200
 
 @api_blueprint.delete('/customizations/<id>')
 @is_admin
 def delete_customization(id):
     return delete_object(Customization, id)
+
+@api_blueprint.get('/improvements')
+def get_improvements():
+    improvements = current_app.cache.fetch(Improvement)
+
+    try:
+        filter_map = {
+            "name": lambda c, value: value.lower() in c.name.lower(),
+            "type": lambda c, value: value.lower() == c.type.value.lower() if c.type else False
+        }
+
+        improvements = filter_objects(filter_map, improvements)
+    except Exception as e:
+        raise BadRequest(str(e))
+    
+    return jsonify(improvements)
+
+@api_blueprint.post('/improvements')
+@is_admin
+def new_improvement():
+    improvement = create_object(Improvement)
+    return jsonify(improvement), 200
+
+@api_blueprint.patch('/improvements')
+@is_admin
+def update_improvement():
+    improvement = update_object(Improvement,
+                                  ["name", "text", "prerequisite"],
+                                  ["source"])
+    return jsonify(improvement), 200
+
+@api_blueprint.delete('/improvements/<id>')
+@is_admin
+def delete_improvement(id):
+    return delete_object(Improvement, id)
 
 
 # --------------------------- #

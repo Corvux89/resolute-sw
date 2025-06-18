@@ -71,6 +71,12 @@ class CustomizationType(db.Model, BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
 
+class ImprovementType(db.Model, BaseModel):
+    __tablename__ = "c_improvement_type"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
+
 class Activity(db.Model, BaseModel):
     __tablename__ = "c_activity"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -1107,3 +1113,33 @@ class Customization(db.Model, BaseModel):
             _source=json.get("source", {}).get("id"),
             text=json.get("text", ""),
         )
+    
+class Improvement(db.Model, BaseModel):
+    __tablename__ = "improvements"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4())
+    name: Mapped[str]
+    _type: Mapped[int] = mapped_column("type", ForeignKey("c_improvement_type.id"))
+    _source: Mapped[int] = mapped_column(
+        "source", ForeignKey("c_content_source.id"), nullable=True
+    )
+    text: Mapped[str]
+    prerequisite: Mapped[str]
+
+    type = relationship("ImprovementType", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+
+    @property
+    def html_text(self):
+        return render_markdown(self.text)
+
+    @classmethod
+    def from_json(cls, json):
+        return cls(
+            id=json.get("id", uuid.uuid4()),
+            name=json.get("name"),
+            _type=json.get("type", {}).get("id"),
+            _source=json.get("source", {}).get("id"),
+            text=json.get("text", ""),
+            prerequisite=json.get('prerequisite','')
+        )
+    

@@ -1,6 +1,6 @@
 
-import { Customization, EnhancedItem, Equipment, Feat, Maneuver, Power } from "./types.js";
-import { defaultCustomizationModal, defaultEquipmentModal, defaultFeatModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchCustomizationInputs, fetchEquipmentInputs, fetchFeatInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
+import { Customization, EnhancedItem, Equipment, Feat, Improvement, Maneuver, Power } from "./types.js";
+import { defaultCustomizationModal, defaultEquipmentModal, defaultFeatModal, defaultImprovementModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchCustomizationInputs, fetchEquipmentInputs, fetchFeatInputs, fetchImprovementInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 
 function boolColumn(data, type){
      if (data) {
@@ -1753,7 +1753,6 @@ if ($("#customization-table").length){
             },
             dataSrc: '',
             data: function(d){
-                console.log(window.location.pathname.replace("/", "").replace("_", " ").slice(0, -5))
                 d["type"] = window.location.pathname.replace("/", "").replace("_", " ").slice(0, -5)
             }
         },
@@ -1900,6 +1899,193 @@ $(document).on('click', '#customization-delete-confirmed', function(){
         success: function(){
             ToastError("Customization Deleted")
             $("#customization-table").DataTable().ajax.reload()
+        },
+        error: function(e){
+            ToastError(`Failed: ${e.responseText}`)
+        }
+        
+    })
+})
+
+// Improvements
+if ($("#improvement-table").length){
+    const params = new URLSearchParams(window.location.search);
+    const tableName = "#improvement-table"
+
+    destroyTable(tableName)
+
+    const table = $(tableName).DataTable({
+        ajax: {
+            url: 'api/improvements',
+            error: function(xhr){
+                ToastError(`Failed ${xhr.responseText?.toString()}`)
+            },
+            dataSrc: '',
+            data: function(d){
+                d["type"] = window.location.pathname.replace("/", "").replace("_", " ").slice(0, -1)
+            }
+        },
+        pageLength: 500,
+        order: [[0, 'asc']],
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true,
+        columns: [
+            {
+                title: "Name",
+                data: "name"
+            },
+            {
+                title: "Prerequisite?",
+                data: "prerequisite",
+                render: function(data, type){
+                    return boolColumn(data, type)
+                }
+            }
+        ]
+    })
+
+    if (params.has('name')){
+        $("#filter-search").val(params.get('name'))
+        table.column(0).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton()
+    }
+    setupTableFilters(tableName, [0])
+}
+
+$(document).on('click', "#improvement-table tbody tr", function(){
+    if ($(this).closest('btn').length) return
+
+    const table = $("#improvement-table").DataTable()
+    const row = table.row(this)
+    const improvement = row.data() as Improvement
+    let stop = false
+
+    if ($(this).hasClass("bold-row")) stop=true
+
+    $("#improvement-table tbody tr").removeClass("bold-row")
+
+    $('.dropdown-row').remove()
+
+    if (!improvement || stop) return
+    let editButton = ''
+    let prereq = ''
+
+    if (document.body.dataset.admin == "True"){
+        editButton = `
+            <button type="button"
+                id="edit-improvement-btn-${improvement.id}"
+                class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
+                data-id="${improvement.id}"
+                title="Edit Improvement"
+                data-bs-toggle="modal"
+                data-bs-target="#improvement-edit-form">
+                <i class="fa fa-pencil"></i>
+            </button>
+        `
+    }
+
+     if (improvement.prerequisite) {
+        prereq = `
+            <div class="p-3 text-center">
+                <p><strong>Prerequisite:</strong> ${improvement.prerequisite}</p>
+            </div>
+        `;
+    }
+
+    const additionalInfo = `
+        <tr class="dropdown-row">
+            <td colspan="${table.columns().count()}">
+                ${editButton}
+                ${prereq}
+                <div class="p-3">
+                    ${improvement.html_text} 
+                </div>
+            </td>
+        </tr>
+    `
+ 
+    $(this).after(additionalInfo)
+    $(this).addClass("bold-row")
+})
+
+$(document).on('click', '#improvement-next', function(){
+    const improvement_type_option = $("#improvement-type").find(":selected")
+
+    if (!improvement_type_option.val()){
+        ToastError("Select an Improvement type first")
+    }
+    
+    let improvement: Improvement = fetchImprovementInputs()
+
+    if (improvement.id !== undefined){
+        improvement = {}
+    }
+
+    improvement.type = {"id": Number(improvement_type_option.val()), "value": improvement_type_option.html()}
+
+
+    defaultImprovementModal(improvement)
+})
+
+$(document).on('click', '#improvement-table .edit-button', function(){
+    const table = $("#improvement-table").DataTable()
+    const objId = $(this).data('id');
+    const improvement: Improvement = table.rows().data().toArray().find((row: Improvement) => row.id == objId);
+    
+    if (!improvement) ToastError("Improvement not found")
+
+    defaultImprovementModal(improvement)
+})
+
+$(document).on('click', '#improvement-submit', function(){
+    const improvement = fetchImprovementInputs()
+
+    if (!improvement.id){
+        $.ajax({
+            url: `api/improvements`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(improvement),
+            success: function() {
+                ToastSuccess("Improvement Added")
+                $("#improvement-table").DataTable().ajax.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    } else {
+        $.ajax({
+            url: `api/improvements`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(improvement),
+            success: function() {
+                ToastSuccess("Improvement Updated")
+                $("#improvement-table").DataTable().ajax.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    }
+})
+
+$(document).on('click', '#improvement-delete-confirmed', function(){
+    const improvement = fetchImprovementInputs()
+
+    if (!improvement.id) return
+
+    $.ajax({
+        url: `/api/improvements/${improvement.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function(){
+            ToastError("Improvement Deleted")
+            $("#improvement-table").DataTable().ajax.reload()
         },
         error: function(e){
             ToastError(`Failed: ${e.responseText}`)

@@ -1,4 +1,4 @@
-import { Archetype, Background, Customization, EnhancedItem, Equipment, Feat, Maneuver, Power, PrimaryClass, Species } from "./types.js";
+import { Archetype, Background, Customization, EnhancedItem, Equipment, Feat, Improvement, Maneuver, Power, PrimaryClass, Species } from "./types.js";
 
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
@@ -662,7 +662,7 @@ export function defaultCustomizationModal(customization: Customization): void {
 
     $("#customization-edit-form").data('type', customization.type)
     $("#customization-name").val(customization.name)
-    $("#customization-text").val(customization.text)
+    setupMDE("customization-text", customization.text, true)
     setSelectInputValue("#customization-source", customization.source && customization.source.id ? customization.source.id.toString() : "6")
 }
 
@@ -681,4 +681,38 @@ export function fetchCustomizationInputs(): Customization {
     }
 
     return customization
+}
+
+export function defaultImprovementModal(improvement: Improvement): void {
+    if (!improvement.id){
+        $("#improvement-edit-form").removeData("id")
+        $("#improvement-delete").addClass("d-none")
+    } else {
+        $("#improvement-edit-form").data("id", improvement.id)
+        $("#improvement-delete").removeClass("d-none")
+    }
+
+    $("#improvement-edit-form").data('type', improvement.type)
+    $("#improvement-name").val(improvement.name)
+    setupMDE("improvement-text", improvement.text, true)
+    $("#improvement.prerequisite").val(improvement.prerequisite)
+    setSelectInputValue("#improvement-source", improvement.source && improvement.source.id ? improvement.source.id.toString() : "6")
+}
+
+export function fetchImprovementInputs(): Improvement {
+    const source_option = $("#improvement-source").find(":selected")
+
+    const improvement: Improvement = {
+        id: $("#improvement-edit-form").data('id'),
+        name: $("#improvement-name").val().toString(),
+        type: $("#improvement-edit-form").data('type'),
+        text: getMDEValue("improvement-text"),
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        },
+        prerequisite: $("#improvement-prerequisite").val().toString()
+    }
+
+    return improvement
 }

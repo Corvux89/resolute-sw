@@ -600,7 +600,7 @@ export function fetchCustomizationInputs() {
     const customization = {
         id: $("#customization-edit-form").data('id'),
         name: $("#customization-name").val().toString(),
-        type: $("#customization-edit-form").data('type'),
+        type: $("customization-edit-form").data('type'),
         text: getMDEValue("customization-text"),
         source: {
             id: Number(source_option.val()),
@@ -608,4 +608,34 @@ export function fetchCustomizationInputs() {
         }
     };
     return customization;
+}
+export function defaultImprovementModal(improvement) {
+    if (!improvement.id) {
+        $("#improvement-edit-form").removeData("id");
+        $("#improvement-delete").addClass("d-none");
+    }
+    else {
+        $("#improvement-edit-form").data("id", improvement.id);
+        $("#improvement-delete").removeClass("d-none");
+    }
+    $("#improvement-edit-form").data('type', improvement.type);
+    $("#improvement-name").val(improvement.name);
+    setupMDE("improvement-text", improvement.text, true);
+    $("#improvement.prerequisite").val(improvement.prerequisite);
+    setSelectInputValue("#improvement-source", improvement.source && improvement.source.id ? improvement.source.id.toString() : "6");
+}
+export function fetchImprovementInputs() {
+    const source_option = $("#improvement-source").find(":selected");
+    const improvement = {
+        id: $("#improvement-edit-form").data('id'),
+        name: $("#improvement-name").val().toString(),
+        type: $("#improvement-edit-form").data('type'),
+        text: getMDEValue("improvement-text"),
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        },
+        prerequisite: $("#improvement-prerequisite").val().toString()
+    };
+    return improvement;
 }

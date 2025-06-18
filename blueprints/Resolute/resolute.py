@@ -14,6 +14,7 @@ from models.G0T0 import (
     EnhancedItemType,
     EquipmentCategory,
     EquipmentSubCategory,
+    ImprovementType,
     ManeuverType,
     PowerAlignment,
     PowerType,
@@ -246,6 +247,18 @@ def weapon_focuses():
 def weapon_supremacies():
     return render_template("/customizations.html", options=_get_options(), title="Weapon Supremacies")
 
+@resolute_blueprint.get('/class_improvements')
+def class_improvements():
+    return render_template('/class_improvements.html', options=_get_options(), title="Class Improvements")
+
+@resolute_blueprint.get('/multiclass_improvements')
+def multiclass_improvements():
+    return render_template('/class_improvements.html', options=_get_options(), title="Multiclass Improvements")
+
+@resolute_blueprint.get('/splashclass_improvements')
+def splashclass_improvements():
+    return render_template('/class_improvements.html', options=_get_options(), title="Splashclass Improvements")
+
 # --------------------------- #
 # Private Methods
 # --------------------------- #
@@ -320,5 +333,6 @@ def _get_options():
     ]
     options["maneuver-type"] = build_select_option("id", "value", current_app.cache.fetch(ManeuverType))
     options["customization-type"] = build_select_option("id", "value", current_app.cache.fetch(CustomizationType))
+    options["class-improvement-type"] = build_select_option("id", "value", current_app.cache.fetch(ImprovementType))
 
     return options

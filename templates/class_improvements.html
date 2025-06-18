@@ -1,0 +1,75 @@
+{% extends "template.html" %} {% block body %}
+
+{% if current_user.is_admin %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+{% endif %}
+
+<h1>{{ title }}</h1>
+
+<filterable-table table-id="improvement-table" button-text="New Improvement" key="cat"></filterable-table>
+
+{% if current_user.is_admin %}
+<custom-modal title="New Improvement" custom-id="cat-edit-form">
+    <div class="container">
+        <div class="row mb-2">
+            <div class="col mb-2">
+                <select-input custom-id="improvement-type" custom-label="Improvement Type" options='{{ options['class-improvement-type']|tojson }}'></select-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col mb-3">
+                <button type="button" class="btn btn-primary float-end m-3" id="improvement-next" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#improvement-edit-form">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+</custom-modal>
+
+<custom-modal title="Improvement" custom-id="improvement-edit-form">
+    <div class="container">
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input label-text="Name" custom-id="improvement-name" required></text-input>
+            </div>
+            <div class="col-6 mb-2">
+                <select-input custom-id="improvement-source" custom-label="Content Source" options='{{ options['content-source']|tojson }}'></select-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-6 mb-2">
+                <text-input label-text="Prerequisite" custom-id="improvement-prerequisite" required></text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label for="improvement-text" class="form-label fw-bold">Text</label>
+            <textarea id="improvement-text" value="" spellcheck="true" class="form-control big-edit-body"></textarea>
+        </div>
+        <div class="row mb-2">
+            <div class="col mb-3">
+                <button type="button" class="btn btn-primary float-end m-3" id="improvement-submit" data-bs-dismiss="modal">
+                    Submit
+                </button>
+                <button type="button" class="btn btn-danger float-end m-3" id="improvement-delete" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#delete-confirm-modal">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</custom-modal>
+
+<custom-modal title="Confirm Delete" custom-id="delete-confirm-modal">
+    <div class="container">
+        <div class="row mb-2">
+            Are you sure you want to delete this improvement?
+        </div>
+        <div class="row-mb-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-id="" id="improvement-delete-confirmed">Delete</button>
+        </div>
+    </div>
+</custom-modal>
+{% endif %}
+
+{% endblock %}

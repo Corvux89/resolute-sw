@@ -179,3 +179,13 @@ export interface Customization {
     text?: string
     html_text?: string
 }
+
+export interface Improvement {
+    id?: string
+    name?: string
+    type?: GenericCategory
+    source?: ContentSource
+    text?: string
+    html_text?: string
+    prerequisite?: string
+}
