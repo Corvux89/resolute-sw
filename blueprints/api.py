@@ -544,7 +544,7 @@ def get_classes():
             "name": lambda c, value: value.lower() in c.value.lower(),
         }
 
-        classes = filter_objects(filter_map)
+        classes = filter_objects(filter_map, classes)
     except Exception as e:
         raise BadRequest(str(e))
 
