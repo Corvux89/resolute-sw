@@ -1320,12 +1320,15 @@ if ($("#background-table").length) {
         columns: [
             {
                 title: "Name",
-                data: "name"
+                data: "name",
+                render: function (data) {
+                    return `<a href="/backgrounds/${encodeURIComponent(data.toString().toLowerCase())}" class="background-link undecorated-link text-black">${data}</a>`;
+                }
             },
             {
                 title: "Skill Proficiency",
                 data: "skills",
-                render: function (data, type) {
+                render: function (data, type, row) {
                     const validSkills = [
                         "Athletics", "Acrobatics", "Sleight of Hand", "Stealth", "Investigation",
                         "Lore", "Nature", "Piloting", "Technology", "Animal Handling", "Insight",
@@ -1338,7 +1341,7 @@ if ($("#background-table").length) {
                         const regex = new RegExp(validSkills.join("|"), "gi");
                         return data.match(regex) || [];
                     }
-                    return data;
+                    return `<a href="/backgrounds/${encodeURIComponent(row.name.toString().toLowerCase())}" class="background-link undecorated-link text-black">${data}</a>`;
                 }
             }
         ]
