@@ -107,7 +107,7 @@ def render_markdown(text: str, add_extension: list = []) -> str:
         set(bleach.sanitizer.ALLOWED_TAGS)
         | {"div", "span", "table", "thead", "tbody", "tr", "th", "td", "p", "h1", "h2", "h3", "h4", "h5", "h6", "br"}
     )
-    allowed_attributes = {"*": ["class", "id", "data-*"], "a": ["href", "title"]}
+    allowed_attributes = {"*": ["class", "id", "data-*", "data-name", "data-text"], "a": ["href", "title"]}
 
     sterilized =  bleach.clean(
         render, tags=allowed_tags, attributes=allowed_attributes, strip=True

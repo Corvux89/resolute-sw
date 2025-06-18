@@ -181,6 +181,8 @@ function prefillCheckboxGroup(groupId: string, values: string[]): void {
         return;
     }
 
+    checkboxGroup.find('input[type="checkbox"]').prop("checked", false);
+
     values.forEach((value) => {
         const checkbox = checkboxGroup.find(`input[type="checkbox"][id="${value}"]`);
         if (checkbox.length) {

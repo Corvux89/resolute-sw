@@ -12,7 +12,6 @@ function boolColumn(data, type) {
     }
 }
 $(document).on("click", ".info-link", function () {
-    console.log('here');
     const name = $(this).data("name"); // Get the name from the data attribute
     const text = $(this).data("text"); // Get the text from the data attribute
     // Populate the modal title and body
