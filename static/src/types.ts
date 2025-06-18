@@ -161,3 +161,12 @@ export interface Background {
     html_bond?: string
     source?: ContentSource
 }
+
+export interface Maneuver {
+    id?: string
+    name?: string
+    source?: ContentSource
+    type?: GenericCategory
+    description?: string
+    prerequisite?: string
+}

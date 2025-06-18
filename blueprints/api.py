@@ -23,6 +23,7 @@ from models.G0T0 import (
     Feat,
     G0T0Guild,
     LevelCost,
+    Maneuver,
     Player,
     Power,
     PrimaryClass,
@@ -903,6 +904,48 @@ def update_background():
 @is_admin
 def delete_backgrounds(id):
     return delete_object(Background, id)
+
+@api_blueprint.get('/maneuvers')
+def get_maneuvers():
+    maneuvers = current_app.cache.fetch(Maneuver)
+
+    try:
+        filter_map = {
+            "name": lambda m, value: (
+                value.lower() in m.name.lower() if m.name else False
+            ),
+            "type": lambda m, value: (
+                value.lower() in m.type.value.lower() if m.type else False
+            )
+        }
+
+        maneuvers = filter_objects(filter_map, maneuvers)
+    except Exception as e:
+        raise BadRequest(str(e))
+    
+    if not maneuvers:
+        raise NotFound("Maneuvers not found")
+    
+    return jsonify(maneuvers)
+
+@api_blueprint.post('/maneuvers')
+@is_admin
+def new_maneuver():
+    maneuver = create_object(Maneuver)
+    return jsonify(maneuver), 200
+
+@api_blueprint.patch('/maneuvers')
+@is_admin
+def update_maneuver():
+    maneuver = update_object(Maneuver,
+                             ["name", "description", "prerequisite"],
+                             ["source", "type"])
+    return jsonify(maneuver), 200
+
+@api_blueprint.delete('/maneuvers/<id>')
+@is_admin
+def delete_maneuver(id):
+    return delete_object(Maneuver, id)
 
 
 # --------------------------- #

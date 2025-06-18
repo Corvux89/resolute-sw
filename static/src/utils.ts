@@ -1,4 +1,4 @@
-import { Archetype, Background, EnhancedItem, Equipment, Feat, Power, PrimaryClass, Species } from "./types.js";
+import { Archetype, Background, EnhancedItem, Equipment, Feat, Maneuver, Power, PrimaryClass, Species } from "./types.js";
 
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
@@ -609,4 +609,44 @@ export function fetchBackgroundInputs(): Background{
     }
 
     return background
+}
+
+export function defaultManeuverModal(manevuer: Maneuver): void {
+    if (!manevuer.id){
+        $("#maneuver-edit-form").removeData("id")
+        $("#maneuver-delete").addClass("d-none")
+    } else {
+        $("#maneuver-edit-form").data("id", manevuer.id)
+        $("#maneuver-delete").removeClass("d-none")
+    }
+
+    $("#maneuver-name").val(manevuer.name)
+    $("#maneuver-description").val(manevuer.description)
+    $("#maneuver-prerequisite").val(manevuer.prerequisite)
+
+    setSelectInputValue("#maneuver-source", manevuer.source && manevuer.source.id ? manevuer.source.id.toString() : "6")
+    setSelectInputValue("#maneuver-type", manevuer.type && manevuer.type.id ? manevuer.type.id.toString() : "1")
+}
+
+export function fetchManeuverInputs(): Maneuver {
+    const source_option = $("#maneuver-source").find(":selected")
+    const type_option = $("#maneuver-type").find(":selected")
+
+    const maneuver: Maneuver = {
+        id: $("#maneuver-edit-form").data('id'),
+        name: $("#maneuver-name").val().toString(),
+        type: type_option.val() ? 
+        {
+            id: Number(type_option.val()),
+            value: type_option.html()
+        } : null,
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        },
+        description: $("#maneuver-description").val().toString(),
+        prerequisite: $("#maneuver-prerequisite").val().toString()
+    }
+
+    return maneuver
 }

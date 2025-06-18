@@ -1,4 +1,4 @@
-import { defaultEquipmentModal, defaultFeatModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchEquipmentInputs, fetchFeatInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
+import { defaultEquipmentModal, defaultFeatModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchEquipmentInputs, fetchFeatInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 function boolColumn(data, type) {
     if (data) {
         if (type == "filter")
@@ -1033,10 +1033,10 @@ $(document).on('click', "#item-table tbody tr", function () {
     }
     if (item.prerequisite) {
         prereq = `
-        <div class="p-3 text-center">
-            <p><strong>Prerequisite:</strong> ${item.prerequisite}</p>
-        </div>
-    `;
+            <div class="p-3 text-center">
+                <p><strong>Prerequisite:</strong> ${item.prerequisite}</p>
+            </div>
+        `;
     }
     const additionalInfo = `
         <tr class="dropdown-row">
@@ -1410,6 +1410,163 @@ $(document).on('click', '#background-delete-confirmed', function () {
         success: function () {
             ToastError("Background Deleted");
             window.location.href = `/backgrounds`;
+        },
+        error: function (e) {
+            ToastError(`Failed: ${e.responseText}`);
+        }
+    });
+});
+// Maneuvers
+if ($("#maneuver-table").length) {
+    const params = new URLSearchParams(window.location.search);
+    const tableName = "#maneuver-table";
+    destroyTable(tableName);
+    const table = $(tableName).DataTable({
+        ajax: {
+            url: 'api/maneuvers',
+            error: function (xhr) {
+                ToastError(`Failed ${xhr.responseText?.toString()}`);
+            },
+            dataSrc: '',
+        },
+        pageLength: 500,
+        order: [[0, 'asc']],
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true,
+        columns: [
+            {
+                title: "Name",
+                data: "name",
+            },
+            {
+                title: "Type",
+                data: "type",
+                render: function (data) {
+                    if (!data)
+                        return '';
+                    return data.value.toString();
+                }
+            },
+            {
+                title: "Prerequisite?",
+                data: "prerequisite",
+                render: function (data, type) {
+                    return boolColumn(data, type);
+                }
+            }
+        ]
+    });
+    if (params.has('name')) {
+        $("#filter-search").val(params.get('name'));
+        table.column(0).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton();
+    }
+    setupTableFilters(tableName, [0]);
+}
+$(document).on('click', "#maneuver-table tbody tr", function () {
+    if ($(this).closest('btn').length)
+        return;
+    const table = $("#maneuver-table").DataTable();
+    const row = table.row(this);
+    const maneuver = row.data();
+    let stop = false;
+    if ($(this).hasClass("bold-row"))
+        stop = true;
+    $("#maneuver-table tbody tr").removeClass("bold-row");
+    $('.dropdown-row').remove();
+    if (!maneuver || stop)
+        return;
+    let editButton = '';
+    let prereq = '';
+    if (document.body.dataset.admin == "True") {
+        editButton = `
+            <button type="button"
+                id="edit-maneuver-btn-${maneuver.id}"
+                class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
+                data-id="${maneuver.id}"
+                title="Edit Maneuver"
+                data-bs-toggle="modal"
+                data-bs-target="#maneuver-edit-form">
+                <i class="fa fa-pencil"></i>
+            </button>
+        `;
+    }
+    if (maneuver.prerequisite) {
+        prereq = `
+            <div class="p-3 text-center">
+                <p><strong>Prerequisite:</strong> ${maneuver.prerequisite}</p>
+            </div>
+        `;
+    }
+    const additionalInfo = `
+        <tr class="dropdown-row">
+            <td colspan="${table.columns().count()}">
+                ${editButton}
+                ${prereq}
+                <div class="p-3">
+                    ${maneuver.description} 
+                </div>
+            </td>
+        </tr>
+    `;
+    $(this).after(additionalInfo);
+    $(this).addClass("bold-row");
+});
+$(document).on('click', '#maneuver-table .edit-button', function () {
+    const table = $("#maneuver-table").DataTable();
+    const manId = $(this).data('id');
+    const maneuver = table.rows().data().toArray().find((row) => row.id == manId);
+    if (!maneuver)
+        ToastError("Maneuver not found");
+    defaultManeuverModal(maneuver);
+});
+$(document).on('click', '#maneuver-submit', function () {
+    const maneuver = fetchManeuverInputs();
+    if (!maneuver.id) {
+        $.ajax({
+            url: `api/maneuvers`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(maneuver),
+            success: function () {
+                ToastSuccess("Maneuver Added");
+                $("#maneuver-table").DataTable().ajax.reload();
+            },
+            error: function (e) {
+                ToastError(`Failed: ${e.responseText}`);
+            }
+        });
+    }
+    else {
+        $.ajax({
+            url: `api/maneuvers`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(maneuver),
+            success: function () {
+                ToastSuccess("Maneuver Updated");
+                $("#maneuver-table").DataTable().ajax.reload();
+            },
+            error: function (e) {
+                ToastError(`Failed: ${e.responseText}`);
+            }
+        });
+    }
+});
+$(document).on('click', '#maneuver-delete-confirmed', function () {
+    const maneuver = fetchManeuverInputs();
+    if (!maneuver.id)
+        return;
+    $.ajax({
+        url: `/api/maneuvers/${maneuver.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function () {
+            ToastError("Maneuver Deleted");
+            $("#maneuver-table").DataTable().ajax.reload();
         },
         error: function (e) {
             ToastError(`Failed: ${e.responseText}`);

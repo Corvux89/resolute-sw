@@ -61,6 +61,11 @@ class EnhancedItemSubtype(db.Model, BaseModel):
     value: Mapped[str]
     parent: Mapped[str]
 
+class ManeuverType(db.Model, BaseModel):
+    __tablename__ = "c_maneuver_type"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
 
 class Activity(db.Model, BaseModel):
     __tablename__ = "c_activity"
@@ -946,7 +951,7 @@ class EnhancedItem(db.Model, BaseModel):
 
 class Feat(db.Model, BaseModel):
     __tablename__ = "feats"
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4())
     name: Mapped[str]
     prerequisite: Mapped[str]
     text: Mapped[str]
@@ -973,7 +978,7 @@ class Feat(db.Model, BaseModel):
 
 class Background(db.Model, BaseModel):
     __tablename__ = "backgrounds"
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4())
     name: Mapped[str]
     flavortext: Mapped[str]
     flavor_name: Mapped[str]
@@ -1045,4 +1050,29 @@ class Background(db.Model, BaseModel):
             flaw=json.get("flaw", ""),
             bond=json.get("bond", ""),
             _source=json.get("source", {}).get("id"),
+        )
+    
+class Maneuver(db.Model, BaseModel):
+    __tablename__ = "maneuvers"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4())
+    name: Mapped[str]
+    _type: Mapped[int] = mapped_column("type", ForeignKey("c_maneuver_type.id"), nullable=True)
+    _source: Mapped[int] = mapped_column(
+        "source", ForeignKey("c_content_source.id"), nullable=True
+    )
+    description: Mapped[str]
+    prerequisite: Mapped[str]
+
+    type = relationship("ManeuverType", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+
+    @classmethod
+    def from_json(cls, json):
+        return cls(
+            id=json.get("id", uuid.uuid4()),
+            name=json.get("name"),
+            _type=json.get("type", {}).get("id"),
+            _source=json.get("source", {}).get("id"),
+            description=json.get("description", ""),
+            prerequisite=json.get("prerequisite", ""),
         )

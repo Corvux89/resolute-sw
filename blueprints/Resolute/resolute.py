@@ -13,6 +13,7 @@ from models.G0T0 import (
     EnhancedItemType,
     EquipmentCategory,
     EquipmentSubCategory,
+    ManeuverType,
     PowerAlignment,
     PowerType,
     PrimaryClass,
@@ -220,6 +221,9 @@ def background_details(back):
         f"/backgrounds/background.html", background=background, options=_get_options()
     )
 
+@resolute_blueprint.get('/maneuvers')
+def maneuvers():
+    return render_template("/maneuvers.html", options=_get_options())
 
 # --------------------------- #
 # Private Methods
@@ -293,5 +297,6 @@ def _get_options():
     options["enhanced-item-subtype"] = [
         j.to_dict() for j in db.session.query(EnhancedItemSubtype).all()
     ]
+    options["maneuver-type"] = build_select_option("id", "value", current_app.cache.fetch(ManeuverType))
 
     return options

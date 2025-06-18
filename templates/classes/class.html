@@ -44,7 +44,7 @@
                 <div class="card-header class-info-card-header fw-bold">
                     THE {{ primary_class.value|upper }}
                 </div>
-                <div class="card-body p-2">
+                <div class="card-body p-2 custom-table-wrapper">
                     {% if primary_class.html_level_table %}
                         {{ primary_class.html_level_table|safe }}
                     {% elif primary_class.level_changes %}
