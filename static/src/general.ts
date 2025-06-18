@@ -1,6 +1,6 @@
 
 import { EnhancedItem, Equipment, Feat, Power } from "./types.js";
-import { defaultEquipmentModal, defaultFeatModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchClassInputs, fetchEquipmentInputs, fetchFeatInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
+import { defaultEquipmentModal, defaultFeatModal, defaultItemModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchEquipmentInputs, fetchFeatInputs, fetchItemInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 
 function boolColumn(data, type){
      if (data) {
@@ -1495,3 +1495,73 @@ if ($("#background-table").length){
 
     setupTableFilters(tableName, [0])
 }
+
+$('#background-edit-form').on('show.bs.modal', function(){
+    setupMDE("background-flavortext")
+    setupMDE("background-feats")
+    setupMDE("background-personality")
+    setupMDE("background-ideal")
+    setupMDE("background-flaw")
+    setupMDE("background-bond")
+
+    const background = fetchBackgroundInputs()
+
+    if (!background.id){
+        $("#background-delete").addClass("d-none")
+    } else {
+        $("#background-delete").removeClass("d-none")
+    }
+})
+
+$(document).on('click', "#background-submit", function(){
+    const background = fetchBackgroundInputs()
+
+   if (!background.id){
+        $.ajax({
+            url: `api/backgrounds`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(background),
+            success: function() {
+                ToastSuccess("Background Added")
+                $("#background-table").DataTable().ajax.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    } else {
+        $.ajax({
+            url: `${window.location.origin}/api/backgrounds`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(background),
+            success: function() {
+                window.location.reload()
+            },
+            error: function(e) {
+                ToastError(`Failed: ${e.responseText}`)
+            }
+        });
+    }
+})
+
+$(document).on('click', '#background-delete-confirmed', function(){
+    const background = fetchBackgroundInputs()
+
+    if (!background.id) return
+
+    $.ajax({
+        url: `${window.location.origin}/api/backgrounds/${background.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function(){
+            ToastError("Background Deleted")
+            window.location.href = `/backgrounds`;
+        },
+        error: function(e){
+            ToastError(`Failed: ${e.responseText}`)
+        }
+        
+    })
+})

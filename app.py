@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_bootstrap import Bootstrap
 from flask_talisman import Talisman
-
 from blueprints.auth import auth_blueprint
 from blueprints.api import api_blueprint
 from blueprints.Resolute import resolute_blueprint
@@ -29,6 +28,7 @@ app = Flask(__name__)
 
 app.secret_key = SECRET_KEY
 app.json = CustomJSONProvider(app)
+app.json.sort_keys=False
 
 app.config.update(DEBUG=WEB_DEBUG)
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_URI

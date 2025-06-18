@@ -96,7 +96,7 @@ def perform_search(query: str):
         or_(
             Archetype.value.ilike(f"%{query.lower()}%"),
         )
-    )
+    ).all()
 
     for a in arch:
         results.append(
@@ -109,7 +109,7 @@ def perform_search(query: str):
     # Equipment
     equip = db.session.query(Equipment).filter(
         or_(Equipment.name.ilike(f"%{query.lower()}%"))
-    )
+    ).all()
 
     for e in equip:
         url = "adventuring"
@@ -125,23 +125,21 @@ def perform_search(query: str):
             )
         )
 
-    # Enhanced Item
-    items = db.session.query(EnhancedItem).filter(
-        or_(EnhancedItem.name.ilike(f"%{query.lower()}%"))
-    )
+    # # Enhanced Item
+    # items = db.session.query(EnhancedItem).filter(
+    #     or_(EnhancedItem.name.ilike(f"%{query.lower()}%"))
+    # ).all()
 
-    for i in items:
-        results.append(
-            SearchResult(f"Enhanced Item - {i.name}"),
-            f"{url_for('resolute.enhanced_items', name=i.name)}",
-        )
+    # for i in items:
+    #     results.append(
+    #         SearchResult(f"Enhanced Item - {i.name}", f"{url_for('resolute.enhanced_items', name=i.name)}"))
 
     # Features
     feats = db.session.query(Feat).filter(
         or_(
             Feat.name.ilike(f"%{query.lower()}%"), Feat.text.ilike(f"%{query.lower()}%")
         )
-    )
+    ).all()
 
     for f in feats:
         results.append(

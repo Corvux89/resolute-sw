@@ -46,8 +46,58 @@
         </div>
         <div class="row mb-2">
             <label for="background-flavortext" class="form-label fw-bold">Flavortext</label>
-            <textarea id="background-flavortext" value="" spellcheck="true" class="form-control">{{ background.flavortext if primary_class else ''}}</textarea>
+            <textarea id="background-flavortext" value="" spellcheck="true" class="form-control">{{ background.flavortext if background else ''}}</textarea>
         </div>
+        <div class="row mb-2">
+            <div class="col-12 mb-3">
+                <text-input
+                custom-id="background-flavor-name"
+                label-text="Flavor Name",
+                value="{{background.flavor_name if background else ''}}">
+                </text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label for="background-flavor-description" class="form-label fw-bold">Flavor Description</label>
+            <textarea id="background-flavor-description" value="" spellcheck="true" class="form-control">{{ background.flavor_description if background else ''}}</textarea>
+        </div>
+         <div class="row mb-2">
+            <div class="col-12 mb-3">
+                <text-input
+                custom-id="background-feature-name"
+                label-text="Feature Name",
+                value="{{background.feature_name if background else ''}}">
+                </text-input>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label for="background-feature-text" class="form-label fw-bold">Feature Text</label>
+            <textarea id="background-feature-text" value="" spellcheck="true" class="form-control">{{ background.feature_text if background else ''}}</textarea>
+        </div>
+        <div class="row mb-2">
+            <label for="background-feats" class="form-label fw-bold">Features</label>
+            <textarea id="background-feats" value="" spellcheck="true" class="form-control">{{ background.feats if background else ''}}</textarea>
+        </div>
+        <div class="row mb-2">
+            <label for="background-suggested-characteristics" class="form-label fw-bold">Suggested Characteristics</label>
+            <textarea id="background-suggested-characteristics" value="" spellcheck="true" class="form-control">{{ background.suggested_characteristics if background else ''}}</textarea>
+        </div>
+        <div class="row mb-2">
+            <label for="background-personality" class="form-label fw-bold">Personality</label>
+            <textarea id="background-personality" value="" spellcheck="true" class="form-control">{{ background.personality if background else ''}}</textarea>
+        </div>
+        <div class="row mb-2">
+            <label for="background-ideal" class="form-label fw-bold">Ideal</label>
+            <textarea id="background-ideal" value="" spellcheck="true" class="form-control">{{ background.ideal if background else ''}}</textarea>
+        </div>
+        <div class="row mb-2">
+            <label for="background-flaw" class="form-label fw-bold">Flaw</label>
+            <textarea id="background-flaw" value="" spellcheck="true" class="form-control">{{ background.flaw if background else ''}}</textarea>
+        </div>
+        <div class="row mb-2">
+            <label for="background-bond" class="form-label fw-bold">Bond</label>
+            <textarea id="background-bond" value="" spellcheck="true" class="form-control">{{ background.bond if background else ''}}</textarea>
+        </div>                
         <div class="row mb-2">
             <div class="col mb-3">
                 <button type="button" class="btn btn-primary float-end m-3" id="background-submit" data-bs-dismiss="modal">

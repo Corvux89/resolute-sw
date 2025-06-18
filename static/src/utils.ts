@@ -1,4 +1,4 @@
-import { Archetype, EnhancedItem, Equipment, Feat, Power, PrimaryClass, Species } from "./types.js";
+import { Archetype, Background, EnhancedItem, Equipment, Feat, Power, PrimaryClass, Species } from "./types.js";
 
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
@@ -579,4 +579,34 @@ export function fetchFeatInputs(): Feat{
     }
 
     return feat
+}
+
+export function fetchBackgroundInputs(): Background{
+    const source_option = $("#background-source").find(':selected')
+
+    const background: Background = {
+        id: $("#background-edit-form").data('id'),
+        name: $("#background-name").val().toString(),
+        flavortext: getMDEValue("background-flavortext"),
+        flavor_name: $("#background-flavor-name").val().toString(),
+        flavor_description: $("#background-flavor-description").val().toString(),
+        skills: $("#background-skills").val().toString(),
+        tools: $("#background-tools").val().toString(),
+        languages: $("#background-languages").val().toString(),
+        equipment: $("#background-equipment").val().toString(),
+        suggested_characteristics: $("#background-suggested-characteristics").val().toString(),
+        feature_name: $("#background-feature-name").val().toString(),
+        feature_text: $("#background-feature-text").val().toString(),
+        feats: getMDEValue("background-feats"),
+        personality: getMDEValue("background-personality"),
+        ideal: getMDEValue("background-ideal"),
+        flaw: getMDEValue("background-flaw"),
+        bond: getMDEValue("background-bond"),
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        }
+    }
+
+    return background
 }

@@ -1023,3 +1023,26 @@ class Background(db.Model, BaseModel):
     @property
     def html_personality(self):
         return render_markdown(self.personality)
+    
+    @classmethod
+    def from_json(cls, json):
+        return cls(
+            id=json.get("id", uuid.uuid4()),
+            name=json.get("name"),
+            flavortext=json.get("flavortext", ""),
+            flavor_name=json.get("flavor_name", ""),
+            flavor_description=json.get("flavor_description", ""),
+            skills=json.get("skills", ""),
+            tools=json.get("tools", ""),
+            languages=json.get("languages", ""),
+            equipment=json.get("equipment", ""),
+            suggested_characteristics=json.get("suggested_characteristics", ""),
+            feature_name=json.get("feature_name", ""),
+            feature_text=json.get("feature_text", ""),
+            feats=json.get("feats", ""),
+            personality=json.get("personality", ""),
+            ideal=json.get("ideal", ""),
+            flaw=json.get("flaw", ""),
+            bond=json.get("bond", ""),
+            _source=json.get("source", {}).get("id"),
+        )
