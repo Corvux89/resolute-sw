@@ -18,6 +18,7 @@ from models.G0T0 import (
     Character,
     CharacterClass,
     CodeConversion,
+    Customization,
     EnhancedItem,
     Equipment,
     Feat,
@@ -946,6 +947,40 @@ def update_maneuver():
 @is_admin
 def delete_maneuver(id):
     return delete_object(Maneuver, id)
+
+@api_blueprint.get('/customizations')
+def get_customizations():
+    customizations = current_app.cache.fetch(Customization)
+
+    try:
+        filter_map = {
+            "name": lambda c, value: value.lower() in c.name.lower(),
+            "type": lambda c, value: value.lower() in c.type.value.lower() if c.type else False
+        }
+
+        customizations = filter_objects(filter_map, customizations)
+    except Exception as e:
+        raise BadRequest(str(e))
+    
+    return jsonify(customizations)
+
+@api_blueprint.post('/customizations')
+@is_admin
+def new_customization():
+    customization = create_object(Customization)
+    return jsonify(customization), 200
+
+@api_blueprint.patch('/customizations')
+@is_admin
+def update_customization():
+    customization = update_object(Customization,
+                                  ["name", "text"])
+    return jsonify(customization), 200
+
+@api_blueprint.delete('/customizations/<id>')
+@is_admin
+def delete_customization(id):
+    return delete_object(Customization, id)
 
 
 # --------------------------- #

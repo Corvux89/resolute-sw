@@ -9,6 +9,7 @@ from models.G0T0 import (
     Archetype,
     Background,
     ContentSource,
+    CustomizationType,
     EnhancedItemSubtype,
     EnhancedItemType,
     EquipmentCategory,
@@ -225,6 +226,26 @@ def background_details(back):
 def maneuvers():
     return render_template("/maneuvers.html", options=_get_options())
 
+@resolute_blueprint.get('/fighting_styles')
+def fighting_styles():
+    return render_template("/customizations.html", options=_get_options(), title="Fighting Styles")
+
+@resolute_blueprint.get('/fighting_masteries')
+def fighting_masteries():
+    return render_template("/customizations.html", options=_get_options(), title="Fighting Masteries")
+
+@resolute_blueprint.get('/lightsaber_forms')
+def lightsaber_forms():
+    return render_template("/customizations.html", options=_get_options(), title="Lightsaber Forms")
+
+@resolute_blueprint.get('/weapon_focuses')
+def weapon_focuses():
+    return render_template("/customizations.html", options=_get_options(), title="Weapon Focuses")
+
+@resolute_blueprint.get('/weapon_supremacies')
+def weapon_supremacies():
+    return render_template("/customizations.html", options=_get_options(), title="Weapon Supremacies")
+
 # --------------------------- #
 # Private Methods
 # --------------------------- #
@@ -298,5 +319,6 @@ def _get_options():
         j.to_dict() for j in db.session.query(EnhancedItemSubtype).all()
     ]
     options["maneuver-type"] = build_select_option("id", "value", current_app.cache.fetch(ManeuverType))
+    options["customization-type"] = build_select_option("id", "value", current_app.cache.fetch(CustomizationType))
 
     return options

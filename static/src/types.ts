@@ -170,3 +170,12 @@ export interface Maneuver {
     description?: string
     prerequisite?: string
 }
+
+export interface Customization {
+    id?: string
+    name?: string
+    type?: GenericCategory
+    source?: ContentSource
+    text?: string
+    html_text?: string
+}

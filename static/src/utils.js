@@ -581,3 +581,31 @@ export function fetchManeuverInputs() {
     };
     return maneuver;
 }
+export function defaultCustomizationModal(customization) {
+    if (!customization.id) {
+        $("#customization-edit-form").removeData("id");
+        $("#customization-delete").addClass("d-none");
+    }
+    else {
+        $("#customization-edit-form").data("id", customization.id);
+        $("#customization-delete").removeClass("d-none");
+    }
+    $("#customization-edit-form").data('type', customization.type);
+    $("#customization-name").val(customization.name);
+    setupMDE("customization-text", customization.text, true);
+    setSelectInputValue("#customization-source", customization.source && customization.source.id ? customization.source.id.toString() : "6");
+}
+export function fetchCustomizationInputs() {
+    const source_option = $("#customization-source").find(":selected");
+    const customization = {
+        id: $("#customization-edit-form").data('id'),
+        name: $("#customization-name").val().toString(),
+        type: $("#customization-edit-form").data('type'),
+        text: getMDEValue("customization-text"),
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        }
+    };
+    return customization;
+}

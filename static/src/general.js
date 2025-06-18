@@ -1,4 +1,4 @@
-import { defaultEquipmentModal, defaultFeatModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchEquipmentInputs, fetchFeatInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
+import { defaultCustomizationModal, defaultEquipmentModal, defaultFeatModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchCustomizationInputs, fetchEquipmentInputs, fetchFeatInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 function boolColumn(data, type) {
     if (data) {
         if (type == "filter")
@@ -1567,6 +1567,154 @@ $(document).on('click', '#maneuver-delete-confirmed', function () {
         success: function () {
             ToastError("Maneuver Deleted");
             $("#maneuver-table").DataTable().ajax.reload();
+        },
+        error: function (e) {
+            ToastError(`Failed: ${e.responseText}`);
+        }
+    });
+});
+// Customizations
+if ($("#customization-table").length) {
+    const params = new URLSearchParams(window.location.search);
+    const tableName = "#customization-table";
+    destroyTable(tableName);
+    const table = $(tableName).DataTable({
+        ajax: {
+            url: 'api/customizations',
+            error: function (xhr) {
+                ToastError(`Failed ${xhr.responseText?.toString()}`);
+            },
+            dataSrc: '',
+            data: function (d) {
+                console.log(window.location.pathname.replace("/", "").replace("_", " ").slice(0, -5));
+                d["type"] = window.location.pathname.replace("/", "").replace("_", " ").slice(0, -5);
+            }
+        },
+        pageLength: 500,
+        order: [[0, 'asc']],
+        dom: 'rti',
+        scrollCollapse: true,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true,
+        columns: [
+            {
+                title: "Name",
+                data: "name"
+            }
+        ]
+    });
+    if (params.has('name')) {
+        $("#filter-search").val(params.get('name'));
+        table.column(0).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton();
+    }
+    setupTableFilters(tableName, [0]);
+}
+$(document).on('click', "#customization-table tbody tr", function () {
+    if ($(this).closest('btn').length)
+        return;
+    const table = $("#customization-table").DataTable();
+    const row = table.row(this);
+    const customization = row.data();
+    let stop = false;
+    if ($(this).hasClass("bold-row"))
+        stop = true;
+    $("#customization-table tbody tr").removeClass("bold-row");
+    $('.dropdown-row').remove();
+    if (!customization || stop)
+        return;
+    let editButton = '';
+    if (document.body.dataset.admin == "True") {
+        editButton = `
+            <button type="button"
+                id="edit-customization-btn-${customization.id}"
+                class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
+                data-id="${customization.id}"
+                title="Edit Equipment"
+                data-bs-toggle="modal"
+                data-bs-target="#customization-edit-form">
+                <i class="fa fa-pencil"></i>
+            </button>
+        `;
+    }
+    const additionalInfo = `
+        <tr class="dropdown-row">
+            <td colspan="${table.columns().count()}">
+                ${editButton}
+                <div class="p-3">
+                    ${customization.html_text} 
+                </div>
+            </td>
+        </tr>
+    `;
+    $(this).after(additionalInfo);
+    $(this).addClass("bold-row");
+});
+$(document).on('click', '#customization-next', function () {
+    const customization_type_option = $("#customization-type").find(":selected");
+    if (!customization_type_option.val()) {
+        ToastError("Select an Customization type first");
+    }
+    let customization = fetchCustomizationInputs();
+    if (customization.id !== undefined) {
+        customization = {};
+    }
+    customization.type = { "id": Number(customization_type_option.val()), "value": customization_type_option.html() };
+    defaultCustomizationModal(customization);
+});
+$(document).on('click', '#customization-table .edit-button', function () {
+    const table = $("#customization-table").DataTable();
+    const objId = $(this).data('id');
+    const customization = table.rows().data().toArray().find((row) => row.id == objId);
+    if (!customization)
+        ToastError("Customization not found");
+    defaultCustomizationModal(customization);
+});
+$(document).on('click', '#customization-submit', function () {
+    const customization = fetchCustomizationInputs();
+    if (!customization.id) {
+        $.ajax({
+            url: `api/customizations`,
+            type: "post",
+            contentType: "application/json",
+            data: JSON.stringify(customization),
+            success: function () {
+                ToastSuccess("customization Added");
+                $("#customization-table").DataTable().ajax.reload();
+            },
+            error: function (e) {
+                ToastError(`Failed: ${e.responseText}`);
+            }
+        });
+    }
+    else {
+        $.ajax({
+            url: `api/customizations`,
+            type: "patch",
+            contentType: "application/json",
+            data: JSON.stringify(customization),
+            success: function () {
+                ToastSuccess("Customization Updated");
+                $("#customization-table").DataTable().ajax.reload();
+            },
+            error: function (e) {
+                ToastError(`Failed: ${e.responseText}`);
+            }
+        });
+    }
+});
+$(document).on('click', '#customization-delete-confirmed', function () {
+    const customization = fetchCustomizationInputs();
+    if (!customization.id)
+        return;
+    $.ajax({
+        url: `/api/customizations/${customization.id}`,
+        type: "delete",
+        contentType: "application/json",
+        success: function () {
+            ToastError("Customization Deleted");
+            $("#customization-table").DataTable().ajax.reload();
         },
         error: function (e) {
             ToastError(`Failed: ${e.responseText}`);

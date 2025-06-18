@@ -63,6 +63,7 @@ class ResoluteCache(ABC):
             self.update(db.session, Feat)
             self.update(db.session, Background)
             self.update(db.session, Maneuver)
+            self.update(db.session, Customization)
 
             # Categories
             self.update(db.session, ContentSource)
@@ -73,6 +74,7 @@ class ResoluteCache(ABC):
             self.update(db.session, EnhancedItemType)
             self.update(db.session, EnhancedItemSubtype)
             self.update(db.session, ManeuverType)
+            self.update(db.session, CustomizationType)
             self.initialized = True
 
     def contains(self, cls):

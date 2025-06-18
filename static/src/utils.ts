@@ -1,4 +1,4 @@
-import { Archetype, Background, EnhancedItem, Equipment, Feat, Maneuver, Power, PrimaryClass, Species } from "./types.js";
+import { Archetype, Background, Customization, EnhancedItem, Equipment, Feat, Maneuver, Power, PrimaryClass, Species } from "./types.js";
 
 export function ToastError(message: string): void{
     $("#error-toast .toast-body").html(message)
@@ -649,4 +649,36 @@ export function fetchManeuverInputs(): Maneuver {
     }
 
     return maneuver
+}
+
+export function defaultCustomizationModal(customization: Customization): void {
+    if (!customization.id){
+        $("#customization-edit-form").removeData("id")
+        $("#customization-delete").addClass("d-none")
+    } else {
+        $("#customization-edit-form").data("id", customization.id)
+        $("#customization-delete").removeClass("d-none")
+    }
+
+    $("#customization-edit-form").data('type', customization.type)
+    $("#customization-name").val(customization.name)
+    $("#customization-text").val(customization.text)
+    setSelectInputValue("#customization-source", customization.source && customization.source.id ? customization.source.id.toString() : "6")
+}
+
+export function fetchCustomizationInputs(): Customization {
+    const source_option = $("#customization-source").find(":selected")
+
+    const customization: Customization = {
+        id: $("#customization-edit-form").data('id'),
+        name: $("#customization-name").val().toString(),
+        type: $("customization-edit-form").data('type'),
+        text: getMDEValue("customization-text"),
+        source: {
+            id: Number(source_option.val()),
+            name: source_option.html()
+        }
+    }
+
+    return customization
 }

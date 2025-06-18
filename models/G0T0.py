@@ -66,6 +66,10 @@ class ManeuverType(db.Model, BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
 
+class CustomizationType(db.Model, BaseModel):
+    __tablename__ = "c_customization_type"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
 
 class Activity(db.Model, BaseModel):
     __tablename__ = "c_activity"
@@ -1075,4 +1079,31 @@ class Maneuver(db.Model, BaseModel):
             _source=json.get("source", {}).get("id"),
             description=json.get("description", ""),
             prerequisite=json.get("prerequisite", ""),
+        )
+    
+class Customization(db.Model, BaseModel):
+    __tablename__ = "customizations"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4())
+    name: Mapped[str]
+    _type: Mapped[int] = mapped_column("type", ForeignKey("c_customization_type.id"))
+    _source: Mapped[int] = mapped_column(
+        "source", ForeignKey("c_content_source.id"), nullable=True
+    )
+    text: Mapped[str]
+
+    type = relationship("CustomizationType", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+
+    @property
+    def html_text(self):
+        return render_markdown(self.text)
+
+    @classmethod
+    def from_json(cls, json):
+        return cls(
+            id=json.get("id", uuid.uuid4()),
+            name=json.get("name"),
+            _type=json.get("type", {}).get("id"),
+            _source=json.get("source", {}).get("id"),
+            text=json.get("text", ""),
         )
