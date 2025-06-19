@@ -7,7 +7,7 @@ from abc import ABC
 from flask import Flask, current_app, session
 from requests import request
 
-from constants import CACHE_TIMEOUT, DISCORD_GUILD_ID, LIMIT
+from constants import CACHE_TIMEOUT, DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, DISCORD_GUILD_ID, DISCORD_RETRIES, LIMIT
 from models.exceptions import UnauthorizedAccessError
 from models.general import BaseModel, IntAttributeMixin, User
 
@@ -136,11 +136,11 @@ class DiscordBot(ABC):
 
     _members = {"members": None, "timestamp": 0}
 
-    def __init__(self, app: Flask):
-        self.client_id = app.config["DISCORD_CLIENT_ID"]
-        self.bot_token = app.config["DISCORD_BOT_TOKEN"]
+    def __init__(self):
+        self.client_id = DISCORD_CLIENT_ID
+        self.bot_token = DISCORD_BOT_TOKEN
 
-        self.retries = app.config.get("DISCORD_RETRIES", 5)
+        self.retries = DISCORD_RETRIES
 
         self.user_cache = {}
 

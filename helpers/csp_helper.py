@@ -1,7 +1,8 @@
-def get_csp():
+def get_csp(nonce):
     csp = {
         "default-src": [
             "'self'",
+            f"nonce-{nonce}",
             "https://docs.google.com",
             "https://code.jquery.com/",
             "https://cdn.jsdelivr.net/",
@@ -14,6 +15,7 @@ def get_csp():
         ],
         "script-src": [
             "'self'",
+            f"nonce-{nonce}",
             "https://cdn.jsdelivr.net/",
             "https://www.googletagmanager.com/",
             "https://ajax.googleapis.com",
@@ -23,6 +25,7 @@ def get_csp():
         "img-src": ["*", "'self'", "data:"],
         "style-src": [
             "'self'",
+            f"nonce-{nonce}",
             "https://use.fontawesome.com",
             "https://cdn.jsdelivr.net/",
             "https://cdn.datatables.net/",
@@ -31,10 +34,12 @@ def get_csp():
         ],
         "font-src": [
             "'self'",
+            f"nonce-{nonce}",
             "https://use.fontawesome.com",
             "https://fonts.gstatic.com/",
             "https://maxcdn.bootstrapcdn.com/",
         ],
     }
 
-    return csp
+    out_csp = "; ".join([f"{key} {value}" for key, value in csp.items()])
+    return out_csp

@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-flask = "*"
 flask-bootstrap = "*"
 flask-talisman = "*"
 gunicorn = "*"
@@ -17,6 +16,10 @@ flask-login = "*"
 requests-oauthlib = "*"
 pyjwt = "*"
 bleach = "==6.2.0"
+flask = "*"
+uvicorn = "*"
+jinja2 = "*"
+fastapi = "*"
 
 [dev-packages]
 pipenv = "*"

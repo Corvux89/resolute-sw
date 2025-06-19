@@ -13,6 +13,18 @@
       "request": "launch",
       "name": "Launch app.py",
       "program": "${workspaceFolder}/app.py"
+    },
+     {
+        "name": "Python: FastAPI",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": [
+            "app:app", // This refers to the 'app' object in main.py
+            "--reload", // Automatically reload on code changes
+            "--port",
+            "8000" // Optional: specify a custom port
+        ]
     }
   ]
 }

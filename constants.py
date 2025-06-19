@@ -14,6 +14,7 @@ DISCORD_REDIRECT_URI = os.environ.get("DISCORD_REDIRECT_URI", "")
 DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "")
 DISCORD_ADMINS = json.loads(os.environ.get("DISCORD_ADMIN_USERS", []))
 DISCORD_GUILD_ID = os.environ.get("DISCORD_GUILD_ID")
+DISCORD_RETRIES = os.environ.get('DISCORD_RETRIES', 5)
 
 BOT_API_URL = os.environ.get("BOT_API_URL", "")
 BOT_API_AUTH_TOKEN = os.environ.get("BOT_API_AUTH_TOKEN", "")

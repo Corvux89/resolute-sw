@@ -1,124 +1,72 @@
-from flask_login import LoginManager, current_user
-from flask_sqlalchemy import SQLAlchemy
-
-from flask import Flask, redirect, render_template, request, session, url_for
-from flask_bootstrap import Bootstrap
-from flask_talisman import Talisman
-from blueprints.auth import auth_blueprint
-from blueprints.api import api_blueprint
-from blueprints.Resolute import resolute_blueprint
-
-from constants import (
-    DB_URI,
-    DISCORD_BOT_TOKEN,
-    DISCORD_CLIENT_ID,
-    DISCORD_REDIRECT_URI,
-    DISCORD_SECRET_KEY,
-    WEB_DEBUG,
-    SECRET_KEY,
-)
+from datetime import datetime
+import uuid
+import secrets
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.templating import Jinja2Templates
 from helpers import get_csp
-from helpers.error_handlers import register_handlers
-from models.cache import ResoluteCache
-from models.discord import DiscordBot
-from models.exceptions import UnderConstruction
-from models.general import CustomJSONProvider, User
+from routers.api import api
+from routers.resolute import resolute
 
-app = Flask(__name__)
 
-app.secret_key = SECRET_KEY
-app.json = CustomJSONProvider(app)
-app.json.sort_keys=False
+app = FastAPI()
 
-app.config.update(DEBUG=WEB_DEBUG)
-app.config["SQLALCHEMY_DATABASE_URI"] = DB_URI
-app.config["SQLALCHEMY_TRACK_MODIFICATION"] = False
-app.config["DISCORD_CLIENT_ID"] = DISCORD_CLIENT_ID
-app.config["DISCORD_REDIRECT_URI"] = DISCORD_REDIRECT_URI
-app.config["DISCORD_CLIENT_SECRET"] = DISCORD_SECRET_KEY
-app.config["DISCORD_BOT_TOKEN"] = DISCORD_BOT_TOKEN
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# OAuth Providers
-app.config["OAUTH2_PROVIDERS"] = {
-    "discord": {
-        "client_id": DISCORD_CLIENT_ID,
-        "client_secret": DISCORD_SECRET_KEY,
-        "authorize_url": "https://discord.com/oauth2/authorize",
-        "token_url": "https://discord.com/api/oauth2/token",
-        "scopes": ["identify", "email", "guilds"],
-        "userinfo": {
-            "url": "https://discord.com/api/users/@me",
-            "id": lambda json: json["id"],
-            "email": lambda json: json["email"],
-            "username": lambda json: json["username"],
-            "global_name": lambda json: (
-                json["global_name"] if json["global_name"] != "" else json["username"]
-            ),
-            "avatar": lambda json: json["avatar"] if json["avatar"] != "" else None,
-        },
-    }
+app.add_middleware(SessionMiddleware, secret_key="your-secret-key")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.json_encoders = {
+    datetime: lambda v: v.isoformat(),
+    uuid.UUID: lambda v: v.hex
 }
 
-app.config["DB"] = db = SQLAlchemy(app)
-app.config["login"] = login = LoginManager(app)
-app.discord = DiscordBot(app)
-app.cache = ResoluteCache()
+@app.middleware("http")
+async def add_csp(request: Request, call_next):
+    csp_nonce = secrets.token_urlsafe(16)
+    request.state.csp_nonce = csp_nonce  
+
+    response = await call_next(request)
+
+    csp = get_csp(csp_nonce) 
+    # response.headers["Content-Security-Policy"] = csp
+
+    return response
+
+templates = Jinja2Templates(directory="templates")
+
+def csp_nonce(request: Request):
+    return request.state.csp_nonce
+
+templates.env.globals["csp_nonce"] = csp_nonce
+templates.env.globals["current_user"] = {"is_admin": True}
+
+# app.state.db = ResoluteCache()
+# app.state.discord = DiscordBot(app)
+
+@app.get("/debug-static")
+async def debug_static():
+    return {"static_url": app.url_path_for("static", path="style.css")}
+
+@app.get("/debug-routes")
+async def debug_routes():
+    return [{"path": route.path, "name": route.name} for route in app.router.routes]
+
+@app.get("/")
+async def homepage(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
 
 
-@app.before_request
-def before_request():
-    app.cache.initialize()
+# app.include_router(auth_router, prefix="/auth")
+app.include_router(api, prefix="/api")
+app.include_router(resolute, prefix="")
 
-    # Allow unauthenticated access to login, static files, and OAuth callback
-    allowed_routes = ["auth.login", "auth.callback", "static", "homepage"]
-
-    if request.endpoint is None or request.endpoint in allowed_routes:
-        return
-    elif not current_user.is_authenticated:
-        return redirect(url_for("auth.login", provider="discord", next=request.path))
-    elif not current_user.is_beta_tester:
-        raise UnderConstruction()
-
-
-@app.route("/")
-def homepage():
-    return render_template("home.html")
-
-
-@login.user_loader
-def load_user(_):
-    print(request.headers)
-    return app.discord.fetch_user()
-
-
-@login.request_loader
-def load_user_from_request(_):
-    if "Authorization" in request.headers:
-        session["OAUTH2_TOKEN"] = request.headers.get("Authorization").replace(
-            "Bearer ", ""
-        )
-        user = User.fetch_user("discord")
-        return user
-
-
-@login.unauthorized_handler
-def unauthorized():
-    return redirect(url_for("auth.login", provider="discord", next=request.path))
-
-
-csp = get_csp()
-
-Bootstrap(app)
-talisman = Talisman(
-    app,
-    content_security_policy=csp,
-    content_security_policy_nonce_in=["script-src", "style-src"],
-)
-
-app.register_blueprint(auth_blueprint, url_prefix="/auth")
-app.register_blueprint(api_blueprint, url_prefix="/api")
-app.register_blueprint(resolute_blueprint, url_prefix="/")
-register_handlers(app)
-
-if __name__ == "__main__":
-    app.run()
+# register_handlers(app)

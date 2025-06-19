@@ -1,48 +1,49 @@
-from flask import Flask, jsonify, render_template, request
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
 from models.exceptions import (
     BadRequest,
-    LoginRequiredError,
     NotFound,
     AdminAccessError,
     UnauthorizedAccessError,
     UnderConstruction,
 )
 
-
-def not_found(e):
-    if "/api/" in request.path:
-        return jsonify({"error": f"{getattr(e, 'message', 'URL not found')}"}), 404
-    return render_template("/exceptions/404.html")
+templates = Jinja2Templates(directory="templates")
 
 
-def unauthorized_error(error):
-    return jsonify({"error": error.message}), 401
+async def not_found_handler(request: Request, exc: NotFound):
+    if "/api/" in str(request.url.path):
+        return JSONResponse(status_code=404, content={"error": exc.message or "URL not found"})
+    return templates.TemplateResponse("/exceptions/404.html", {"request": request})
 
 
-def exception_error(error):
-    return jsonify({"error": error.message}), 403
+async def unauthorized_error_handler(request: Request, exc: UnauthorizedAccessError):
+    return JSONResponse(status_code=401, content={"error": exc.message})
 
 
-def bad_request(error):
-    return jsonify({"error": error.message}), 400
+async def exception_error_handler(request: Request, exc: AdminAccessError):
+    return JSONResponse(status_code=403, content={"error": exc.message})
 
 
-def general_error(error):
-    if "/api/" in request.path:
-        return jsonify({"error": f"{str(error)}"}), 500
-    return render_template("home.html", error=f"{error}")
+async def bad_request_handler(request: Request, exc: BadRequest):
+    return JSONResponse(status_code=400, content={"error": exc.message})
 
 
-def under_construction(error):
-    return render_template("/exceptions/temp.html")
+async def general_error_handler(request: Request, exc: Exception):
+    if "/api/" in str(request.url.path):
+        return JSONResponse(status_code=500, content={"error": str(exc)})
+    return templates.TemplateResponse("home.html", {"request": request, "error": str(exc)})
 
 
-def register_handlers(app: Flask):
-    app.register_error_handler(404, not_found)
-    app.register_error_handler(NotFound, not_found)
-    app.register_error_handler(AdminAccessError, exception_error)
-    app.register_error_handler(TypeError, general_error)
-    app.register_error_handler(LoginRequiredError, exception_error)
-    app.register_error_handler(BadRequest, bad_request)
-    app.register_error_handler(UnauthorizedAccessError, unauthorized_error)
-    app.register_error_handler(UnderConstruction, under_construction)
+async def under_construction_handler(request: Request, exc: UnderConstruction):
+    return templates.TemplateResponse("/exceptions/temp.html", {"request": request})
+
+
+def register_handlers(app):
+    app.add_exception_handler(NotFound, not_found_handler)
+    app.add_exception_handler(UnauthorizedAccessError, unauthorized_error_handler)
+    app.add_exception_handler(AdminAccessError, exception_error_handler)
+    app.add_exception_handler(BadRequest, bad_request_handler)
+    app.add_exception_handler(Exception, general_error_handler)
+    app.add_exception_handler(UnderConstruction, under_construction_handler)
