@@ -12,6 +12,52 @@ function boolColumn(data, type){
     }
 }
 
+function propertyColumn(data, type, category){
+    if (type === "filter") {
+            return data.split(", ").map((c) =>
+                c.replace(/[\d]/g, "").split("(")[0].trim()
+            );
+        }
+
+        const escapeHtml = (text: string): string => {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        };
+
+        const properties = data.split(", ").map((c) => c.trim());
+
+        const referenceTable = $("#reference-table");
+        const propertiesData = JSON.parse(referenceTable.data("properties") || "[]");
+
+        return properties
+            .map((property) => {
+                const clean_prop = property.replace(/[\d]/g, "").split("(")[0].trim()
+                const matchingProperty: Property = propertiesData.find(
+                    (prop: Property) => {
+                        return (
+                            prop.name.toLowerCase() === clean_prop.toLowerCase() &&
+                            prop.type.value === category
+                        );
+                    }
+                );
+
+                if (matchingProperty) {
+                    return `<span class="info-link" data-name="${escapeHtml(
+                        matchingProperty.name
+                    )}" data-text="${escapeHtml(
+                        matchingProperty.text
+                    )}">${escapeHtml(property)}</span>`;
+                } else {
+                    return escapeHtml(property);
+                }
+            })
+            .join(", ");
+}
+
 $(document).on("click", ".info-link", function(e) {
     e.stopPropagation()
     const name = $(this).data("name"); // Get the name from the data attribute
@@ -771,55 +817,7 @@ if ($("#equipment-table").length){
                 title: "Property",
                 data: "properties",
                 render: function (data, type) {
-                    if (type === "filter") {
-                        return data.split(", ").map((c) =>
-                            c.replace(/[\d]/g, "").split("(")[0].trim()
-                        );
-                    }
-
-                    // Utility function to escape HTML special characters
-                    const escapeHtml = (text: string): string => {
-                        return text
-                            .replace(/&/g, "&amp;")
-                            .replace(/</g, "&lt;")
-                            .replace(/>/g, "&gt;")
-                            .replace(/"/g, "&quot;")
-                            .replace(/'/g, "&#039;");
-                    };
-
-                    // Parse the properties string into individual properties
-                    const properties = data.split(", ").map((c) => c.trim());
-
-                    // Get the reference table's data-properties attribute
-                    const referenceTable = $("#reference-table");
-                    const propertiesData = JSON.parse(referenceTable.data("properties") || "[]");
-
-                    // Transform each property into a span if it matches the reference table
-                    return properties
-                        .map((property) => {
-                            const cleanProp = property.replace(/[\d]/g,"").split("(")[0].trim()
-                            const matchingProperty: Property = propertiesData.find(
-                                (prop: Property) => {
-                                    return (
-                                        prop.name.toLowerCase() === cleanProp.toLowerCase() &&
-                                        prop.type.value === "Weapon"
-                                    );
-                                }
-                            );
-
-                            if (matchingProperty) {
-                                // Create a span element for the info-link
-                                return `<span class="info-link" data-name="${escapeHtml(
-                                    matchingProperty.name
-                                )}" data-text="${escapeHtml(
-                                    matchingProperty.text
-                                )}">${escapeHtml(property)}</span>`;
-                            } else {
-                                // Return plain text if no match is found
-                                return escapeHtml(property);
-                            }
-                        })
-                        .join(", "); // Join the transformed properties with a comma
+                   return propertyColumn(data, type, "Weapon")
                 }
             },
             {
@@ -871,8 +869,7 @@ if ($("#equipment-table").length){
                 title: "Property",
                 data: "properties",
                 render: function(data, type){
-                    if (type == "filter") return data.split(', ').map(c => c.replace(/[\d]/g, '').split("(")[0].trim())
-                    return data
+                    return propertyColumn(data, type, "Armor")
                 }
             },
             {
