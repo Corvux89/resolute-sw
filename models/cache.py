@@ -65,6 +65,7 @@ class ResoluteCache(ABC):
             self.update(db.session, Maneuver)
             self.update(db.session, Customization)
             self.update(db.session, Improvement)
+            self.update(db.session, Property)
 
             # Categories
             self.update(db.session, ContentSource)

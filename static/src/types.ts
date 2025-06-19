@@ -189,3 +189,10 @@ export interface Improvement {
     html_text?: string
     prerequisite?: string
 }
+
+export interface Property {
+    id: string
+    name: string
+    text: string
+    type: GenericCategory
+}

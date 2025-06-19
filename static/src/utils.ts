@@ -103,20 +103,19 @@ export function setupTableFilters(table_name: string, exceptions?: number[], ini
                         const render = col.render(raw, 'filter', row);
 
                         if (Array.isArray(render)) {
-                            // Return each array value as its own entry
                             return render.map((item) => {
                                 const tempDiv = document.createElement('div');
-                                tempDiv.innerHTML = capitalizeFirstLetter(item);
-                                return tempDiv.textContent || ""; // Cleaned text content
+                                tempDiv.innerHTML = capitalizeFirstLetter(item).trim();
+                                return (tempDiv.textContent || "").trim();
                             });
                         } else {
                             const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = render?.toString() || "";
-                            return tempDiv.textContent || ""; // Cleaned text content
+                            tempDiv.innerHTML = render?.toString().trim() || "";
+                            return (tempDiv.textContent || "").trim(); 
                         }
                     }
                     if (raw == null || raw == undefined) return;
-                    return typeof raw === "string" ? raw.split(",")[0] : raw.toString();
+                    return typeof raw === "string" ? raw.split(",")[0].toString().trim() : raw.toString().trim();
                 } catch {
                     return;
                 }

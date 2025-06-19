@@ -19,6 +19,7 @@ from models.G0T0 import (
     PowerAlignment,
     PowerType,
     PrimaryClass,
+    Property,
     Rarity,
     Species,
 )
@@ -55,12 +56,12 @@ def force_powers():
 
 @resolute_blueprint.get("/weapons")
 def weapons():
-    return render_template("equipment.html", title="Weapons", options=_get_options())
+    return render_template("equipment.html", title="Weapons", options=_get_options(), properties=current_app.cache.fetch(Property))
 
 
 @resolute_blueprint.get("/armor")
 def armor():
-    return render_template("equipment.html", title="Armor", options=_get_options())
+    return render_template("equipment.html", title="Armor", options=_get_options(), properties=current_app.cache.fetch(Property))
 
 
 @resolute_blueprint.get("/enhanced_consumable")
@@ -334,5 +335,5 @@ def _get_options():
     options["maneuver-type"] = build_select_option("id", "value", current_app.cache.fetch(ManeuverType))
     options["customization-type"] = build_select_option("id", "value", current_app.cache.fetch(CustomizationType))
     options["class-improvement-type"] = build_select_option("id", "value", current_app.cache.fetch(ImprovementType))
-
+ 
     return options

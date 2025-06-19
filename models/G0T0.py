@@ -11,7 +11,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.dialects.postgresql import ARRAY
 
 from constants import DISCORD_GUILD_ID
-from models.general import BaseModel, FeatureHyperlinkExtension, db, render_markdown
+from models.general import BaseModel, FeatureHyperlinkExtension, render_markdown
 
 
 db = SQLAlchemy()
@@ -76,6 +76,10 @@ class ImprovementType(db.Model, BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True)
     value: Mapped[str]
 
+class PropertyType(db.Model, BaseModel):
+    __tablename__ = "c_property_type"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[str]
 
 class Activity(db.Model, BaseModel):
     __tablename__ = "c_activity"
@@ -1143,3 +1147,15 @@ class Improvement(db.Model, BaseModel):
             prerequisite=json.get('prerequisite','')
         )
     
+class Property(db.Model, BaseModel):
+    __tablename__ = "properties"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4())
+    name: Mapped[str]
+    _type: Mapped[int] = mapped_column("type", ForeignKey("c_property_type.id"))
+    _text: Mapped[str] = mapped_column("text")
+
+    type = relationship("PropertyType", lazy="joined")
+
+    @property
+    def text(self):
+        return render_markdown(self._text)

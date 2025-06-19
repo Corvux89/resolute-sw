@@ -5,6 +5,7 @@ from xml.etree.ElementTree import Element
 import bleach
 import markdown
 from markdown.extensions import Extension
+import markdown.inlinepatterns
 from markdown.preprocessors import Preprocessor
 from flask import current_app, session
 from flask.json.provider import JSONProvider
@@ -50,7 +51,6 @@ class MonsterBlockPreProcessor(Preprocessor):
         html += markdown.markdown("\n".join(content), extensions=["tables"])
         html += "</div>"
         return html
-
 
 class FeatureHyperlinkPattern(markdown.inlinepatterns.Pattern):
     def __init__(self, *args, **kwargs):

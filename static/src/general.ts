@@ -1,5 +1,5 @@
 
-import { Customization, EnhancedItem, Equipment, Feat, Improvement, Maneuver, Power } from "./types.js";
+import { Customization, EnhancedItem, Equipment, Feat, Improvement, Maneuver, Power, Property } from "./types.js";
 import { defaultCustomizationModal, defaultEquipmentModal, defaultFeatModal, defaultImprovementModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchCustomizationInputs, fetchEquipmentInputs, fetchFeatInputs, fetchImprovementInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 
 function boolColumn(data, type){
@@ -12,7 +12,8 @@ function boolColumn(data, type){
     }
 }
 
-$(document).on("click", ".info-link", function() {
+$(document).on("click", ".info-link", function(e) {
+    e.stopPropagation()
     const name = $(this).data("name"); // Get the name from the data attribute
     const text = $(this).data("text"); // Get the text from the data attribute
 
@@ -769,9 +770,56 @@ if ($("#equipment-table").length){
             {
                 title: "Property",
                 data: "properties",
-                render: function(data, type){
-                    if (type == "filter") return data.split(', ').map(c => c.replace(/[\d]/g, '').split("(")[0])
-                    return data
+                render: function (data, type) {
+                    if (type === "filter") {
+                        return data.split(", ").map((c) =>
+                            c.replace(/[\d]/g, "").split("(")[0].trim()
+                        );
+                    }
+
+                    // Utility function to escape HTML special characters
+                    const escapeHtml = (text: string): string => {
+                        return text
+                            .replace(/&/g, "&amp;")
+                            .replace(/</g, "&lt;")
+                            .replace(/>/g, "&gt;")
+                            .replace(/"/g, "&quot;")
+                            .replace(/'/g, "&#039;");
+                    };
+
+                    // Parse the properties string into individual properties
+                    const properties = data.split(", ").map((c) => c.trim());
+
+                    // Get the reference table's data-properties attribute
+                    const referenceTable = $("#reference-table");
+                    const propertiesData = JSON.parse(referenceTable.data("properties") || "[]");
+
+                    // Transform each property into a span if it matches the reference table
+                    return properties
+                        .map((property) => {
+                            const cleanProp = property.replace(/[\d]/g,"").split("(")[0].trim()
+                            const matchingProperty: Property = propertiesData.find(
+                                (prop: Property) => {
+                                    return (
+                                        prop.name.toLowerCase() === cleanProp.toLowerCase() &&
+                                        prop.type.value === "Weapon"
+                                    );
+                                }
+                            );
+
+                            if (matchingProperty) {
+                                // Create a span element for the info-link
+                                return `<span class="info-link" data-name="${escapeHtml(
+                                    matchingProperty.name
+                                )}" data-text="${escapeHtml(
+                                    matchingProperty.text
+                                )}">${escapeHtml(property)}</span>`;
+                            } else {
+                                // Return plain text if no match is found
+                                return escapeHtml(property);
+                            }
+                        })
+                        .join(", "); // Join the transformed properties with a comma
                 }
             },
             {
@@ -823,7 +871,7 @@ if ($("#equipment-table").length){
                 title: "Property",
                 data: "properties",
                 render: function(data, type){
-                    if (type == "filter") return data.split(', ').map(c => c.replace(/[\d]/g, '').split("(")[0])
+                    if (type == "filter") return data.split(', ').map(c => c.replace(/[\d]/g, '').split("(")[0].trim())
                     return data
                 }
             },
