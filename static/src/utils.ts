@@ -25,7 +25,6 @@ export function setupMDE(element: string, default_text?: string, clear_text: boo
     }
 
     if (default_text || clear_text) $(`#${element}`).val(default_text)
-    
     //@ts-expect-error This is pulled in from a parent and no import needed
     window[element] = new EasyMDE(
         {
@@ -37,6 +36,14 @@ export function setupMDE(element: string, default_text?: string, clear_text: boo
             toolbar: ["undo","redo","|","bold","italic","heading","|","code","quote","unordered-list","ordered-list","|","link"] 
         }
     )
+    
+    // Sync EasyMDE content back to the textarea whenever it changes
+    window[element].codemirror.on("change", function() {
+        const textareaElement = document.getElementById(element) as HTMLTextAreaElement;
+        if (textareaElement) {
+            textareaElement.value = window[element].value();
+        }
+    });
 }
 
 export function getMDEValue(element: string): string{
@@ -279,7 +286,7 @@ export function fetchPowerInputs(): Power{
         id: Number(source_option.val()),
         name: source_option.html(),
     }
-    power.description = getMDEValue("power-desc")
+    power.description = $("#power-desc").val().toString()
     power.concentration = $("#power-conc").prop('checked')
     if ($("#power-alignment").length){
         const align_option = $("#power-alignment").find(':selected')
@@ -318,7 +325,7 @@ export function fetchSpeciesInputs(): Species{
         weight_mod: $("#species-wmod").val().toString(),
         homeworld: $("#species-world").val().toString(),
         language: $("#species-language").val().toString(),
-        traits: getMDEValue("species-traits"),
+        traits: $("#species-traits").val().toString(),
         flavortext: $("#species-flavortext").val().toString(),
     }
 
@@ -333,6 +340,7 @@ export function fetchClassInputs(): PrimaryClass{
     const prim_class: PrimaryClass = {
         id: $("#class-edit-form").data('id'),
         value: $("#class-name").val().toString(),
+        summary: $("#class-summary").val().toString(),
         image_url: $("#class-image").val().toString(),
         source: {
             id: Number(source_option.val()),
@@ -353,10 +361,10 @@ export function fetchClassInputs(): PrimaryClass{
             value: caster_option.html()
         } 
         : null,
-        starting_equipment: getMDEValue("class-equipment"),
-        flavortext: getMDEValue("class-flavortext"),
-        level_changes: getMDEValue("class-level-changes"),
-        features: getMDEValue("class-features"),
+        starting_equipment: $("#class-equipment").val().toString(),
+        flavortext: $("#class-flavortext").val().toString(),
+        level_changes: $("#class-level-changes").val().toString(),
+        features: $("#class-features").val().toString(),
     }
 
     return prim_class

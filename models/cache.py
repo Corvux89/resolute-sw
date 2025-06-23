@@ -53,13 +53,16 @@ class ResoluteCache(ABC):
         db = app.db
         if not self.initialized or force:
             # Objects
-            self.update(db, ResoluteGuild)
-            self.update(db, Feature)
-            self.update(db, WebContent)
-            self.update(db, Species)
+            self._update(db, ResoluteGuild)
+            self._update(db, Feature)
+            self._update(db, WebContent)
+            self._update(db, Species)
+            self._update(db, PrimaryClass)
 
             # Categories
-            self.update(db, ContentSource)
+            self._update(db, ContentSource)
+            self._update(db, PowerAlignment)
+            self._update(db, PowerType)
             self.initialized = True
 
     def contains(self, cls):
@@ -77,7 +80,7 @@ class ResoluteCache(ABC):
 
         return self.cache.get(cls)
 
-    def update(self, session: scoped_session[Session], cls: Type):
+    def _update(self, session: scoped_session[Session], cls: Type):
         if cls is ResoluteGuild:
             self.cache[ResoluteGuild] = (
                 session.query(ResoluteGuild)
@@ -86,3 +89,7 @@ class ResoluteCache(ABC):
             )
         else:
             self.cache[cls] = session.query(cls).all()
+
+    def update(self, session: scoped_session[Session], cls: Type):
+        if cls in self.cache:
+            self._update(session, cls)

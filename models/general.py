@@ -20,20 +20,31 @@ def custom_encoder(obj, **kwargs):
         return [custom_encoder(item, **kwargs) for item in obj]
     
     if hasattr(obj, "__dict__"):
+        # Use __dict__ instead of dir() for better performance
+        # and only get non-private attributes that aren't callable
         filtered_dict = {}
-        for k in dir(obj):
-            if not k.startswith("_") and not callable(getattr(obj, k)):
+        obj_dict = obj.__dict__
+        obj_class = obj.__class__
+        
+        for k, v in obj_dict.items():
+            if not k.startswith("_"):
                 try:
-                    value = getattr(obj, k)
-                    # Attempt to serialize the value
-                    jsonable_encoder(value)
-                    filtered_dict[k] = value
+                    filtered_dict[k] = jsonable_encoder(v, **kwargs)
                 except Exception:
                     pass
-                    # Skip non-serializable attributes
-                    # logging.warning(f"Skipping non-serializable attribute: {k}")
         
-        return jsonable_encoder(filtered_dict, **kwargs)
+        # Also check for properties (computed attributes)
+        for attr_name in dir(obj_class):
+            if (not attr_name.startswith("_") and 
+                isinstance(getattr(obj_class, attr_name, None), property) and
+                attr_name not in filtered_dict):
+                try:
+                    attr_value = getattr(obj, attr_name)
+                    filtered_dict[attr_name] = jsonable_encoder(attr_value, **kwargs)
+                except Exception:
+                    pass
+        
+        return filtered_dict
     else:  
         return jsonable_encoder(obj, **kwargs)
     
@@ -44,7 +55,7 @@ class MonsterBlockExtension(Extension):
 class HTTPError(BaseModel):
     detail: str
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "eample": {"detail": "HTTPException Raised"}
         }
 

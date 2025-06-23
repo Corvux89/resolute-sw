@@ -1,6 +1,6 @@
 {% extends "template.html" %} {% block body %}
 
-{% if current_user.is_admin %}
+{% if is_admin %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 {% endif %}
@@ -9,7 +9,7 @@
 
 <filterable-table table-id="archetype-table" button-text="New Archetype" key="archetype"></filterable-table>
 
-{% if current_user.is_admin %}
+{% if is_admin %}
 {% include '/archetypes/archetype_modal.html' %}
 {% endif %}
 

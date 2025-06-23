@@ -1,5 +1,7 @@
 import time
 import aiohttp
+import jwt
+from datetime import datetime, timedelta, timezone
 
 from aiocache import cached
 from abc import ABC
@@ -9,8 +11,8 @@ from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
-from constants import CACHE_TIMEOUT, DISCORD_BOT_TOKEN, DISCORD_GUILD_ID, LIMIT
-from models.exceptions import RateLimited
+from constants import CACHE_TIMEOUT, DISCORD_BOT_TOKEN, DISCORD_GUILD_ID, LIMIT, SECRET_KEY
+from models.exceptions import RateLimited, Unauthorized
 
 class RefreshTokenPayload(TypedDict):
     client_id: str
@@ -180,7 +182,7 @@ class DiscordBot(ABC):
         else:
             raise Exception("Other HTTP than GET and POST are currently not Supported")
         if resp.status == 401:
-            raise Exception("Unauthorized")
+            raise Unauthorized()
         if resp.status == 429:
             raise RateLimited(data, resp.headers)
         return data
@@ -202,24 +204,27 @@ class DiscordBot(ABC):
             async with self.client_session.post(
                 f"{self._base_url}{route}",
                 headers=headers,
-                proxy=self.proxy,
+                proxy=self.proxy,                
                 proxy_auth=self.proxy_auth,
             ) as resp:
                 data = await resp.json()
         else:
             raise Exception("Other HTTP than GET and POST are currently not Supported")
         if resp.status == 401:
-            raise Exception("Unauthorized")
+            raise Unauthorized()
         if resp.status == 429:
             raise RateLimited(data, resp.headers)
-        return data
-    
+        return data  
+      
     async def user(self, request: Request):
         if "identify" not in self.scopes:
             raise Exception("Missing identify scope")
         route = "/users/@me"
         token = self.get_token(request)
-        return User(**(await self.request(route, token)))
+        
+        # Simple caching using the existing request cache pattern
+        user_data = await self.request(route, token)
+        return User(**user_data)
     
     async def isAuthenticated(self, token: str):
         route = "/oauth2/@me"
@@ -231,20 +236,26 @@ class DiscordBot(ABC):
 
     async def requires_authorization(self, bearer: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer())):
         if bearer is None:
-            raise Exception("Unauthorized")
+            raise Unauthorized()
         if not await self.isAuthenticated(bearer.credentials):
-            raise Exception("Unathorized")
+            raise Unauthorized()
         
     def get_token(self, request: Request):
         authorization_header = request.headers.get("Authorization")
-        if not authorization_header:
-            raise Exception("Unathorized")
-        authorization_header = authorization_header.split(" ")
-        if not authorization_header[0] == "Bearer" or len(authorization_header) > 2:
-            raise Exception("Unathorized")
-
-        token = authorization_header[1]
-        return token
+        if authorization_header:
+            authorization_header = authorization_header.split(" ")
+            if authorization_header[0] == "Bearer" and len(authorization_header) == 2:
+                return authorization_header[1]
+        
+        jwt_token = request.cookies.get("auth_token")
+        if jwt_token:
+            try:
+                access_token, _ = self.decode_tokens_from_jwt(jwt_token)
+                return access_token
+            except Unauthorized:
+                pass
+            
+        raise Unauthorized()
     
     async def fetch_members(self, member_id: str = None) -> Union[Optional[Member], List[Member]]:
         current_time = time.time()
@@ -281,11 +292,35 @@ class DiscordBot(ABC):
         
         return self._roles["objects"]
 
-
+    def encode_tokens_to_jwt(self, access_token: str, refresh_token: str) -> str:
+        """
+        Encode Discord tokens into a JWT for secure cookie storage
+        """
+        payload = {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(timezone.utc) + timedelta(days=7)  # JWT expires in 7 days
+        }
+        return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     
- 
+    def decode_tokens_from_jwt(self, token_jwt: str) -> Tuple[str, str]:
+        """
+        Decode JWT to extract Discord tokens
+        """
+        try:
+            payload = jwt.decode(token_jwt, SECRET_KEY, algorithms=["HS256"])
+            return payload["access_token"], payload["refresh_token"]
+        except jwt.ExpiredSignatureError:
+            raise Unauthorized("Token expired")
+        except jwt.InvalidTokenError:
+            raise Unauthorized("Invalid token")
 
 
-        
+
+
+
+
+
 
 

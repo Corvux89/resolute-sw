@@ -18,10 +18,11 @@
         "name": "Python: FastAPI",
         "type": "debugpy",
         "request": "launch",
-        "module": "uvicorn",
+        "module": "uvicorn",          
         "args": [
             "app:app", 
             "--reload",
+            "--reload-include", "*.js",
             "--port",
             "5000" 
         ]

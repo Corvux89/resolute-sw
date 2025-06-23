@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/2.3.1/css/dataTables.dataTables.css" />
 </head>
 
-<body data-admin="{{ current_user.is_admin }}">
+<body data-admin="{{ is_admin }}">
     <div id="navbar">
         {% include "/includes/navbar.html" %}
     </div>

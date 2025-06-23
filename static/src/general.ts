@@ -1,6 +1,5 @@
-
-import { Customization, EnhancedItem, Equipment, Feat, Improvement, Maneuver, Power, Property } from "./types.js";
-import { defaultCustomizationModal, defaultEquipmentModal, defaultFeatModal, defaultImprovementModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchCustomizationInputs, fetchEquipmentInputs, fetchFeatInputs, fetchImprovementInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
+import { Customization, EnhancedItem, Equipment, Feat, Improvement, Maneuver, Power, Property, WebContent } from "./types.js";
+import { defaultCustomizationModal, defaultEquipmentModal, defaultFeatModal, defaultImprovementModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchCustomizationInputs, fetchEquipmentInputs, fetchFeatInputs, fetchImprovementInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, getMDEValue, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 
 function boolColumn(data, type){
      if (data) {
@@ -73,50 +72,22 @@ $(document).on("click", ".info-link", function(e) {
 
 // Generic Content
 if ($("#content-edit-form").length){
-    
-    //@ts-expect-error This is pulled in from a parent and no import needed
-    const easyMDE = new EasyMDE(
-        {
-            element: document.getElementById('content-body'),
-            autofocus: true,
-            sideBySideFullscreen: false,
-            autoRefresh: { delay: 300},
-            maxHeight: "80vh",
-            toolbar: ["undo","redo",
-                {
-                    name: "save",
-                    title: "Save",
-                    className: "fa-solid fa-floppy-disk",
-                    action: (editor) => {
-                        const key = $("#content-submit-button").data('key')
-                        const content = editor.value()
-                        $.ajax({
-                            url: `api/content/${key}`,
-                            type: "PATCH",
-                            contentType: "application/json",
-                            data: JSON.stringify({ content }),
-                            success: function() {
-                                ToastSuccess("Content saved. Refresh to view.")
-                            },
-                            error: function() {
-                                ToastError("Failed to update content")
-                            }
-                        });
-                    }
-                },
-                "|","bold","italic","heading","|","code","quote","unordered-list","ordered-list","|","link"] 
-        }
-    )
 
-    $("#content-submit-button").on('click', function(){
-        const key = $(this).data('key');
-        const content = easyMDE.value()
+    setupMDE("content-body")
+
+    $(".content-submit-btn").on('click', function(){
+        const con: WebContent = {
+            id: $(this).data('key'),
+            key: $(this).data('key'),
+            content: getMDEValue('content-body')
+            
+        }
 
         $.ajax({
-            url: `api/content/${key}`,
+            url: `api/content`,
             type: "PATCH",
             contentType: "application/json",
-            data: JSON.stringify({ content }),
+            data: JSON.stringify(con),
             success: function() {
                 location.reload();
             },
@@ -416,14 +387,16 @@ if ($("#species-table").length){
             },
         },
         pageLength: 500,
-        columns: [
-            {
+        columns: [            {
                 data: "image_url",
                 render: function(data, type, row){
                     return `
                     <a href="/species/${encodeURIComponent(row.value.toString().toLowerCase())}">
                         <div class="species-preview-container">
-                            <img src="${data ? data : 'static/images/placeholder-trooper.jpg'}" alt="species image" class="species-preview"/>
+                            <img src="${data ? data : `${window.location.origin}/static/images/placeholder-trooper.jpg`}" 
+                                 alt="species image" 
+                                 class="species-preview"
+                                 onerror="this.src='static/images/placeholder-trooper.jpg'; this.onerror=null;"/>
                         </div>
                     </a>
                     `
@@ -475,10 +448,9 @@ $('#species-edit-form').on('show.bs.modal', function(){
 
 $(document).on('click', "#species-submit", function(){
     const species = fetchSpeciesInputs()
-
    if (!species.id){
         $.ajax({
-            url: `api/species`,
+            url: `${window.location.origin}/api/species`,
             type: "post",
             contentType: "application/json",
             data: JSON.stringify(species),
@@ -535,7 +507,7 @@ if ($("#class-table").length){
 
     const table = $(tableName).DataTable({
         ajax: {
-            url: '/api/classes',
+            url: `${window.location.origin}/api/classes`,
             dataSrc: '',
             error: function(xhr){
                 ToastError(`Failed ${xhr.responseText?.toString()}`)
@@ -626,7 +598,7 @@ $(document).on('click', "#class-submit", function(){
 
    if (!prim_class.id){
         $.ajax({
-            url: `api/classes`,
+            url: `${window.location.origin}/api/classes`,
             type: "post",
             contentType: "application/json",
             data: JSON.stringify(prim_class),

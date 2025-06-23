@@ -16,12 +16,17 @@ from constants import DB_URI, DISCORD_CLIENT_ID, DISCORD_REDIRECT_URI, DISCORD_S
 from models.auth import DiscordBot
 from models.cache import ResoluteCache
 from models.exceptions import RateLimited
+from models.templates import ResoluteJinja
 from routers import api_router, admin_api_router, auth_router, frontend_router
 
 tags_metadata = [
     {
         "name": "API",
         "description": "Backend routes that serve up data."
+    },
+    {
+        "name": "Admin API",
+        "description": "Administrative backend routes for modifying data"
     },
     {
         "name": "Frontend",
@@ -87,18 +92,13 @@ async def rate_limit_error_handler(_, e: RateLimited):
 app.include_router(api_router, prefix="/api")
 app.include_router(admin_api_router, prefix="/api")
 app.include_router(auth_router, prefix="/auth")
-app.include_router(frontend_router, prefix="/")
+app.include_router(frontend_router, prefix="")
 
-templates = Jinja2Templates(directory="templates")
+templates = ResoluteJinja(directory="templates")
 
 # Start some routes
 @app.get('/')
 async def homepage(request: Request):
-    try:
-        user = await request.app.discord.user(request)
-    except:
-        user = None
-    return templates.TemplateResponse("home.html", {
+    return await templates.TemplateResponse("home.html", {
         "request": request,
-        "current_user": user
     })

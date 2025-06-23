@@ -1,11 +1,10 @@
 import uuid
-from typing import Optional, Type
+from typing import List, Optional
 from pydantic import BaseModel
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, ForeignKey, Integer, String, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ARRAY, BIGINT
-from sqlalchemy.ext.declarative import DeclarativeMeta
 
 from models.general import IntAttributeMixin, render_markdown
 
@@ -14,30 +13,58 @@ base = declarative_base()
 
 class GenericCategory(base):
     __abstract__ = True
+    __exceptions__: List[str] = []
     id = Column(Integer, primary_key=True, index=True)
-    value = Column(String)        
+    value = Column(String)
+
+class GenericObject(base):
+    __abstract__ = True
+    __exceptions__: List[str] = []
+
+class OptionalColumn(Column):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('type_', String)
+        kwargs.setdefault('nullable', True)
+        super().__init__(**kwargs)
+
+class GenericSchema(BaseModel):  
+    class Config:
+        from_attributes=True
+
+class GenericCategorySchema(GenericSchema):
+    id: int
+    value: str
 
 # --------------------------- #
 # Categories
 # --------------------------- #
-class ContentSource(base):
+class ContentSource(GenericObject):
     __tablename__ = "c_content_source"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)        
     abbreviation = Column(String, nullable=True)
 
-class ContentSourceSchema(BaseModel):
+class ContentSourceSchema(GenericSchema):
     id: int
     name: str
     abbreviation: Optional[str] = None
 
-    class Config:
-        orm_mode=True
+class PowerAlignment(GenericCategory):
+    __tablename__ = "c_power_alignment"
+
+class PowerAlignmentSchema(GenericCategorySchema):
+    pass
+
+class PowerType(GenericCategory):
+    __tablename__ = "c_power_type"
+
+class PowerTypeSchema(GenericCategorySchema):
+    pass
 
 # --------------------------- #
 # Objects
 # --------------------------- #
-class ResoluteGuild(base, IntAttributeMixin):
+class ResoluteGuild(GenericObject, IntAttributeMixin):
     __tablename__ = "guilds"
     _id =  Column("id", BIGINT, primary_key=True, index=True)
     _admin_role = Column("admin_role", BIGINT, nullable=True)
@@ -56,48 +83,45 @@ class ResoluteGuild(base, IntAttributeMixin):
     
     
 
-class WebContent(base):
+class WebContent(GenericObject):
     __tablename__="web_content"
+    __exceptions__ = ["id", "key"]
     key = Column(String, primary_key=True, index=True)
     id = Column(String, index=True, unique=True)
     content = Column(String)
-    title = Column(String)
 
     @property
     def html_content(self):
         return render_markdown(self.content)
 
 
-class WebContentSchema(BaseModel):
+class WebContentSchema(GenericSchema):
     key: str
     id: str
     content: str
-    title: str
-
-    class Config:
-        orm_mode=True
 
 class WebContentFullSchema(WebContentSchema):
     html_content: str
 
-class Species(base):
+class Species(GenericObject):
     __tablename__ = "c_character_species"
+    __exceptions__ = ["id"]
     id = Column(Integer, primary_key=True, index=True)
     value = Column(String)
-    skin_options = Column(String, nullable=True)
-    hair_options = Column(String, nullable=True)
-    eye_options = Column(String, nullable=True)
-    distinctions = Column(String, nullable=True)
-    height_average = Column(String, nullable=True)
-    height_mod = Column(String, nullable=True)
-    weight_average = Column(String, nullable=True)
-    weight_mod = Column(String, nullable=True)
-    homeworld = Column(String, nullable=True)
-    flavortext = Column(String, nullable=True)
-    traits = Column(String, nullable=True)
-    language = Column(String, nullable=True)
-    image_url = Column(String, nullable=True)
-    size = Column(String, nullable=True)
+    skin_options = OptionalColumn()
+    hair_options = OptionalColumn()
+    eye_options = OptionalColumn()
+    distinctions = OptionalColumn()
+    height_average = OptionalColumn()
+    height_mod = OptionalColumn()
+    weight_average = OptionalColumn()
+    weight_mod = OptionalColumn()
+    homeworld = OptionalColumn()
+    flavortext = OptionalColumn()
+    traits = OptionalColumn()
+    language = OptionalColumn()
+    image_url = OptionalColumn()
+    size = OptionalColumn()
     _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
 
     source = relationship("ContentSource", lazy="joined")
@@ -110,8 +134,8 @@ class Species(base):
     def html_traits(self):
         return render_markdown(self.traits)
     
-class SpeciesSchema(BaseModel):
-    id: int
+class SpeciesSchema(GenericSchema):
+    id: Optional[int] = None
     value: str
     skin_options: Optional[str] = None
     hair_options: Optional[str] = None
@@ -131,18 +155,84 @@ class SpeciesSchema(BaseModel):
     size: Optional[str] = None
     source: Optional[ContentSourceSchema] = None
 
-    class Config:
-        orm_mode=True
+class PrimaryClass(GenericObject):
+    __tablename__ = "c_character_class"
+    __exceptions__ = ["id"]
 
+    id = Column(Integer, primary_key=True, index=True)
+    value = Column(String)
+    summary = OptionalColumn()
+    primary_ability = OptionalColumn()
+    flavortext = OptionalColumn()
+    level_changes = OptionalColumn()
+    hit_die = OptionalColumn(type_=Integer)
+    level_1_hp = OptionalColumn()
+    higher_hp = OptionalColumn()
+    armor_prof = OptionalColumn()
+    weapon_prof = OptionalColumn()
+    tool_prof = OptionalColumn()
+    saving_throws = OptionalColumn()
+    skill_choices = OptionalColumn()
+    starting_equipment = OptionalColumn()
+    features = OptionalColumn()
+    archetype_flavor = OptionalColumn()
+    image_url = OptionalColumn()
+    _caster_type = Column("caster_type", ForeignKey("c_power_type.id"), nullable=True)
+    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
 
-class Feature(base):
+    source = relationship("ContentSource")
+    caster_type = relationship("PowerType")
+
+    @property
+    def html_flavortext(self):
+        return render_markdown(self.flavortext)
+    
+    @property
+    def html_features(self):
+        return render_markdown(self.features)
+    
+    @property
+    def html_level_table(self):
+        return render_markdown(self.level_changes)
+    
+    @property
+    def html_starting_equip(self):
+        return render_markdown(self.starting_equipment)
+    
+class PrimaryClassSchema(GenericSchema):
+    id: Optional[int] = None
+    value: str
+    summary: Optional[str] = None
+    primary_ability: Optional[str] = None
+    flavortext: Optional[str] = None
+    html_flavortext: Optional[str] = None
+    level_changes: Optional[str] = None
+    html_level_table: Optional[str] = None
+    hit_die: Optional[int] = None
+    level_1_hp: Optional[str] = None
+    higher_hp: Optional[str] = None
+    armor_prof: Optional[str] = None
+    weapon_prof: Optional[str] = None
+    tool_prof: Optional[str] = None
+    saving_throws: Optional[str] = None
+    skill_choices: Optional[str] = None
+    starting_equipment: Optional[str] = None
+    html_starting_equip: Optional[str] = None
+    features: Optional[str] = None
+    html_features: Optional[str] = None
+    archetype_flavor: Optional[str] = None
+    image_url: Optional[str] = None
+    source: Optional[ContentSourceSchema] = None
+    caster_type: Optional[PowerTypeSchema] = None    
+
+class Feature(GenericObject):
     __tablename__ = "feats"
     id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4())
-    name = Column(String, nullable=False)
-    prerequisite = Column(String, nullable=True)
-    text = Column(String, nullable = True)
+    name = Column(String)
+    prerequisite = OptionalColumn()
+    text = OptionalColumn()
     _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
-    attributes = Column(ARRAY(String), nullable=True, default=[])
+    attributes = OptionalColumn(type_=ARRAY(String), default=[])
 
     source = relationship("ContentSource", lazy="joined")
 
@@ -150,13 +240,10 @@ class Feature(base):
     def html_text(self):
         return render_markdown(self.text)
 
-class FeatureSchema(BaseModel):
+class FeatureSchema(GenericSchema):
     id: uuid.UUID
     name: str
     prerequisite: str
     text: str
     source: ContentSourceSchema
     html_text: str
-
-    class Config:
-        orm_mode=True
