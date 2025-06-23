@@ -1036,7 +1036,7 @@ def delete_object(model_class, id):
         if not id:
             raise BadRequest("Missing Object ID")
 
-        obj = current_app.cache.fetch(model_class, id)
+        obj = current_app.cache.fetch(model_class, id, db=db)
 
         if not obj:
             raise NotFound(f"{model_class.__name__} not found")
@@ -1067,7 +1067,7 @@ def update_object(model_class, update_fields: [] = [], fk_fields: [] = []):
         if not object_id:
             raise NotFound(f"Missing object id")
 
-        obj = current_app.cache.fetch(model_class, object_id)
+        obj = current_app.cache.fetch(model_class, object_id, db=db)
         if not obj:
             raise NotFound(f"{model_class.__name__} not found.")
 
@@ -1078,7 +1078,7 @@ def update_object(model_class, update_fields: [] = [], fk_fields: [] = []):
                 if field in update_fields:
                     setattr(obj, field, data[field])
                 elif field in fk_fields:
-                    setattr(obj, f"_{field}", data[field].get("id"))
+                    setattr(obj, f"_{field}", data[field].get("id") if data[field] else None)
 
         db.session.commit()
         if current_app.cache.contains(model_class):

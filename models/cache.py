@@ -83,10 +83,16 @@ class ResoluteCache(ABC):
     def contains(self, cls):
         return cls in self.cache
 
-    def fetch(self, cls, id=None):
+    def fetch(self, cls, id=None, **kwargs):
         if id:
             norm_id = normalize_id(id)
-            return next((i for i in self.cache.get(cls) if i.id == norm_id), None)
+            object = next((i for i in self.cache.get(cls) if i.id == norm_id), None)
+            
+            if not object and (db := kwargs.get('db')):
+                object = db.session.query(cls).filter(cls.id == norm_id).first()
+
+            return object
+
         return self.cache.get(cls)
 
     def update(self, session: scoped_session[Session], cls: Type):

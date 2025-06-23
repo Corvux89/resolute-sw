@@ -57,7 +57,7 @@
             </div>
         </div>
         <div class="row mb-2">
-            <select-input custom-id="class-caster" custom-label="Caster Type" allownone options='{{ options['stats']|tojson }}' {% if primary_class %}selected="{{ primary_class.caster_type }}"{% endif %}></select-input>
+            <select-input custom-id="class-caster" custom-label="Caster Type" allownone options='{{ options['power-type']|tojson }}' {% if primary_class %}selected="{{ primary_class.caster_type }}"{% endif %}></select-input>
         </div>
         <div clas="row mb-2">
              <label for="class-equipment" class="form-label fw-bold">Starting Equipment</label>
