@@ -1,15 +1,17 @@
 from abc import ABC
 from typing import Type
 
+from fastapi import FastAPI
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import scoped_session, Session
 
 from constants import DISCORD_GUILD_ID
-from models.G0T0 import *
-from models.general import Content
+from models import *
 
 import uuid
+
+from models.resolute import *
 
 
 def normalize_id(id):
@@ -40,67 +42,47 @@ class ResoluteCache(ABC):
     initialized: bool = False
     cache = {}
 
-    def __init__(self):
+    def __init__(self, app: FastAPI):
         self.cache = {}
+        self.initialized = False
 
-    def initialize(self, force: bool = False):
-        db: SQLAlchemy = current_app.config.get("DB")
+        if app:
+            self.initialize(app)
+
+    def initialize(self, app: FastAPI, force: bool = False):
+        db = app.db
         if not self.initialized or force:
             # Objects
-            self.update(db.session, G0T0Guild)
-            self.update(db.session, RefMessage)
-            self.update(db.session, Activity)
-            self.update(db.session, ActivityPoints)
-            self.update(db.session, CodeConversion)
-            self.update(db.session, LevelCost)
-            self.update(db.session, Content)
-            self.update(db.session, Power)
-            self.update(db.session, Species)
-            self.update(db.session, PrimaryClass)
-            self.update(db.session, Archetype)
-            self.update(db.session, Equipment)
-            self.update(db.session, EnhancedItem)
-            self.update(db.session, Feat)
-            self.update(db.session, Background)
-            self.update(db.session, Maneuver)
-            self.update(db.session, Customization)
-            self.update(db.session, Improvement)
-            self.update(db.session, Property)
+            self.update(db, ResoluteGuild)
+            self.update(db, Feature)
+            self.update(db, WebContent)
+            self.update(db, Species)
 
             # Categories
-            self.update(db.session, ContentSource)
-            self.update(db.session, PowerAlignment)
-            self.update(db.session, PowerType)
-            self.update(db.session, EquipmentCategory)
-            self.update(db.session, EquipmentSubCategory)
-            self.update(db.session, EnhancedItemType)
-            self.update(db.session, EnhancedItemSubtype)
-            self.update(db.session, ManeuverType)
-            self.update(db.session, CustomizationType)
-            self.update(db.session, ImprovementType)
+            self.update(db, ContentSource)
             self.initialized = True
 
     def contains(self, cls):
         return cls in self.cache
 
-    def fetch(self, cls, id=None):
+    def fetch(self, cls, id=None, **kwargs):
         if id:
             norm_id = normalize_id(id)
-            return next((i for i in self.cache.get(cls) if i.id == norm_id), None)
+            obj =  next((i for i in self.cache.get(cls) if i.id == norm_id), None)
+
+            if not obj and (db := kwargs.get('db', None)):
+                obj = db.query(cls).filter(cls.id == norm_id).first()
+
+            return obj
+
         return self.cache.get(cls)
 
     def update(self, session: scoped_session[Session], cls: Type):
-        if cls is G0T0Guild:
-            self.cache[G0T0Guild] = (
-                session.query(G0T0Guild)
-                .filter(G0T0Guild._id == int(DISCORD_GUILD_ID))
+        if cls is ResoluteGuild:
+            self.cache[ResoluteGuild] = (
+                session.query(ResoluteGuild)
+                .filter(ResoluteGuild._id == int(DISCORD_GUILD_ID))
                 .first()
-            )
-        elif cls is RefMessage:
-            self.cache[RefMessage] = (
-                session.query(RefMessage)
-                .filter(RefMessage._guild_id == int(DISCORD_GUILD_ID))
-                .all()
             )
         else:
             self.cache[cls] = session.query(cls).all()

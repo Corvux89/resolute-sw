@@ -20,6 +20,9 @@ flask = "*"
 uvicorn = "*"
 jinja2 = "*"
 fastapi = "*"
+httpx = "*"
+aiohttp = "*"
+aiocache = "*"
 
 [dev-packages]
 pipenv = "*"

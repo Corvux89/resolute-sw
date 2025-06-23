@@ -1,21 +1,74 @@
-from datetime import datetime
+
 import uuid
-import secrets
+
+from contextlib import asynccontextmanager
+from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import create_engine
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.templating import Jinja2Templates
-from helpers import get_csp
-from routers.api import api
-from routers.resolute import resolute
+from sqlalchemy.orm import sessionmaker
+from constants import DB_URI, DISCORD_CLIENT_ID, DISCORD_REDIRECT_URI, DISCORD_SECRET_KEY, SECRET_KEY
+
+from models.auth import DiscordBot
+from models.cache import ResoluteCache
+from models.exceptions import RateLimited
+from routers import api_router, admin_api_router, auth_router, frontend_router
+
+tags_metadata = [
+    {
+        "name": "API",
+        "description": "Backend routes that serve up data."
+    },
+    {
+        "name": "Frontend",
+        "description": "These operations server a view"
+    },
+    {
+        "name": "Authorization",
+        "description": "Manages app security"
+    }
+]
+
+json_encoder = {
+    datetime: lambda v: v.isoformat(),
+    uuid.UUID: lambda v: v.hex
+}
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    engine = create_engine(DB_URI)
+    app.db_session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    app.db = app.db_session()
+
+    app.cache = ResoluteCache(app)
+
+    app.discord.initialize()
+    yield
 
 
-app = FastAPI()
+
+def csp_nonce(request: Request):
+    return request.state.csp_nonce
+
+app = FastAPI(lifespan=lifespan,
+              redoc_url=None,
+              openapi_url="/api/v1/openapi.json",
+              docs_url="/api/swagger",
+              title="Resolute Website",
+              description="Website for the Resolute SW5E Discord Server",
+              version="0.0.1",
+              openapi_tags=tags_metadata,
+              json_encoder=json_encoder)
+
+app.discord: DiscordBot = DiscordBot(DISCORD_CLIENT_ID, DISCORD_SECRET_KEY, DISCORD_REDIRECT_URI)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-app.add_middleware(SessionMiddleware, secret_key="your-secret-key")
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,49 +77,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.json_encoders = {
-    datetime: lambda v: v.isoformat(),
-    uuid.UUID: lambda v: v.hex
-}
+@app.exception_handler(RateLimited)
+async def rate_limit_error_handler(_, e: RateLimited):
+    return JSONResponse(
+        {"error": "RateLimited", "retry": e.retry_after, "message": e.message},
+        status_code=429,
+    )
 
-@app.middleware("http")
-async def add_csp(request: Request, call_next):
-    csp_nonce = secrets.token_urlsafe(16)
-    request.state.csp_nonce = csp_nonce  
-
-    response = await call_next(request)
-
-    csp = get_csp(csp_nonce) 
-    # response.headers["Content-Security-Policy"] = csp
-
-    return response
+app.include_router(api_router, prefix="/api")
+app.include_router(admin_api_router, prefix="/api")
+app.include_router(auth_router, prefix="/auth")
+app.include_router(frontend_router, prefix="/")
 
 templates = Jinja2Templates(directory="templates")
 
-def csp_nonce(request: Request):
-    return request.state.csp_nonce
-
-templates.env.globals["csp_nonce"] = csp_nonce
-templates.env.globals["current_user"] = {"is_admin": True}
-
-# app.state.db = ResoluteCache()
-# app.state.discord = DiscordBot(app)
-
-@app.get("/debug-static")
-async def debug_static():
-    return {"static_url": app.url_path_for("static", path="style.css")}
-
-@app.get("/debug-routes")
-async def debug_routes():
-    return [{"path": route.path, "name": route.name} for route in app.router.routes]
-
-@app.get("/")
+# Start some routes
+@app.get('/')
 async def homepage(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
-
-
-# app.include_router(auth_router, prefix="/auth")
-app.include_router(api, prefix="/api")
-app.include_router(resolute, prefix="")
-
-# register_handlers(app)
+    try:
+        user = await request.app.discord.user(request)
+    except:
+        user = None
+    return templates.TemplateResponse("home.html", {
+        "request": request,
+        "current_user": user
+    })

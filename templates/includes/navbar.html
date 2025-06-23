@@ -11,9 +11,9 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Server Content</a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for("house_rules") }}">House Rules</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for ("content_rulings") }}">Content Rulings</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for("errata") }}">Server Errata</a></li>
+                        <li><a class="dropdown-item" href="#">House Rules</a></li>
+                        <li><a class="dropdown-item" href="#">Content Rulings</a></li>
+                        <li><a class="dropdown-item" href="#">Server Errata</a></li>
                         <li><a class="dropdown-item" href="https://chicken-dinner.com/5e/5e-point-buy.html#select&NA&8&8&8&8&8&8&0&0&32&15&8&19&15&12&9&7&5&4&3&2&1&0&1&2&4&6&9&4&4&4&4&4&4" target="_blank">Stat Planner</a></li>
                     </ul>
                 </li>
@@ -63,8 +63,8 @@
                         Powers
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for("tech_powers") }}">Tech Powers</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for("force_powers") }}">Force Powers</a></li>
+                        <li><a class="dropdown-item" href="#">Tech Powers</a></li>
+                        <li><a class="dropdown-item" href="#">Force Powers</a></li>
                     </ul>
                 </li>
 
@@ -89,7 +89,7 @@
         </div>
     </div>
 
-    {% if current_user.is_authenticated %}
+    {% if current_user %}
     <div class="d-flex ms-auto align-items-center" id="user-info-container"></div>
         <a class="navbar-brand ms-auto" href="#" id="user-badge">
             <p class="text-muted d-inline">{{current_user.username}}</p>
