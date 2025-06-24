@@ -265,7 +265,6 @@ class Content(db.Model):
     __tablename__ = "web_content"
     key: Mapped[str] = mapped_column(primary_key=True)
     content: Mapped[str]
-    title: Mapped[str]
 
     @property
     def html_content(self):

@@ -167,8 +167,8 @@ class PrimaryClass(db.Model, BaseModel):
     )
 
     source = relationship("ContentSource", lazy="joined")
-    caster_type = relationship("PowerType", lazy="joined")
-
+    caster_type = relationship("PowerType", lazy="joined")    
+    
     @classmethod
     def from_json(cls, json):
         return cls(
@@ -189,8 +189,8 @@ class PrimaryClass(db.Model, BaseModel):
             features=json.get("features", ""),
             archetype_flavor=json.get("archetype_flavor", ""),
             image_url=json.get("image_url", ""),
-            _caster_type=json.get("caster_type", {}).get("id"),
-            _source=json.get("source", {}).get("id"),
+            _caster_type=json.get("caster_type", {}).get("id") if json.get("caster_type") else None,
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
         )
 
     @property
@@ -227,8 +227,8 @@ class Archetype(db.Model, BaseModel):
 
     caster_type = relationship("PowerType", lazy="joined")
 
-    source = relationship("ContentSource", lazy="joined")
-
+    source = relationship("ContentSource", lazy="joined")    
+    
     @classmethod
     def from_json(cls, json):
         return cls(
@@ -238,8 +238,8 @@ class Archetype(db.Model, BaseModel):
             flavortext=json.get("flavortext", ""),
             level_table=json.get("level_table", ""),
             image_url=json.get("image_url", ""),
-            _caster_type=json.get("caster_type", {}).get("id"),
-            _source=json.get("source", {}).get("id"),
+            _caster_type=json.get("caster_type", {}).get("id") if json.get("caster_type") else None,
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
         )
 
     @property
@@ -277,8 +277,8 @@ class Species(db.Model, BaseModel):
         "source", ForeignKey("c_content_source.id"), nullable=True
     )
 
-    source = relationship(ContentSource, lazy="joined")
-
+    source = relationship(ContentSource, lazy="joined")    
+    
     @classmethod
     def from_json(cls, json):
         return cls(
@@ -297,7 +297,7 @@ class Species(db.Model, BaseModel):
             language=json.get("language", ""),
             image_url=json.get("image_url", ""),
             size=json.get("size", ""),
-            _source=json.get("source", {}).get("id"),
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
         )
 
     @property
@@ -845,20 +845,20 @@ class Power(db.Model, BaseModel):
 
     type = relationship("PowerType", lazy="joined")
     source = relationship("ContentSource", lazy="joined")
-    alignment = relationship("PowerAlignment", lazy="joined")
-
+    alignment = relationship("PowerAlignment", lazy="joined")    
+    
     @classmethod
     def from_json(cls, json):
         return cls(
             name=json.get("name"),
             pre_requisite=json.get("pre_requisite"),
-            _type=json.get("type", {}).get("id"),
+            _type=json.get("type", {}).get("id") if json.get("type") else None,
             casttime=json.get("casttime"),
             range=json.get("range"),
-            _source=json.get("source", {}).get("id"),
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
             description=json.get("description"),
             concentration=json.get("concentration"),
-            _alignment=json.get("alignment", {}).get("id"),
+            _alignment=json.get("alignment", {}).get("id") if json.get("alignment") else None,
             level=json.get("level"),
             duration=json.get("duration"),
         )
@@ -893,22 +893,22 @@ class Equipment(db.Model, BaseModel):
 
     sub_category = relationship("EquipmentSubCategory", lazy="joined")
     source = relationship("ContentSource", lazy="joined")
-    category = relationship("EquipmentCategory", lazy="joined")
-
+    category = relationship("EquipmentCategory", lazy="joined")    
+    
     @classmethod
     def from_json(cls, json):
         return cls(
             id=json.get("id", uuid.uuid4()),
             name=json.get("name"),
-            _source=json.get("source", {}).get("id"),
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
             description=json.get("description", ""),
             cost=json.get("cost", 0),
             weight=json.get("weight", 0),
-            _category=json.get("category", {}).get("id"),
+            _category=json.get("category", {}).get("id") if json.get("category") else None,
             dmg_number_of_die=json.get("dmg_number_of_die", 0),
             dmg_die_type=json.get("dmg_die_type", 0),
             dmg_type=json.get("dmg_type", ""),
-            _sub_category=json.get("sub_category", {}).get("id"),
+            _sub_category=json.get("sub_category", {}).get("id") if json.get("sub_category") else None,
             properties=json.get("properties", ""),
             ac=json.get("ac", ""),
             stealth_dis=json.get("stealth_dis", False),
@@ -944,22 +944,22 @@ class EnhancedItem(db.Model, BaseModel):
 
     @property
     def html_text(self):
-        return render_markdown(self.text)
-
+        return render_markdown(self.text)    
+    
     @classmethod
     def from_json(cls, json):
         return cls(
             id=json.get("id", uuid.uuid4()),
             name=json.get("name"),
-            _type=json.get("type", {}).get("id"),
-            _rarity=json.get("rarity", {}).get("id"),
+            _type=json.get("type", {}).get("id") if json.get("type") else None,
+            _rarity=json.get("rarity", {}).get("id") if json.get("rarity") else None,
             attunement=json.get("attunement", False),
             text=json.get("text", ""),
             prerequisite=json.get("prerequisite", ""),
             subtype_ft=json.get("subtype_ft", ""),
-            _subtype=json.get("subtype", {}).get("id"),
+            _subtype=json.get("subtype", {}).get("id") if json.get("subtype") else None,
             cost=json.get("cost", 0),
-            _source=json.get("source", {}).get("id"),
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
         )
 
 
@@ -976,8 +976,8 @@ class Feat(db.Model, BaseModel):
 
     @property
     def html_text(self):
-        return render_markdown(self.text)
-
+        return render_markdown(self.text)    
+    
     @classmethod
     def from_json(cls, json):
         return cls(
@@ -985,7 +985,7 @@ class Feat(db.Model, BaseModel):
             name=json.get("name"),
             prerequisite=json.get("prerequisite"),
             text=json.get("text"),
-            _source=json.get("source", {}).get("id"),
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
             attributes=json.get("attributes", []),
         )
 
@@ -1037,9 +1037,7 @@ class Background(db.Model, BaseModel):
 
     @property
     def html_feats(self):
-        return render_markdown(self.feats, [FeatureHyperlinkExtension()])
-
-    @property
+        return render_markdown(self.feats, [FeatureHyperlinkExtension()])    @property
     def html_personality(self):
         return render_markdown(self.personality)
     
@@ -1063,7 +1061,7 @@ class Background(db.Model, BaseModel):
             ideal=json.get("ideal", ""),
             flaw=json.get("flaw", ""),
             bond=json.get("bond", ""),
-            _source=json.get("source", {}).get("id"),
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
         )
     
 class Maneuver(db.Model, BaseModel):
@@ -1078,15 +1076,15 @@ class Maneuver(db.Model, BaseModel):
     prerequisite: Mapped[str]
 
     type = relationship("ManeuverType", lazy="joined")
-    source = relationship("ContentSource", lazy="joined")
-
+    source = relationship("ContentSource", lazy="joined")    
+    
     @classmethod
     def from_json(cls, json):
         return cls(
             id=json.get("id", uuid.uuid4()),
             name=json.get("name"),
-            _type=json.get("type", {}).get("id"),
-            _source=json.get("source", {}).get("id"),
+            _type=json.get("type", {}).get("id") if json.get("type") else None,
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
             description=json.get("description", ""),
             prerequisite=json.get("prerequisite", ""),
         )
@@ -1106,15 +1104,15 @@ class Customization(db.Model, BaseModel):
 
     @property
     def html_text(self):
-        return render_markdown(self.text)
-
+        return render_markdown(self.text)   
+    
     @classmethod
     def from_json(cls, json):
         return cls(
             id=json.get("id", uuid.uuid4()),
             name=json.get("name"),
-            _type=json.get("type", {}).get("id"),
-            _source=json.get("source", {}).get("id"),
+            _type=json.get("type", {}).get("id") if json.get("type") else None,
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
             text=json.get("text", ""),
         )
     
@@ -1134,15 +1132,15 @@ class Improvement(db.Model, BaseModel):
 
     @property
     def html_text(self):
-        return render_markdown(self.text)
-
+        return render_markdown(self.text)   
+        
     @classmethod
     def from_json(cls, json):
         return cls(
             id=json.get("id", uuid.uuid4()),
             name=json.get("name"),
-            _type=json.get("type", {}).get("id"),
-            _source=json.get("source", {}).get("id"),
+            _type=json.get("type", {}).get("id") if json.get("type") else None,
+            _source=json.get("source", {}).get("id") if json.get("source") else None,
             text=json.get("text", ""),
             prerequisite=json.get('prerequisite','')
         )
