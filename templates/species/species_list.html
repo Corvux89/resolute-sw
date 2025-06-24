@@ -7,7 +7,7 @@
 
 <h1>Species</h1>
 
-<filterable-table table-id="species-table" button-text="New Species" key="species"></filterable-table>
+<filterable-table table-id="species-table" button-text="New Species" key="species" data-source='{{table|tojson|e}}'></filterable-table>
 
 {% if is_admin %}
 {% include '/species/species_modal.html' %}

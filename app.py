@@ -97,7 +97,7 @@ app.include_router(frontend_router, prefix="")
 templates = ResoluteJinja(directory="templates")
 
 # Start some routes
-@app.get('/')
+@app.get('/', tags=["Frontend"])
 async def homepage(request: Request):
     return await templates.TemplateResponse("home.html", {
         "request": request,

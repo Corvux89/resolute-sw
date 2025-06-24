@@ -7,7 +7,7 @@
 
 <h1>Backgrounds</h1>
 
-<filterable-table table-id="background-table" button-text="New Background" key="background"></filterable-table>
+<filterable-table table-id="background-table" button-text="New Background" key="background" data-source='{{table|tojson|e}}'></filterable-table>
 
 {% if is_admin %}
 {% include '/backgrounds/background_modal.html' %}

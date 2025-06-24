@@ -24,5 +24,5 @@ class Unauthorized(HTTPException):
         super().__init__(status_code, detail=message, *args)
 
 class NotFound(HTTPException):
-    def __init__(self,message:str="Object not found", status_code=404, *args):
+    def __init__(self, message:str="Object not found", status_code=404, *args):
         super().__init__(status_code, detail=message, *args)

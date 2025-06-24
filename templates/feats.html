@@ -7,7 +7,7 @@
 
 <h1>Feats</h1>
 
-<filterable-table table-id="feat-table" button-text="New Feat" key="feat"></filterable-table>
+<filterable-table table-id="feat-table" button-text="New Feat" key="feat" data-source='{{table|tojson|e}}'></filterable-table>
 
 {% if is_admin %}
 <custom-modal title="Feature" custom-id="feat-edit-form">

@@ -5,12 +5,19 @@ from typing import Any, Dict, Optional
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from starlette.responses import Response
-from jinja2 import Environment
 
 from helpers.auth_helpers import is_admin
 from models.cache import ResoluteCache
 from models.exceptions import Forbidden
 from models.resolute import ContentSource, PowerAlignment, PowerType
+
+def build_select_option(objects: [], value_attr: str = "id", label_attr: str = "value"):
+            return [
+                {"value": getattr(o, value_attr), "label": getattr(o, label_attr)} for o in objects
+            ]
+        
+def build_generic_option(values: []):
+    return [{"value": v, "label": v} for v in values]
 
 
 class ResoluteJinja(Jinja2Templates):
@@ -69,14 +76,6 @@ class ResoluteJinja(Jinja2Templates):
         # Options setup
         options = {}
         cache: ResoluteCache = request.app.cache
-
-        def build_select_option(objects: [], value_attr: str = "id", label_attr: str = "value"):
-            return [
-                {"value": getattr(o, value_attr), "label": getattr(o, label_attr)} for o in objects
-            ]
-        
-        def build_generic_option(values: []):
-            return [{"value": v, "label": v} for v in values]
         
         options["power-type"] = build_select_option(cache.fetch(PowerType))
         options["power-alignment"] = build_select_option(cache.fetch(PowerAlignment))

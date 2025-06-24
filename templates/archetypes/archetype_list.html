@@ -7,7 +7,7 @@
 
 <h1>Archetypes</h1>
 
-<filterable-table table-id="archetype-table" button-text="New Archetype" key="archetype"></filterable-table>
+<filterable-table table-id="archetype-table" button-text="New Archetype" key="archetype" data-source='{{table|tojson|e}}'></filterable-table>
 
 {% if is_admin %}
 {% include '/archetypes/archetype_modal.html' %}

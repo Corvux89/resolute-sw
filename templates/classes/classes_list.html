@@ -7,7 +7,7 @@
 
 <h1>Classes</h1>
 
-<filterable-table table-id="class-table" button-text="New Class" key="class"></filterable-table>
+<filterable-table table-id="class-table" button-text="New Class" key="class" data-source='{{table|tojson|e}}'></filterable-table>
 
 {% if is_admin %}
 {% include '/classes/class_modal.html' %}

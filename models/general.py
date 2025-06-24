@@ -2,18 +2,13 @@ from __future__ import annotations
 
 import markdown
 import bleach
-from typing import Type, TYPE_CHECKING
 from xml.etree.ElementTree import Element
 from markdown import Extension
 from markdown.preprocessors import Preprocessor
-from sqlalchemy.orm import DeclarativeMeta
 from pydantic import BaseModel
-import logging
 
 from fastapi.encoders import jsonable_encoder
 
-if TYPE_CHECKING:
-    from models.cache import ResoluteCache
 
 def custom_encoder(obj, **kwargs):
     if isinstance(obj, list):
@@ -87,14 +82,13 @@ class MonsterBlockPreProcessor(Preprocessor):
         return html
 
 class FeatureHyperlinkPattern(markdown.inlinepatterns.Pattern):
-    cache: ResoluteCache
 
-    def __init__(self, cache: ResoluteCache, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(r"\[\[(.*?)\]\]", *args, **kwargs)
-        self.cache = cache
 
     def handleMatch(self, m):
         from models.resolute import Feature
+        from models.cache import ResoluteCache
 
         raw_text = m.group(0)  # Get the full match
         text = raw_text.strip("[]")  # Extract text manually
@@ -102,7 +96,7 @@ class FeatureHyperlinkPattern(markdown.inlinepatterns.Pattern):
         feat: Feature = next(
             (
                 f
-                for f in self.cache.fetch(Feature)
+                for f in ResoluteCache.global_fetch(Feature)
                 if f.name.lower() == text.lower()
             ),
             None,
@@ -122,14 +116,11 @@ class FeatureHyperlinkPattern(markdown.inlinepatterns.Pattern):
 
 
 class FeatureHyperlinkExtension(Extension):
-    cache: ResoluteCache
-
-    def __init__(self, cache: ResoluteCache, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.cache = cache
 
     def extendMarkdown(self, md):
-        md.inlinePatterns.register(FeatureHyperlinkPattern(self.cache), "hyperlink", 175)
+        md.inlinePatterns.register(FeatureHyperlinkPattern(), "hyperlink", 175)
 
 
 def render_markdown(text: str, add_extension: list = []) -> str:

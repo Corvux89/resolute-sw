@@ -1,14 +1,13 @@
 
 
 from urllib.parse import unquote
-from aiocache import cached
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 
 from helpers.auth_helpers import is_beta_tester
 from models.exceptions import NotFound
-from models.resolute import PrimaryClass, Species, WebContent
-from models.templates import ResoluteJinja
+from models.resolute import *
+from models.templates import ResoluteJinja, build_select_option
 
 
 frontend_router = APIRouter(
@@ -48,7 +47,7 @@ async def errata(request: Request):
 @frontend_router.get('/species/{species_name}')
 async def species(request: Request, species_name: str = None):
     if species_name:
-        species = next((s for s in request.app.cache.fetch(Species) if unquote(species_name).lower() == s.value.lower()),None)
+        species = request.app.cache.fetch(Species, value=unquote(species_name))
 
         if not Species:
             raise NotFound("Species not found")
@@ -57,13 +56,18 @@ async def species(request: Request, species_name: str = None):
                                                     "request": request,
                                                     "species": species,
                                                  })    
-    return await templates.TemplateResponse("/species/species_list.html", {"request": request})
+    
+    # species_list = request.app.cache.get_model(Species, SpeciesSchema)
+    species_list = request.app.cache.fetch(SpeciesSchema)
+    return await templates.TemplateResponse("/species/species_list.html", 
+                                            {"request": request, 
+                                             "table": species_list})
 
 @frontend_router.get('/classes')
 @frontend_router.get('/classes/{class_name}')
 async def classes(request: Request, class_name: str = None):
     if class_name:
-        prim_class = next((c for c in request.app.cache.fetch(PrimaryClass) if unquote(class_name).lower() == c.value.lower()), None)
+        prim_class = request.app.cache.fetch(PrimaryClass, value=unquote(class_name))
 
         if not prim_class:
             raise NotFound("Class not found")
@@ -71,5 +75,75 @@ async def classes(request: Request, class_name: str = None):
                                                 {
                                                     "request": request,
                                                     "primary_class": prim_class,
-                                                })  
-    return await templates.TemplateResponse("/classes/classes_list.html", {"request": request})
+                                                })
+    
+    class_list = request.app.cache.fetch(PrimaryClassSchema)
+    return await templates.TemplateResponse("/classes/classes_list.html", 
+                                            {
+                                                "request": request,
+                                                "table": class_list
+                                                })
+
+@frontend_router.get('/archetypes')
+@frontend_router.get('/archetypes/{arch_name}')
+async def archetypes(request: Request, arch_name: str = None):
+    options = {}
+    class_options = build_select_option(request.app.cache.fetch(PrimaryClass))
+    options["classes"] = class_options
+    
+
+    if arch_name:
+        archetype = request.app.cache.fetch(Archetype, value=arch_name)
+
+        if not archetype:
+            raise NotFound("Archetype not found")
+        
+        return await templates.TemplateResponse("/archetypes/archetype.html",
+                                                {
+                                                    "request": request,
+                                                    "archetype": archetype,
+
+                                                }, options=options)
+    
+    archetype_list = request.app.cache.fetch(ArchetypeSchema)
+    return await templates.TemplateResponse("/archetypes/archetype_list.html",
+                                            {
+                                                "request": request,
+                                                "table": archetype_list
+                                            }, options=options)
+
+@frontend_router.get('/backgrounds')
+@frontend_router.get('/backgrounds/{back_name}')
+async def backgrounds(request: Request, back_name: str = None):
+    if back_name:
+        background = request.app.cache.fetch(Background, name=back_name)
+
+        if not background:
+            raise NotFound("Background not found")
+        
+        return await templates.TemplateResponse("/backgrounds/background.html",
+                                                {
+                                                    "request": request,
+                                                    "background": background
+                                                })
+    
+    background_list = request.app.cache.fetch(BackgroundSchema)
+    if not background_list:
+        # This will happen the first time, but not too often
+        request.app.cache.update(request.app.db, Background)
+        background_list = request.app.cache.fetch(BackgroundSchema)
+    return await templates.TemplateResponse("/backgrounds/background_list.html",
+                                            {
+                                                "request": request,
+                                                "table": background_list
+                                            })
+
+@frontend_router.get('/features')
+async def features(request: Request):
+    feature_list = request.app.cache.fetch(FeatureSchema)
+
+    return await templates.TemplateResponse("/feats.html",
+                                            {
+                                                "request": request,
+                                                "table": feature_list
+                                            })

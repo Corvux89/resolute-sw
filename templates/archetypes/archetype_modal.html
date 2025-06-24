@@ -16,13 +16,13 @@
                 </text-input>
             </div>
         </div>
-        {% if not archetype and classes %}
+        {% if not archetype %}
         <div class="row mb-2">
            <div class="col-6 mb-2">
                 <select-input
                 custom-id="archetype-parent"
                 custom-label="Parent Class"
-                options='{{ classes|tojson }}'
+                options='{{ options['classes']|tojson }}'
                 >
                 </select-input>
            </div> 
@@ -43,7 +43,7 @@
                     custom-id="archetype-source" 
                     custom-label="Source" 
                     options='{{ options["content-source"]|tojson }}'
-                    selected="{{archetype.source.id if archetype else '6'}}">
+                    selected="{{archetype.source.id if archetype and archetype.source else '6'}}">
                 </select-input>
             </div>
         </div>

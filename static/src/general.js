@@ -1,4 +1,39 @@
-import { defaultCustomizationModal, defaultEquipmentModal, defaultFeatModal, defaultImprovementModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchCustomizationInputs, fetchEquipmentInputs, fetchFeatInputs, fetchImprovementInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, getMDEValue, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
+import { defaultCustomizationModal, defaultEquipmentModal, defaultFeatModal, defaultImprovementModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchCustomizationInputs, fetchEquipmentInputs, fetchFeatInputs, fetchImprovementInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, getMDEValue, refreshTableData, setupFilterableTable, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
+let isDragging = false;
+let mouseDownPos = { x: 0, y: 0 };
+const DRAG_THRESHOLD = 5; // pixels
+function initClickDragDetection() {
+    $(document).on('mousedown', 'tbody tr', function (e) {
+        isDragging = false;
+        mouseDownPos = { x: e.clientX, y: e.clientY };
+    });
+    $(document).on('mousemove', 'tbody tr', function (e) {
+        if (mouseDownPos.x !== 0 || mouseDownPos.y !== 0) {
+            const deltaX = Math.abs(e.clientX - mouseDownPos.x);
+            const deltaY = Math.abs(e.clientY - mouseDownPos.y);
+            if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
+                e.stopPropagation();
+                isDragging = true;
+            }
+        }
+    });
+    $(document).on('mouseup', 'tbody tr', function () {
+        setTimeout(() => {
+            isDragging = false;
+            mouseDownPos = { x: 0, y: 0 };
+        }, 10);
+    });
+    $(document).on('click mouseup mousemove mousedown', 'tbody tr', function (e) {
+        if (isDragging) {
+            e.stopPropagation();
+            e.preventDefault();
+            return false;
+        }
+    });
+}
+$(document).on('DOMContentLoaded', function () {
+    initClickDragDetection();
+});
 function boolColumn(data, type) {
     if (data) {
         if (type == "filter")
@@ -203,6 +238,8 @@ if ($("#power-table").length) {
 $(document).on('click', "#power-table tbody tr", function () {
     if ($(this).closest('btn').length)
         return;
+    if (isDragging)
+        return; // Prevent click action if user was dragging
     const table = $("#power-table").DataTable();
     const row = table.row(this);
     const power = row.data();
@@ -313,61 +350,38 @@ $(document).on('click', '#power-delete-confirmed', function () {
 });
 // Species List
 if ($("#species-table").length) {
-    const params = new URLSearchParams(window.location.search);
-    const tableName = "#species-table";
-    destroyTable(tableName);
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: '/api/species',
-            dataSrc: '',
-            error: function (xhr) {
-                ToastError(`Failed ${xhr.responseText?.toString()}`);
-            },
-        },
-        pageLength: 500,
-        columns: [{
-                data: "image_url",
-                render: function (data, type, row) {
-                    return `
-                    <a href="/species/${encodeURIComponent(row.value.toString().toLowerCase())}">
-                        <div class="species-preview-container">
-                            <img src="${data ? data : `${window.location.origin}/static/images/placeholder-trooper.jpg`}" 
-                                 alt="species image" 
-                                 class="species-preview"
-                                 onerror="this.src='static/images/placeholder-trooper.jpg'; this.onerror=null;"/>
-                        </div>
-                    </a>
-                    `;
-                }
-            },
-            {
-                title: "Name",
-                data: "value",
-                render: function (data) {
-                    return `<a href="/species/${encodeURIComponent(data.toString().toLowerCase())}" class="species-link undecorated-link text-black">${data}</a>`;
-                }
-            },
-            {
-                title: "Size",
-                data: "size",
-                render: function (data, type, row) {
-                    return `<a href="/species/${encodeURIComponent(row.value.toString().toLowerCase())}" class="species-link undecorated-link text-black">${data}</a>`;
-                }
+    const columns = [
+        {
+            data: "image_url",
+            render: function (data, type, row) {
+                return `
+                <a href="/species/${encodeURIComponent(row.value.toString().toLowerCase())}">
+                    <div class="species-preview-container">
+                        <img src="${data ? data : `${window.location.origin}/static/images/placeholder-trooper.jpg`}" 
+                                alt="species image" 
+                                class="species-preview"
+                                onerror="this.src='static/images/placeholder-trooper.jpg'; this.onerror=null;"/>
+                    </div>
+                </a>
+                `;
             }
-        ],
-        order: [[1, 'asc']],
-        dom: 'rti',
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true
-    });
-    if (params.has('name')) {
-        $("#filter-search").val(params.get('name'));
-        table.column(1).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton();
-    }
-    setupTableFilters(tableName, [0, 1]);
+        },
+        {
+            title: "Name",
+            data: "value",
+            render: function (data) {
+                return `<a href="/species/${encodeURIComponent(data.toString().toLowerCase())}" class="species-link undecorated-link text-black">${data}</a>`;
+            }
+        },
+        {
+            title: "Size",
+            data: "size",
+            render: function (data, type, row) {
+                return `<a href="/species/${encodeURIComponent(row.value.toString().toLowerCase())}" class="species-link undecorated-link text-black">${data}</a>`;
+            }
+        }
+    ];
+    setupFilterableTable("#species-table", columns, [[1, 'asc']], [0, 1], [], undefined, 1);
 }
 $('#species-edit-form').on('show.bs.modal', function () {
     setupMDE("species-flavortext");
@@ -390,7 +404,7 @@ $(document).on('click', "#species-submit", function () {
             data: JSON.stringify(species),
             success: function () {
                 ToastSuccess("Species Added");
-                $("#species-table").DataTable().ajax.reload();
+                refreshTableData("#species-table", `${window.location.origin}/api/species`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -431,83 +445,53 @@ $(document).on('click', '#species-delete-confirmed', function () {
 });
 // Classes
 if ($("#class-table").length) {
-    const params = new URLSearchParams(window.location.search);
-    const tableName = "#class-table";
-    destroyTable(tableName);
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: `${window.location.origin}/api/classes`,
-            dataSrc: '',
-            error: function (xhr) {
-                ToastError(`Failed ${xhr.responseText?.toString()}`);
-            },
+    const columns = [
+        {
+            title: "Class",
+            data: "value",
+            render: function (data) {
+                return `<a href="/classes/${encodeURIComponent(data.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
+            }
         },
-        pageLength: 500,
-        columns: [
-            {
-                title: "Class",
-                data: "value",
-                render: function (data) {
-                    return `<a href="/classes/${encodeURIComponent(data.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
-                }
-            },
-            {
-                title: "Desc",
-                data: "summary",
-                render: function (data, type, row) {
-                    return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
-                }
-            },
-            {
-                title: "Hit Die",
-                data: "hit_die",
-                width: "10%",
-                render: function (data, type, row) {
-                    if (!data)
-                        return "";
-                    if (type == 'sort')
-                        return Number(data);
-                    return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">d${data}</a>`;
-                }
-            },
-            {
-                title: "Primary Ability",
-                data: "primary_ability",
-                render: function (data, type, row) {
-                    if (!data)
-                        return "";
-                    return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
-                }
-            },
-            {
-                title: "Archetypes",
-                data: "archetype_flavor",
-                render: function (data, type, row) {
-                    if (!data)
-                        return "";
-                    return `<a href="/archetypes?class=${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
-                }
+        {
+            title: "Desc",
+            data: "summary",
+            render: function (data, type, row) {
+                return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
             }
-        ],
-        order: [[0, 'asc']],
-        dom: 'rti',
-        columnDefs: [
-            {
-                targets: 2,
-                type: "num"
+        },
+        {
+            title: "Hit Die",
+            data: "hit_die",
+            width: "10%",
+            render: function (data, type, row) {
+                if (!data)
+                    return "";
+                if (type == 'sort')
+                    return Number(data);
+                return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">d${data}</a>`;
             }
-        ],
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true
-    });
-    if (params.has('name')) {
-        $("#filter-search").val(params.get('name'));
-        table.column(0).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton();
-    }
-    setupTableFilters(tableName, [0, 1, 4]);
+        },
+        {
+            title: "Primary Ability",
+            data: "primary_ability",
+            render: function (data, type, row) {
+                if (!data)
+                    return "";
+                return `<a href="/classes/${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
+            }
+        },
+        {
+            title: "Archetypes",
+            data: "archetype_flavor",
+            render: function (data, type, row) {
+                if (!data)
+                    return "";
+                return `<a href="/archetypes?class=${encodeURIComponent(row.value.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
+            }
+        }
+    ];
+    setupFilterableTable("#class-table", columns, [[0, 'asc']], [0, 1, 4], [{ targets: 2, type: "num" }]);
 }
 $('#class-edit-form').on('show.bs.modal', function () {
     setupMDE("class-equipment");
@@ -532,7 +516,7 @@ $(document).on('click', "#class-submit", function () {
             data: JSON.stringify(prim_class),
             success: function () {
                 ToastSuccess("Primary Class Added");
-                $("#class-table").DataTable().ajax.reload();
+                refreshTableData("#class-table", `${window.location.origin}/api/classes`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -573,44 +557,21 @@ $(document).on('click', '#class-delete-confirmed', function () {
 });
 // Archetypes
 if ($("#archetype-table").length) {
-    const params = new URLSearchParams(window.location.search);
-    const tableName = "#archetype-table";
-    destroyTable(tableName);
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: '/api/archetypes',
-            dataSrc: '',
-            error: function (xhr) {
-                ToastError(`Failed ${xhr.responseText?.toString()}`);
-            },
-        },
-        pageLength: 500,
-        columns: [
-            {
-                title: "Archetype",
-                data: "value",
-                render: function (data) {
-                    return `<a href="/archetypes/${encodeURIComponent(data.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
-                }
-            },
-            {
-                title: "Class",
-                data: "parent_name"
+    const columns = [
+        {
+            title: "Archetype",
+            data: "value",
+            render: function (data) {
+                return `<a href="/archetypes/${encodeURIComponent(data.toString().toLowerCase())}" class="class-link undecorated-link text-black">${data}</a>`;
             }
-        ],
-        order: [[0, 'asc']],
-        dom: 'rti',
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true
-    });
-    if (params.has('name')) {
-        $("#filter-search").val(params.get('name'));
-        table.column(1).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton();
-    }
-    setupTableFilters(tableName, [0], { 1: params.get('class') });
+        },
+        {
+            title: "Class",
+            data: "parent_name"
+        }
+    ];
+    const params = new URLSearchParams(window.location.search);
+    setupFilterableTable("#archetype-table", columns, [[0, 'asc']], [0], [], { 1: params.get('class') });
 }
 $("#archetype-edit-form").on('show.bs.modal', function () {
     setupMDE('archetype-flavortext');
@@ -633,7 +594,7 @@ $(document).on('click', '#archetype-submit', function () {
             data: JSON.stringify(archetype),
             success: function () {
                 ToastSuccess("Archetype Added");
-                $("#archetype-table").DataTable().ajax.reload();
+                refreshTableData("#archetype-table", `${window.location.origin}/api/archetypes`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -813,6 +774,8 @@ if ($("#equipment-table").length) {
 $(document).on('click', "#equipment-table tbody tr", function () {
     if ($(this).closest('btn').length)
         return;
+    if (isDragging)
+        return; // Prevent click action if user was dragging
     const table = $("#equipment-table").DataTable();
     const row = table.row(this);
     const equipment = row.data();
@@ -1009,6 +972,8 @@ if ($("#item-table").length) {
 $(document).on('click', "#item-table tbody tr", function () {
     if ($(this).closest('btn').length)
         return;
+    if (isDragging)
+        return; // Prevent click action if user was dragging
     const table = $("#item-table").DataTable();
     const row = table.row(this);
     const item = row.data();
@@ -1130,59 +1095,37 @@ $(document).on('click', '#item-delete-confirmed', function () {
 });
 // Feats
 if ($("#feat-table").length) {
-    const params = new URLSearchParams(window.location.search);
-    const tableName = "#feat-table";
-    destroyTable(tableName);
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: 'api/feats',
-            dataSrc: '',
-            error: function (xhr) {
-                ToastError(`Failed ${xhr.responseText?.toString()}`);
-            },
+    const columns = [
+        {
+            title: "Name",
+            data: "name"
         },
-        pageLength: 1000,
-        order: [[0, 'asc']],
-        dom: 'rti',
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true,
-        columns: [
-            {
-                title: "Name",
-                data: "name"
-            },
-            {
-                title: "Ability Score Increase",
-                data: "attributes",
-                render: function (data, type) {
-                    if (!data)
-                        return '';
-                    if (type == "filter")
-                        return data.map(c => c.replace(/[\d]/g, '').split(" ")[0]);
-                    return data.join(" or ");
-                }
-            },
-            {
-                title: "Prerequisite?",
-                data: "prerequisite",
-                render: function (data, type) {
-                    return boolColumn(data, type);
-                }
+        {
+            title: "Ability Score Increase",
+            data: "attributes",
+            render: function (data, type) {
+                if (!data)
+                    return '';
+                if (type == "filter")
+                    return data.map(c => c.replace(/[\d]/g, '').split(" ")[0]);
+                return data.join(" or ");
             }
-        ]
-    });
-    if (params.has('name')) {
-        $("#filter-search").val(params.get('name'));
-        table.column(0).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton();
-    }
-    setupTableFilters(tableName, [0]);
+        },
+        {
+            title: "Prerequisite?",
+            data: "prerequisite",
+            render: function (data, type) {
+                return boolColumn(data, type);
+            }
+        }
+    ];
+    setupFilterableTable("#feat-table", columns, [[0, 'asc']], [0]);
 }
 $(document).on('click', "#feat-table tbody tr", function () {
     if ($(this).closest('btn').length)
         return;
+    if (isDragging)
+        return; // Prevent click action if user was dragging
     const table = $("#feat-table").DataTable();
     const row = table.row(this);
     const feat = row.data();
@@ -1253,13 +1196,13 @@ $(document).on('click', '#feat-submit', function () {
     const feat = fetchFeatInputs();
     if (!feat.id) {
         $.ajax({
-            url: `api/feats`,
+            url: `${window.location.origin}/api/features`,
             type: "post",
             contentType: "application/json",
             data: JSON.stringify(feat),
             success: function () {
                 ToastSuccess("Feature Added");
-                $("#feat-table").DataTable().ajax.reload();
+                refreshTableData("#feat-table", `${window.location.origin}/api/features`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1268,13 +1211,13 @@ $(document).on('click', '#feat-submit', function () {
     }
     else {
         $.ajax({
-            url: `api/feats`,
+            url: `${window.location.origin}/api/features`,
             type: "patch",
             contentType: "application/json",
             data: JSON.stringify(feat),
             success: function () {
                 ToastSuccess("Feature Updated");
-                $("#feat-table").DataTable().ajax.reload();
+                refreshTableData("#feat-table", `${window.location.origin}/api/features`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1287,12 +1230,12 @@ $(document).on('click', '#feat-delete-confirmed', function () {
     if (!feat.id)
         return;
     $.ajax({
-        url: `/api/feats/${feat.id}`,
+        url: `${window.location.origin}/api/features/${feat.id}`,
         type: "delete",
         contentType: "application/json",
         success: function () {
             ToastError("Feature Deleted");
-            $("#feat-table").DataTable().ajax.reload();
+            refreshTableData("#feat-table", `${window.location.origin}/api/features`);
         },
         error: function (e) {
             ToastError(`Failed: ${e.responseText}`);
@@ -1301,59 +1244,35 @@ $(document).on('click', '#feat-delete-confirmed', function () {
 });
 // Backgrounds
 if ($("#background-table").length) {
-    const params = new URLSearchParams(window.location.search);
-    const tableName = "#background-table";
-    destroyTable(tableName);
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: `/api/backgrounds`,
-            dataSrc: '',
-            error: function (xhr) {
-                ToastError(`Failed ${xhr.responseText?.toString()}`);
+    const columns = [
+        {
+            title: "Name",
+            data: "name",
+            render: function (data) {
+                return `<a href="/backgrounds/${encodeURIComponent(data.toString().toLowerCase())}" class="background-link undecorated-link text-black">${data}</a>`;
             }
         },
-        pageLength: 500,
-        order: [[0, 'asc']],
-        dom: 'rti',
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true,
-        columns: [
-            {
-                title: "Name",
-                data: "name",
-                render: function (data) {
-                    return `<a href="/backgrounds/${encodeURIComponent(data.toString().toLowerCase())}" class="background-link undecorated-link text-black">${data}</a>`;
+        {
+            title: "Skill Proficiency",
+            data: "skills",
+            render: function (data, type, row) {
+                const validSkills = [
+                    "Athletics", "Acrobatics", "Sleight of Hand", "Stealth", "Investigation",
+                    "Lore", "Nature", "Piloting", "Technology", "Animal Handling", "Insight",
+                    "Medicine", "Perception", "Survival", "Deception", "Intimidation",
+                    "Performance", "Persuasion"
+                ];
+                if (!data)
+                    return '';
+                if (type == "filter") {
+                    const regex = new RegExp(validSkills.join("|"), "gi");
+                    return data.match(regex) || [];
                 }
-            },
-            {
-                title: "Skill Proficiency",
-                data: "skills",
-                render: function (data, type, row) {
-                    const validSkills = [
-                        "Athletics", "Acrobatics", "Sleight of Hand", "Stealth", "Investigation",
-                        "Lore", "Nature", "Piloting", "Technology", "Animal Handling", "Insight",
-                        "Medicine", "Perception", "Survival", "Deception", "Intimidation",
-                        "Performance", "Persuasion"
-                    ];
-                    if (!data)
-                        return '';
-                    if (type == "filter") {
-                        const regex = new RegExp(validSkills.join("|"), "gi");
-                        return data.match(regex) || [];
-                    }
-                    return `<a href="/backgrounds/${encodeURIComponent(row.name.toString().toLowerCase())}" class="background-link undecorated-link text-black">${data}</a>`;
-                }
+                return `<a href="/backgrounds/${encodeURIComponent(row.name.toString().toLowerCase())}" class="background-link undecorated-link text-black">${data}</a>`;
             }
-        ]
-    });
-    if (params.has('name')) {
-        $("#filter-search").val(params.get('name'));
-        table.column(0).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton();
-    }
-    setupTableFilters(tableName, [0]);
+        }
+    ];
+    setupFilterableTable("#background-table", columns, [[0, 'asc']], [0], []);
 }
 $('#background-edit-form').on('show.bs.modal', function () {
     setupMDE("background-flavortext");
@@ -1380,7 +1299,7 @@ $(document).on('click', "#background-submit", function () {
             data: JSON.stringify(background),
             success: function () {
                 ToastSuccess("Background Added");
-                $("#background-table").DataTable().ajax.reload();
+                refreshTableData("#background-table", `${window.location.origin}/api/backgrounds`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1472,6 +1391,8 @@ if ($("#maneuver-table").length) {
 $(document).on('click', "#maneuver-table tbody tr", function () {
     if ($(this).closest('btn').length)
         return;
+    if (isDragging)
+        return; // Prevent click action if user was dragging
     const table = $("#maneuver-table").DataTable();
     const row = table.row(this);
     const maneuver = row.data();
@@ -1616,6 +1537,8 @@ if ($("#customization-table").length) {
 $(document).on('click', "#customization-table tbody tr", function () {
     if ($(this).closest('btn').length)
         return;
+    if (isDragging)
+        return; // Prevent click action if user was dragging
     const table = $("#customization-table").DataTable();
     const row = table.row(this);
     const customization = row.data();
@@ -1770,6 +1693,8 @@ if ($("#improvement-table").length) {
 $(document).on('click', "#improvement-table tbody tr", function () {
     if ($(this).closest('btn').length)
         return;
+    if (isDragging)
+        return; // Prevent click action if user was dragging
     const table = $("#improvement-table").DataTable();
     const row = table.row(this);
     const improvement = row.data();
