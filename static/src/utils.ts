@@ -731,7 +731,7 @@ export function defaultManeuverModal(manevuer: Maneuver): void {
     $("#maneuver-prerequisite").val(manevuer.prerequisite)
 
     setSelectInputValue("#maneuver-source", manevuer.source && manevuer.source.id ? manevuer.source.id.toString() : "6")
-    setSelectInputValue("#maneuver-type", manevuer.type && manevuer.type.id ? manevuer.type.id.toString() : "1")
+    setSelectInputValue("#maneuver-type", manevuer.type && manevuer.type.id ? manevuer.type.id.toString() : "")
 }
 
 export function fetchManeuverInputs(): Maneuver {

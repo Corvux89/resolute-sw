@@ -7,7 +7,7 @@
 
 <h1>Maneuvers</h1>
 
-<filterable-table table-id="maneuver-table" button-text="New Maneuver" key="maneuver"></filterable-table>
+<filterable-table table-id="maneuver-table" button-text="New Maneuver" key="maneuver" data-source='{{table|tojson|e}}'></filterable-table>
 
 {% if is_admin %}
 <custom-modal title="Maneuver" custom-id="maneuver-edit-form" data-subcategory='{{ options['maneuver-type']|tojson }}'>

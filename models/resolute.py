@@ -63,6 +63,12 @@ class PowerType(GenericCategory):
 class PowerTypeSchema(GenericCategorySchema):
     pass
 
+class ManeuverType(GenericCategory):
+    __tablename__ = "c_maneuver_type"
+
+class ManeuverTypeSchema(GenericCategorySchema):
+    pass
+
 # --------------------------- #
 # Objects
 # --------------------------- #
@@ -374,4 +380,24 @@ class FeatureSchema(GenericSchema):
     attributes: Optional[List[str]] = []
     source: Optional[ContentSourceSchema] = None
 
+class Maneuver(GenericObject):
+    __tablename__ = "maneuvers"
+    __exceptions__ = ["id"]
 
+    id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
+    name =  Column(String)
+    description = OptionalStringColumn()
+    prerequisite = OptionalStringColumn()
+    _type = Column("type", Integer, ForeignKey("c_maneuver_type.id"), nullable=True)
+    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+
+    type = relationship("ManeuverType", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+
+class ManeuverSchema(GenericSchema):
+    id: Optional[uuid.UUID] = None
+    name: str
+    prerequisite: Optional[str] = None
+    description: Optional[str] = None
+    type: Optional[ManeuverTypeSchema] = None
+    source: Optional[ContentSourceSchema] = None

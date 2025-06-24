@@ -1490,54 +1490,29 @@ $(document).on('click', '#background-delete-confirmed', function(){
 
 // Maneuvers
 if ($("#maneuver-table").length){
-    const params = new URLSearchParams(window.location.search);    const tableName = "#maneuver-table";
-
-    destroyTable(tableName);
-
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: 'api/maneuvers',
-            error: function(xhr){
-                ToastError(`Failed ${xhr.responseText?.toString()}`)
-            },
-            dataSrc: '',
+    const columns =  [
+        {
+            title: "Name",
+            data: "name",
         },
-        pageLength: 500,
-        order: [[0, 'asc']],
-        dom: 'rti',
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true,
-        columns: [
-            {
-                title: "Name",
-                data: "name",
-            },
-            {
-                title: "Type",
-                data: "type",
-                render: function(data){
-                    if (!data) return ''
-                    return data.value.toString()
-                }
-            },
-            {
-                title: "Prerequisite?",
-                data: "prerequisite",
-                render: function(data, type){
-                    return boolColumn(data, type)
-                }
+        {
+            title: "Type",
+            data: "type",
+            render: function(data){
+                if (!data) return ''
+                return data.value.toString()
             }
-        ] 
-    })
+        },
+        {
+            title: "Prerequisite?",
+            data: "prerequisite",
+            render: function(data, type){
+                return boolColumn(data, type)
+            }
+        }
+    ] 
 
-    if (params.has('name')){
-        $("#filter-search").val(params.get('name'))
-        table.column(0).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton()
-    }
-    setupTableFilters(tableName, [0])
+    setupFilterableTable("#maneuver-table", columns, [[0, 'asc']], [0])
 }
 
 $(document).on('click', "#maneuver-table tbody tr", function(){
@@ -1586,7 +1561,7 @@ $(document).on('click', "#maneuver-table tbody tr", function(){
                 ${editButton}
                 ${prereq}
                 <div class="p-3">
-                    ${maneuver.description} 
+                    ${maneuver.description ? maneuver.description : ''} 
                 </div>
             </td>
         </tr>
@@ -1611,13 +1586,13 @@ $(document).on('click', '#maneuver-submit', function(){
 
     if (!maneuver.id){
         $.ajax({
-            url: `api/maneuvers`,
+            url: `${window.location.origin}/api/maneuvers`,
             type: "post",
             contentType: "application/json",
             data: JSON.stringify(maneuver),
             success: function() {
                 ToastSuccess("Maneuver Added")
-                $("#maneuver-table").DataTable().ajax.reload()
+                refreshTableData("#maneuver-table", `${window.location.origin}/api/maneuvers`)
             },
             error: function(e) {
                 ToastError(`Failed: ${e.responseText}`)
@@ -1625,13 +1600,13 @@ $(document).on('click', '#maneuver-submit', function(){
         });
     } else {
         $.ajax({
-            url: `api/maneuvers`,
+            url: `${window.location.origin}/api/maneuvers`,
             type: "patch",
             contentType: "application/json",
             data: JSON.stringify(maneuver),
             success: function() {
                 ToastSuccess("Maneuver Updated")
-                $("#maneuver-table").DataTable().ajax.reload()
+                refreshTableData("#maneuver-table", `${window.location.origin}/api/maneuvers`)
             },
             error: function(e) {
                 ToastError(`Failed: ${e.responseText}`)
@@ -1646,12 +1621,12 @@ $(document).on('click', '#maneuver-delete-confirmed', function(){
     if (!maneuver.id) return
 
     $.ajax({
-        url: `/api/maneuvers/${maneuver.id}`,
+        url: `${window.location.origin}/api/maneuvers/${maneuver.id}`,
         type: "delete",
         contentType: "application/json",
         success: function(){
             ToastError("Maneuver Deleted")
-            $("#maneuver-table").DataTable().ajax.reload()
+            refreshTableData("#maneuver-table", `${window.location.origin}/api/maneuvers`)
         },
         error: function(e){
             ToastError(`Failed: ${e.responseText}`)

@@ -231,6 +231,43 @@ async def update_feature(request: Request, feat: FeatureSchema):
 async def delete_feature(request: Request, obj_id: str):
     return await delete_object(request.app, Feature, obj_id)
 
+@api_router.get('/maneuvers', response_model=List[ManeuverSchema])
+async def get_maneuvers(name: str = None, type: str = None):
+    try:
+        if name:
+            m = ResoluteCache.global_fetch(Maneuver, name=name)
+            maneuvers = [m] if m else []
+        else:
+            maneuvers = ResoluteCache.global_fetch(Maneuver)
+
+        if type:
+            maneuvers = list(filter(lambda m: m.type and m.type.value.lower() == type.lower()), maneuvers)
+    except Exception as e:
+        raise BadRequest(str(e))
+    
+    if not maneuvers:
+        raise NotFound("Maneuvers not found")
+    
+    return maneuvers
+
+@admin_api_router.post('/maneuvers', response_model=ManeuverSchema)
+async def new_maneuver(request: Request, man: ManeuverSchema):
+    maneuver = await create_object(request.app, man, Maneuver)
+
+    return maneuver
+
+@admin_api_router.patch('/maneuvers', response_model=ManeuverSchema)
+async def udpate_maneuver(request: Request, man: ManeuverSchema):
+    maneuver = await update_object(request.app, man, Maneuver)
+
+    return maneuver
+
+@admin_api_router.delete('/maneuvers/{obj_id}')
+async def delete_maneuver(request: Request, obj_id: str):
+    await delete_object(request.app, Maneuver, obj_id)
+    
+
+
 # --------------------------- #
 # Private Methods
 # --------------------------- #

@@ -147,3 +147,17 @@ async def features(request: Request):
                                                 "request": request,
                                                 "table": feature_list
                                             })
+
+@frontend_router.get('/maneuvers')
+async def maneuvers(request: Request):
+    options = {}
+    types = build_select_option(request.app.cache.fetch(ManeuverType))
+    options["maneuver-type"] = types
+    maneuver_list = request.app.cache.fetch(ManeuverSchema)
+
+    return await templates.TemplateResponse("/maneuvers.html",
+                                            {
+                                                "request": request,
+                                                "table": maneuver_list
+                                            },
+                                            options=options)
