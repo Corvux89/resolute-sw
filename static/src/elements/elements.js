@@ -307,12 +307,54 @@ class FilterableTable extends HTMLElement {
         this.tableId = "table";
         this.key = '';
         this.buttonText = '';
+        this.source = [];
+    }
+    static get observedAttributes() {
+        return ['table-id', 'key', 'button-text', 'data-source'];
     }
     connectedCallback() {
+        this.updateFromAttributes();
+        this.render();
+    }
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === 'table-id') {
+            this.tableId = newValue || "table";
+        }
+        if (name === 'key') {
+            this.key = newValue || "";
+        }
+        if (name === 'button-text') {
+            this.buttonText = newValue || "";
+        }
+        if (name === 'data-source') {
+            try {
+                this.source = newValue ? JSON.parse(newValue) : [];
+            }
+            catch (error) {
+                console.error('Failed to parse source JSON:', error);
+                this.source = [];
+            }
+        }
+        this.render();
+    }
+    updateFromAttributes() {
         this.tableId = this.getAttribute("table-id") || "table";
         this.key = this.getAttribute("key") || "";
         this.buttonText = this.getAttribute("button-text") || "";
-        this.render();
+        const sourceAttr = this.getAttribute("data-source");
+        if (sourceAttr) {
+            try {
+                this.source = JSON.parse(sourceAttr);
+            }
+            catch (error) {
+                console.error('Failed to parse source JSON:', error);
+                this.source = [];
+            }
+        }
+    }
+    // Public method to get the data for DataTable initialization
+    getData() {
+        return this.source;
     }
     render() {
         this.innerHTML = `

@@ -1,124 +1,104 @@
-from flask_login import LoginManager, current_user
-from flask_sqlalchemy import SQLAlchemy
 
-from flask import Flask, redirect, render_template, request, session, url_for
-from flask_bootstrap import Bootstrap
-from flask_talisman import Talisman
-from blueprints.auth import auth_blueprint
-from blueprints.api import api_blueprint
-from blueprints.Resolute import resolute_blueprint
+import uuid
 
-from constants import (
-    DB_URI,
-    DISCORD_BOT_TOKEN,
-    DISCORD_CLIENT_ID,
-    DISCORD_REDIRECT_URI,
-    DISCORD_SECRET_KEY,
-    WEB_DEBUG,
-    SECRET_KEY,
-)
-from helpers import get_csp
-from helpers.error_handlers import register_handlers
+from contextlib import asynccontextmanager
+from datetime import datetime
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import create_engine
+from starlette.middleware.sessions import SessionMiddleware
+from sqlalchemy.orm import sessionmaker
+from constants import DB_URI, DISCORD_CLIENT_ID, DISCORD_REDIRECT_URI, DISCORD_SECRET_KEY, SECRET_KEY
+
+from models.auth import DiscordBot
 from models.cache import ResoluteCache
-from models.discord import DiscordBot
-from models.exceptions import UnderConstruction
-from models.general import CustomJSONProvider, User
+from models.exceptions import RateLimited
+from models.templates import ResoluteJinja
+from routers import api_router, admin_api_router, auth_router, frontend_router
 
-app = Flask(__name__)
-
-app.secret_key = SECRET_KEY
-app.json = CustomJSONProvider(app)
-app.json.sort_keys=False
-
-app.config.update(DEBUG=WEB_DEBUG)
-app.config["SQLALCHEMY_DATABASE_URI"] = DB_URI
-app.config["SQLALCHEMY_TRACK_MODIFICATION"] = False
-app.config["DISCORD_CLIENT_ID"] = DISCORD_CLIENT_ID
-app.config["DISCORD_REDIRECT_URI"] = DISCORD_REDIRECT_URI
-app.config["DISCORD_CLIENT_SECRET"] = DISCORD_SECRET_KEY
-app.config["DISCORD_BOT_TOKEN"] = DISCORD_BOT_TOKEN
-
-# OAuth Providers
-app.config["OAUTH2_PROVIDERS"] = {
-    "discord": {
-        "client_id": DISCORD_CLIENT_ID,
-        "client_secret": DISCORD_SECRET_KEY,
-        "authorize_url": "https://discord.com/oauth2/authorize",
-        "token_url": "https://discord.com/api/oauth2/token",
-        "scopes": ["identify", "email", "guilds"],
-        "userinfo": {
-            "url": "https://discord.com/api/users/@me",
-            "id": lambda json: json["id"],
-            "email": lambda json: json["email"],
-            "username": lambda json: json["username"],
-            "global_name": lambda json: (
-                json["global_name"] if json["global_name"] != "" else json["username"]
-            ),
-            "avatar": lambda json: json["avatar"] if json["avatar"] != "" else None,
-        },
+tags_metadata = [
+    {
+        "name": "API",
+        "description": "Backend routes that serve up data."
+    },
+    {
+        "name": "Admin API",
+        "description": "Administrative backend routes for modifying data"
+    },
+    {
+        "name": "Frontend",
+        "description": "These operations server a view"
+    },
+    {
+        "name": "Authorization",
+        "description": "Manages app security"
     }
+]
+
+json_encoder = {
+    datetime: lambda v: v.isoformat(),
+    uuid.UUID: lambda v: v.hex
 }
 
-app.config["DB"] = db = SQLAlchemy(app)
-app.config["login"] = login = LoginManager(app)
-app.discord = DiscordBot(app)
-app.cache = ResoluteCache()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    engine = create_engine(DB_URI)
+    app.db_session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    app.db = app.db_session()
+
+    app.cache = ResoluteCache(app)
+
+    app.discord.initialize()
+    yield
 
 
-@app.before_request
-def before_request():
-    app.cache.initialize()
 
-    # Allow unauthenticated access to login, static files, and OAuth callback
-    allowed_routes = ["auth.login", "auth.callback", "static", "homepage"]
+def csp_nonce(request: Request):
+    return request.state.csp_nonce
 
-    if request.endpoint is None or request.endpoint in allowed_routes:
-        return
-    elif not current_user.is_authenticated:
-        return redirect(url_for("auth.login", provider="discord", next=request.path))
-    elif not current_user.is_beta_tester:
-        raise UnderConstruction()
+app = FastAPI(lifespan=lifespan,
+              redoc_url=None,
+              openapi_url="/api/v1/openapi.json",
+              docs_url="/api/swagger",
+              title="Resolute Website",
+              description="Website for the Resolute SW5E Discord Server",
+              version="0.0.1",
+              openapi_tags=tags_metadata,
+              json_encoder=json_encoder)
 
+app.discord: DiscordBot = DiscordBot(DISCORD_CLIENT_ID, DISCORD_SECRET_KEY, DISCORD_REDIRECT_URI)
 
-@app.route("/")
-def homepage():
-    return render_template("home.html")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-
-@login.user_loader
-def load_user(_):
-    print(request.headers)
-    return app.discord.fetch_user()
-
-
-@login.request_loader
-def load_user_from_request(_):
-    if "Authorization" in request.headers:
-        session["OAUTH2_TOKEN"] = request.headers.get("Authorization").replace(
-            "Bearer ", ""
-        )
-        user = User.fetch_user("discord")
-        return user
-
-
-@login.unauthorized_handler
-def unauthorized():
-    return redirect(url_for("auth.login", provider="discord", next=request.path))
-
-
-csp = get_csp()
-
-Bootstrap(app)
-talisman = Talisman(
-    app,
-    content_security_policy=csp,
-    content_security_policy_nonce_in=["script-src", "style-src"],
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-app.register_blueprint(auth_blueprint, url_prefix="/auth")
-app.register_blueprint(api_blueprint, url_prefix="/api")
-app.register_blueprint(resolute_blueprint, url_prefix="/")
-register_handlers(app)
+@app.exception_handler(RateLimited)
+async def rate_limit_error_handler(_, e: RateLimited):
+    return JSONResponse(
+        {"error": "RateLimited", "retry": e.retry_after, "message": e.message},
+        status_code=429,
+    )
 
-if __name__ == "__main__":
-    app.run()
+app.include_router(api_router, prefix="/api")
+app.include_router(admin_api_router, prefix="/api")
+app.include_router(auth_router, prefix="/auth")
+app.include_router(frontend_router, prefix="")
+
+templates = ResoluteJinja(directory="templates")
+
+# Start some routes
+@app.get('/', tags=["Frontend"])
+async def homepage(request: Request):
+    return await templates.TemplateResponse("home.html", {
+        "request": request,
+    })

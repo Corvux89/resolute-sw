@@ -10,7 +10,7 @@
     <p>seconds</p> 
 </div>
 
-<script nonce="{{ csp_nonce() }}">
+<script nonce="{{ csp_nonce }}">
     var seconds = 6
     let url = "{{ url_for('homepage') }}"
     function redirect(){

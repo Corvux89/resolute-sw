@@ -29,6 +29,13 @@ export function setupMDE(element, default_text, clear_text = false) {
         maxHeight: "20vh",
         toolbar: ["undo", "redo", "|", "bold", "italic", "heading", "|", "code", "quote", "unordered-list", "ordered-list", "|", "link"]
     });
+    // Sync EasyMDE content back to the textarea whenever it changes
+    window[element].codemirror.on("change", function () {
+        const textareaElement = document.getElementById(element);
+        if (textareaElement) {
+            textareaElement.value = window[element].value();
+        }
+    });
 }
 export function getMDEValue(element) {
     if (window[element] && typeof window[element].value === "function")
@@ -74,55 +81,63 @@ function capitalizeFirstLetter(val) {
 }
 export function setupTableFilters(table_name, exceptions, initialFilters) {
     const table = $(table_name).DataTable();
-    table.on("xhr", function () {
-        const data = table.ajax.json();
-        const columns = table.settings().init().columns;
-        const $filterMenu = $("#filter-dropdown");
-        $filterMenu.empty();
-        columns.forEach((col, colIdx) => {
-            if (!col.data || (exceptions && exceptions.includes(colIdx)))
-                return;
-            const values = Array.from(new Set(data.map(row => {
-                const raw = row[col.data.toString()];
-                try {
-                    if (col.render) {
-                        // @ts-expect-error This works...idk why typescript has issues with it
-                        const render = col.render(raw, 'filter', row);
-                        if (Array.isArray(render)) {
-                            return render.map((item) => {
-                                const tempDiv = document.createElement('div');
-                                tempDiv.innerHTML = capitalizeFirstLetter(item).trim();
-                                return (tempDiv.textContent || "").trim();
-                            });
-                        }
-                        else {
+    // Check if table uses AJAX or static data
+    let data;
+    const ajaxData = table.ajax.json();
+    if (ajaxData) {
+        // Table uses AJAX data
+        data = ajaxData;
+    }
+    else {
+        // Table uses static data, get it from the table rows
+        data = table.rows().data().toArray();
+    }
+    const columns = table.settings().init().columns;
+    const $filterMenu = $("#filter-dropdown");
+    $filterMenu.empty();
+    columns.forEach((col, colIdx) => {
+        if (!col.data || (exceptions && exceptions.includes(colIdx)))
+            return;
+        const values = Array.from(new Set(data.map(row => {
+            const raw = row[col.data.toString()];
+            try {
+                if (col.render) {
+                    // @ts-expect-error This works...idk why typescript has issues with it
+                    const render = col.render(raw, 'filter', row);
+                    if (Array.isArray(render)) {
+                        return render.map((item) => {
                             const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = render?.toString().trim() || "";
+                            tempDiv.innerHTML = capitalizeFirstLetter(item).trim();
                             return (tempDiv.textContent || "").trim();
-                        }
+                        });
                     }
-                    if (raw == null || raw == undefined)
-                        return;
-                    return typeof raw === "string" ? raw.split(",")[0].toString().trim() : raw.toString().trim();
+                    else {
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = render?.toString().trim() || "";
+                        return (tempDiv.textContent || "").trim();
+                    }
                 }
-                catch {
+                if (raw == null || raw == undefined)
                     return;
-                }
-            }).flat().filter(v => v != null && v !== ""))); // Flatten the array and filter out null/empty values
-            values.sort((a, b) => a.localeCompare(b, undefined, { numberic: true, sensitivity: 'base' }));
-            if (values.length == 0)
+                return typeof raw === "string" ? raw.split(",")[0].toString().trim() : raw.toString().trim();
+            }
+            catch {
                 return;
-            const subMenuID = `submenu-${colIdx}`;
-            const subMenu = `
-                    <li class="drowdown-submenu">
-                        <div class="dropdown-item">${col.title} &raquo;</div>
-                        <ul class="dropdown-menu dropdown-submenu" id=${subMenuID}>
-                            ${values.map(val => `<li><div class="dropdown-item filter-option" data-col="${colIdx}" data-value="${val}">${val}</div></li>`).join('')}
-                        </ul>
-                    </li>
-                    `;
-            $filterMenu.append(subMenu);
-        });
+            }
+        }).flat().filter(v => v != null && v !== ""))); // Flatten the array and filter out null/empty values
+        values.sort((a, b) => a.localeCompare(b, undefined, { numberic: true, sensitivity: 'base' }));
+        if (values.length == 0)
+            return;
+        const subMenuID = `submenu-${colIdx}`;
+        const subMenu = `
+                <li class="drowdown-submenu">
+                    <div class="dropdown-item">${col.title} &raquo;</div>
+                    <ul class="dropdown-menu dropdown-submenu" id=${subMenuID}>
+                        ${values.map(val => `<li><div class="dropdown-item filter-option" data-col="${colIdx}" data-value="${val}">${val}</div></li>`).join('')}
+                    </ul>
+                </li>
+                `;
+        $filterMenu.append(subMenu);
         // Reapply active state for dropdown items based on initial filters
         if (initialFilters) {
             Object.entries(initialFilters).forEach(([colIdx, filterValue]) => {
@@ -211,6 +226,82 @@ export function updateFilters(colIdx) {
         table.column(colIdx).search('').draw();
     }
 }
+/**
+ * Refreshes DataTable data by querying an API endpoint
+ * @param tableName - The selector for the DataTable (e.g., "#power-table")
+ * @param apiUrl - The API endpoint to fetch fresh data from
+ * @param requestData - Optional data to send with the API request
+ * @param onSuccess - Optional callback function to execute after successful refresh
+ * @param onError - Optional callback function to execute if refresh fails
+ */
+export function refreshTableData(tableName, apiUrl, requestData, onSuccess, onError) {
+    const table = $(tableName).DataTable();
+    $.ajax({
+        url: apiUrl,
+        type: 'GET',
+        data: requestData,
+        success: function (data) {
+            try {
+                // Clear existing data and add new data
+                table.clear();
+                table.rows.add(data);
+                table.draw();
+                // Update filterable table component if it exists
+                const $filterableTable = $('filterable-table');
+                if ($filterableTable.length) {
+                    const element = $filterableTable[0];
+                    if (element.setData && typeof element.setData === 'function') {
+                        element.setData(data);
+                    }
+                }
+                // Execute success callback if provided
+                if (onSuccess && typeof onSuccess === 'function') {
+                    onSuccess(data);
+                }
+                ToastSuccess("Table data refreshed successfully");
+            }
+            catch (error) {
+                console.error("Error updating table data:", error);
+                ToastError("Failed to update table data");
+                if (onError && typeof onError === 'function') {
+                    onError(error);
+                }
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error("API request failed:", error);
+            ToastError(`Failed to refresh data: ${xhr.responseText || error}`);
+            if (onError && typeof onError === 'function') {
+                onError({ xhr, status, error });
+            }
+        }
+    });
+}
+// @ts-expect-error ehhh.....datatables
+export function setupFilterableTable(tableName, columns, order, filters, columnConfig = [], initialFilters, primaryColumn) {
+    const params = new URLSearchParams(window.location.search);
+    destroyTable(tableName);
+    const $filterableTable = $('filterable-table');
+    const data = $filterableTable.length ? $filterableTable[0].getData() : [];
+    const table = $(tableName).DataTable({
+        data: data,
+        pageLength: 2000,
+        columns: columns,
+        order: order,
+        dom: 'rti',
+        scrollCollapse: true,
+        columnDefs: columnConfig,
+        scrollY: "75vh",
+        //@ts-expect-error idk why this errors but it does
+        responsive: true
+    });
+    if (params.has('name')) {
+        $("#filter-search").val(params.get('name'));
+        table.column(primaryColumn ?? 0).search(params.get('name') || '').draw();
+        updateClearAllFiltersButton();
+    }
+    setupTableFilters(tableName, filters, initialFilters);
+}
 export function defaultPowerModal(power) {
     if (!power.id) {
         $("#power-edit-form").removeData("id");
@@ -249,7 +340,7 @@ export function fetchPowerInputs() {
         id: Number(source_option.val()),
         name: source_option.html(),
     };
-    power.description = getMDEValue("power-desc");
+    power.description = $("#power-desc").val().toString();
     power.concentration = $("#power-conc").prop('checked');
     if ($("#power-alignment").length) {
         const align_option = $("#power-alignment").find(':selected');
@@ -286,7 +377,7 @@ export function fetchSpeciesInputs() {
         weight_mod: $("#species-wmod").val().toString(),
         homeworld: $("#species-world").val().toString(),
         language: $("#species-language").val().toString(),
-        traits: getMDEValue("species-traits"),
+        traits: $("#species-traits").val().toString(),
         flavortext: $("#species-flavortext").val().toString(),
     };
     return species;
@@ -298,6 +389,7 @@ export function fetchClassInputs() {
     const prim_class = {
         id: $("#class-edit-form").data('id'),
         value: $("#class-name").val().toString(),
+        summary: $("#class-summary").val().toString(),
         image_url: $("#class-image").val().toString(),
         source: {
             id: Number(source_option.val()),
@@ -318,10 +410,10 @@ export function fetchClassInputs() {
             value: caster_option.html()
         }
             : null,
-        starting_equipment: getMDEValue("class-equipment"),
-        flavortext: getMDEValue("class-flavortext"),
-        level_changes: getMDEValue("class-level-changes"),
-        features: getMDEValue("class-features"),
+        starting_equipment: $("#class-equipment").val().toString(),
+        flavortext: $("#class-flavortext").val().toString(),
+        level_changes: $("#class-level-changes").val().toString(),
+        features: $("#class-features").val().toString(),
     };
     return prim_class;
 }
@@ -558,7 +650,7 @@ export function defaultManeuverModal(manevuer) {
     $("#maneuver-description").val(manevuer.description);
     $("#maneuver-prerequisite").val(manevuer.prerequisite);
     setSelectInputValue("#maneuver-source", manevuer.source && manevuer.source.id ? manevuer.source.id.toString() : "6");
-    setSelectInputValue("#maneuver-type", manevuer.type && manevuer.type.id ? manevuer.type.id.toString() : "1");
+    setSelectInputValue("#maneuver-type", manevuer.type && manevuer.type.id ? manevuer.type.id.toString() : "");
 }
 export function fetchManeuverInputs() {
     const source_option = $("#maneuver-source").find(":selected");

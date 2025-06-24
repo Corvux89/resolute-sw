@@ -1,15 +1,15 @@
 {% extends "template.html" %} {% block body %}
 
-{% if current_user.is_admin %}
+{% if is_admin %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 {% endif %}
 
 <h1>Feats</h1>
 
-<filterable-table table-id="feat-table" button-text="New Feat" key="feat"></filterable-table>
+<filterable-table table-id="feat-table" button-text="New Feat" key="feat" data-source='{{table|tojson|e}}'></filterable-table>
 
-{% if current_user.is_admin %}
+{% if is_admin %}
 <custom-modal title="Feature" custom-id="feat-edit-form">
     <div class="container">
         <div class="row mb-2">

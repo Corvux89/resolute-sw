@@ -13,6 +13,13 @@ interface ContentSource {
     abbreviation?: string
 }
 
+export interface WebContent {
+    id?: string
+    key?: string
+    content?: string
+    title?: string
+}
+
 export interface Power {
     id?: string
     name?: string

@@ -1,6 +1,6 @@
 {% extends "template.html" %} {% block body %}
 
-{% if current_user.is_admin %}
+{% if is_admin %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 {% endif %}
@@ -9,7 +9,7 @@
 
 <filterable-table table-id="customization-table" button-text="New Item" key="cat"></filterable-table>
 
-{% if current_user.is_admin %}
+{% if is_admin %}
 <custom-modal title="New Customization" custom-id="cat-edit-form">
     <div class="container">
         <div class="row mb-2">

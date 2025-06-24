@@ -1,6 +1,6 @@
 {% extends "template.html" %}{% block body %}
 
-{% if current_user.is_admin %}
+{% if is_admin %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 {% endif %}
@@ -10,7 +10,7 @@
         <div class="col-12 mb-3">
             <h3 class="text-primary class-detail-title fw-bold">
                 {{ archetype.value|upper }}
-                 {% if current_user.is_admin %}
+                 {% if is_admin %}
                 <button type="button"
                 id="edit-class-btn-{{ archetype.id }}"
                 class="btn btn-sm btn-outline-primary ms-3 position-relative edit-button"
@@ -51,7 +51,7 @@
     </div>
 </div>
 
-{% if current_user.is_admin %}
+{% if is_admin %}
 {% include '/archetypes/archetype_modal.html' %}
 {% endif %}
 
