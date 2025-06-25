@@ -37,11 +37,6 @@ export function setupMDE(element, default_text, clear_text = false) {
         }
     });
 }
-export function getMDEValue(element) {
-    if (window[element] && typeof window[element].value === "function")
-        return window[element].value();
-    return "";
-}
 export function updateClearAllFiltersButton() {
     if ($('#active-filters .badge').length > 0 || $("#filter-search").val() != "") {
         $('#clear-all-filters').removeClass('d-none');
@@ -312,7 +307,7 @@ export function defaultPowerModal(power) {
         $("#power-delete").removeClass("d-none");
     }
     $("#power-name").val(power.name);
-    $("#power-prereq").val(power.pre_requisite);
+    $("#power-prereq").val(power.prerequisite);
     $("#power-casttime").val(power.casttime);
     $("#power-range").val(power.range);
     setSelectInputValue("#power-source", power.source && power.source.id ? power.source.id.toString() : "6");
@@ -332,7 +327,7 @@ export function fetchPowerInputs() {
     power.id = $("#power-edit-form").data("id");
     power.name = $("#power-name").val().toString();
     power.type = window.location.pathname.includes("tech_powers") ? { id: 2, value: "Tech" } : { id: 1, value: "Force" };
-    power.pre_requisite = $("#power-prereq").val().toString();
+    power.prerequisite = $("#power-prereq").val().toString();
     power.casttime = $("#power-casttime").val().toString();
     power.range = $("#power-range").val().toString();
     const source_option = $("#power-source").find(':selected');
@@ -437,8 +432,8 @@ export function fetchArchetypInputs() {
             id: Number(source_option.val()),
             name: source_option.html()
         },
-        flavortext: getMDEValue('archetype-flavortext'),
-        level_table: getMDEValue('archetype-level-table')
+        flavortext: $('#archetype-flavortext').val().toString(),
+        level_table: $('#archetype-level-table').val().toString()
     };
     return archetype;
 }
@@ -606,7 +601,7 @@ export function fetchFeatInputs() {
         },
         attributes: getSelectedCheckboxValues("feat-attributes"),
         prerequisite: $("#feat-prereq").val().toString(),
-        text: getMDEValue("feat-text")
+        text: $("#feat-text").val().toString()
     };
     return feat;
 }
@@ -615,7 +610,7 @@ export function fetchBackgroundInputs() {
     const background = {
         id: $("#background-edit-form").data('id'),
         name: $("#background-name").val().toString(),
-        flavortext: getMDEValue("background-flavortext"),
+        flavortext: $("#background-flavortext").val().toString(),
         flavor_name: $("#background-flavor-name").val().toString(),
         flavor_description: $("#background-flavor-description").val().toString(),
         skills: $("#background-skills").val().toString(),
@@ -625,11 +620,11 @@ export function fetchBackgroundInputs() {
         suggested_characteristics: $("#background-suggested-characteristics").val().toString(),
         feature_name: $("#background-feature-name").val().toString(),
         feature_text: $("#background-feature-text").val().toString(),
-        feats: getMDEValue("background-feats"),
-        personality: getMDEValue("background-personality"),
-        ideal: getMDEValue("background-ideal"),
-        flaw: getMDEValue("background-flaw"),
-        bond: getMDEValue("background-bond"),
+        feats: $("#background-feats").val().toString(),
+        personality: $("#background-personality").val().toString(),
+        ideal: $("#background-ideal").val().toString(),
+        flaw: $("#background-flaw").val().toString(),
+        bond: $("#background-bond").val().toString(),
         source: {
             id: Number(source_option.val()),
             name: source_option.html()

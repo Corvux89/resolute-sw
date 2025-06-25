@@ -7,7 +7,7 @@
 
 <h1>{{ title }}</h1>
 
-<filterable-table table-id="power-table" button-text="New Power" key="power"></filterable-table>
+<filterable-table table-id="power-table" button-text="New Power" key="power" data-source='{{table|tojson|e}}'></filterable-table>
 
 {% if is_admin %}
 <custom-modal title="Power" custom-id="power-edit-form">

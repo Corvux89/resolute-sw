@@ -17,25 +17,31 @@ class GenericCategory(base):
     id = Column(Integer, primary_key=True, index=True)
     value = Column(String)
 
+
 class GenericObject(base):
     __abstract__ = True
     __exceptions__: List[str] = []
 
+
 def OptionalStringColumn(*args, **kwargs):
-    kwargs.setdefault('nullable', True)
+    kwargs.setdefault("nullable", True)
     return Column(String, *args, **kwargs)
 
+
 def OptionalIntegerColumn(*args, **kwargs):
-    kwargs.setdefault('nullable', True)
+    kwargs.setdefault("nullable", True)
     return Column(Integer, *args, **kwargs)
 
-class GenericSchema(BaseModel):  
+
+class GenericSchema(BaseModel):
     class Config:
-        from_attributes=True
+        from_attributes = True
+
 
 class GenericCategorySchema(GenericSchema):
     id: int
     value: str
+
 
 # --------------------------- #
 # Categories
@@ -43,106 +49,129 @@ class GenericCategorySchema(GenericSchema):
 class ContentSource(GenericObject):
     __tablename__ = "c_content_source"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)        
+    name = Column(String)
     abbreviation = Column(String, nullable=True)
+
 
 class ContentSourceSchema(GenericSchema):
     id: int
     name: str
     abbreviation: Optional[str] = None
 
+
 class PowerAlignment(GenericCategory):
     __tablename__ = "c_power_alignment"
+
 
 class PowerAlignmentSchema(GenericCategorySchema):
     pass
 
+
 class PowerType(GenericCategory):
     __tablename__ = "c_power_type"
+
 
 class PowerTypeSchema(GenericCategorySchema):
     pass
 
+
 class ManeuverType(GenericCategory):
     __tablename__ = "c_maneuver_type"
+
 
 class ManeuverTypeSchema(GenericCategorySchema):
     pass
 
+
 class CustomizationType(GenericCategory):
     __tablename__ = "c_customization_type"
+
 
 class CustomizationTypeSchema(GenericCategorySchema):
     pass
 
+
 class ImprovementType(GenericCategory):
     __tablename__ = "c_improvement_type"
+
 
 class ImprovementTypeSchema(GenericCategorySchema):
     pass
 
+
 class EquipmentCategory(GenericCategory):
     __tablename__ = "c_equipment_category"
 
+
 class EquipmentCategorySchema(GenericCategorySchema):
     pass
+
 
 class EquipmentSubCategory(GenericCategory):
     __tablename__ = "c_equipment_subcategory"
     parent = Column(Integer)
 
+
 class EquipmentSubCategorySchema(GenericCategorySchema):
     parent: Optional[int] = None
+
 
 class PropertyType(GenericCategory):
     __tablename__ = "c_property_type"
 
+
 class PropertyTypeSchema(GenericCategorySchema):
     pass
+
 
 class EnhancedItemType(GenericCategory):
     __tablename__ = "c_enhanced_type"
 
+
 class EnhancedItemTypeSchema(GenericCategorySchema):
     pass
+
 
 class EnhancedItemSubType(GenericCategory):
     __tablename__ = "c_enhanced_subtype"
     parent = Column(Integer)
 
+
 class EnhancedItemSubTypeSchema(GenericCategorySchema):
     parent: Optional[int] = None
+
 
 class Rarity(GenericCategory):
     __tablename__ = "c_rarity"
 
+
 class RaritySchema(GenericCategorySchema):
     pass
+
 
 # --------------------------- #
 # Objects
 # --------------------------- #
 class ResoluteGuild(GenericObject, IntAttributeMixin):
     __tablename__ = "guilds"
-    _id =  Column("id", BIGINT, primary_key=True, index=True)
+    _id = Column("id", BIGINT, primary_key=True, index=True)
     _admin_role = Column("admin_role", BIGINT, nullable=True)
 
     @property
-    def id(self): 
+    def id(self):
         return str(self._id)
-    
+
     @property
     def admin_role(self):
         return str(self._admin_role)
-    
+
     @admin_role.setter
     def admin_role(self, value):
         self.set_int_attribute("_admin_role", value)
-    
-    
+
 
 class WebContent(GenericObject):
-    __tablename__="web_content"
+    __tablename__ = "web_content"
     __exceptions__ = ["id", "key"]
     key = Column(String, primary_key=True, index=True)
     id = Column(String, index=True, unique=True)
@@ -158,8 +187,10 @@ class WebContentSchema(GenericSchema):
     id: str
     content: str
 
+
 class WebContentFullSchema(WebContentSchema):
     html_content: str
+
 
 class Species(GenericObject):
     __tablename__ = "c_character_species"
@@ -180,18 +211,21 @@ class Species(GenericObject):
     language = OptionalStringColumn()
     image_url = OptionalStringColumn()
     size = OptionalStringColumn()
-    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
 
     source = relationship("ContentSource", lazy="joined")
 
     @property
     def html_flavortext(self):
         return render_markdown(self.flavortext)
-    
+
     @property
     def html_traits(self):
         return render_markdown(self.traits)
-    
+
+
 class SpeciesSchema(GenericSchema):
     id: Optional[int] = None
     value: str
@@ -212,6 +246,7 @@ class SpeciesSchema(GenericSchema):
     image_url: Optional[str] = None
     size: Optional[str] = None
     source: Optional[ContentSourceSchema] = None
+
 
 class PrimaryClass(GenericObject):
     __tablename__ = "c_character_class"
@@ -236,7 +271,9 @@ class PrimaryClass(GenericObject):
     archetype_flavor = OptionalStringColumn()
     image_url = OptionalStringColumn()
     _caster_type = Column("caster_type", ForeignKey("c_power_type.id"), nullable=True)
-    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
 
     source = relationship("ContentSource")
     caster_type = relationship("PowerType")
@@ -244,19 +281,20 @@ class PrimaryClass(GenericObject):
     @property
     def html_flavortext(self):
         return render_markdown(self.flavortext)
-    
+
     @property
     def html_features(self):
         return render_markdown(self.features)
-    
+
     @property
     def html_level_table(self):
         return render_markdown(self.level_changes)
-    
+
     @property
     def html_starting_equip(self):
         return render_markdown(self.starting_equipment)
-    
+
+
 class PrimaryClassSchema(GenericSchema):
     id: Optional[int] = None
     value: str
@@ -283,6 +321,7 @@ class PrimaryClassSchema(GenericSchema):
     source: Optional[ContentSourceSchema] = None
     caster_type: Optional[PowerTypeSchema] = None
 
+
 class Archetype(GenericObject):
     __tablename__ = "c_character_archetype"
     __exceptions__ = ["id"]
@@ -293,8 +332,12 @@ class Archetype(GenericObject):
     flavortext = OptionalStringColumn()
     level_table = OptionalStringColumn()
     image_url = OptionalStringColumn()
-    _caster_type = Column("caster_type", Integer, ForeignKey("c_power_type.id"), nullable=True)
-    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+    _caster_type = Column(
+        "caster_type", Integer, ForeignKey("c_power_type.id"), nullable=True
+    )
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
 
     _parent_class = relationship("PrimaryClass", lazy="joined")
     caster_type = relationship("PowerType", lazy="joined")
@@ -303,15 +346,16 @@ class Archetype(GenericObject):
     @property
     def parent_name(self):
         return self._parent_class.value if self._parent_class else None
-    
+
     @property
     def html_flavortext(self):
         return render_markdown(self.flavortext)
-    
+
     @property
     def html_level_table(self):
         return render_markdown(self.level_table)
-    
+
+
 class ArchetypeSchema(GenericSchema):
     id: Optional[int] = None
     value: str
@@ -323,6 +367,7 @@ class ArchetypeSchema(GenericSchema):
     html_level_table: Optional[str] = None
     caster_type: Optional[PowerTypeSchema] = None
     source: Optional[ContentSourceSchema] = None
+
 
 class Background(GenericObject):
     __tablename__ = "backgrounds"
@@ -345,18 +390,20 @@ class Background(GenericObject):
     ideal = OptionalStringColumn()
     flaw = OptionalStringColumn()
     bond = OptionalStringColumn()
-    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
 
     source = relationship("ContentSource", lazy="joined")
 
     @property
     def html_flavortext(self):
         return render_markdown(self.flavortext)
-    
+
     @property
     def html_flavor_description(self):
         return render_markdown(self.flavor_description)
-    
+
     @property
     def html_feats(self):
         return render_markdown(self.feats, [FeatureHyperlinkExtension()])
@@ -372,10 +419,11 @@ class Background(GenericObject):
     @property
     def html_ideal(self):
         return render_markdown(self.ideal)
-    
+
     @property
     def html_personality(self):
         return render_markdown(self.personality)
+
 
 class BackgroundSchema(GenericSchema):
     id: Optional[uuid.UUID] = None
@@ -404,23 +452,27 @@ class BackgroundSchema(GenericSchema):
     html_bond: Optional[str] = None
     source: Optional[ContentSourceSchema] = None
 
+
 class Feature(GenericObject):
     __tablename__ = "feats"
     __exceptions__ = ["id"]
 
     id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
-    name =  Column(String)
+    name = Column(String)
     prerequisite = OptionalStringColumn()
     text = OptionalStringColumn()
     attributes = Column(ARRAY(String), nullable=True, default=[])
-    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
 
     source = relationship("ContentSource", lazy="joined")
 
     @property
     def html_text(self):
         return render_markdown(self.text)
-    
+
+
 class FeatureSchema(GenericSchema):
     id: Optional[uuid.UUID] = None
     name: str
@@ -430,19 +482,23 @@ class FeatureSchema(GenericSchema):
     attributes: Optional[List[str]] = []
     source: Optional[ContentSourceSchema] = None
 
+
 class Maneuver(GenericObject):
     __tablename__ = "maneuvers"
     __exceptions__ = ["id"]
 
     id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
-    name =  Column(String)
+    name = Column(String)
     description = OptionalStringColumn()
     prerequisite = OptionalStringColumn()
     _type = Column("type", Integer, ForeignKey("c_maneuver_type.id"), nullable=True)
-    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
 
     type = relationship("ManeuverType", lazy="joined")
     source = relationship("ContentSource", lazy="joined")
+
 
 class ManeuverSchema(GenericSchema):
     id: Optional[uuid.UUID] = None
@@ -452,6 +508,7 @@ class ManeuverSchema(GenericSchema):
     type: Optional[ManeuverTypeSchema] = None
     source: Optional[ContentSourceSchema] = None
 
+
 class Customization(GenericObject):
     __tablename__ = "customizations"
     __exceptions__ = ["id", "type"]
@@ -460,7 +517,9 @@ class Customization(GenericObject):
     name = Column(String)
     text = OptionalStringColumn()
     _type = Column("type", Integer, ForeignKey("c_customization_type.id"))
-    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
 
     type = relationship("CustomizationType", lazy="joined")
     source = relationship("ContentSource", lazy="joined")
@@ -468,7 +527,8 @@ class Customization(GenericObject):
     @property
     def html_text(self):
         return render_markdown(self.text)
-    
+
+
 class CustomizationSchema(GenericSchema):
     id: Optional[uuid.UUID] = None
     name: str
@@ -476,6 +536,7 @@ class CustomizationSchema(GenericSchema):
     html_text: Optional[str] = None
     type: CustomizationTypeSchema
     source: Optional[ContentSourceSchema] = None
+
 
 class Improvement(GenericObject):
     __tablename__ = "improvements"
@@ -486,7 +547,9 @@ class Improvement(GenericObject):
     text = OptionalStringColumn()
     prerequisite = OptionalStringColumn()
     _type = Column("type", Integer, ForeignKey("c_improvement_type.id"))
-    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
 
     type = relationship("ImprovementType", lazy="joined")
     source = relationship("ContentSource", lazy="joined")
@@ -494,7 +557,8 @@ class Improvement(GenericObject):
     @property
     def html_text(self):
         return render_markdown(self.text)
-    
+
+
 class ImprovementSchema(GenericSchema):
     id: Optional[uuid.UUID] = None
     name: str
@@ -503,6 +567,7 @@ class ImprovementSchema(GenericSchema):
     prerequisite: Optional[str] = None
     type: ImprovementTypeSchema
     source: Optional[ContentSourceSchema] = None
+
 
 class Equipment(GenericObject):
     __tablename__ = "equipment"
@@ -520,12 +585,17 @@ class Equipment(GenericObject):
     ac = OptionalStringColumn()
     stealth_dis = Column(BOOLEAN, nullable=True)
     _category = Column("category", ForeignKey("c_equipment_category.id"))
-    _sub_category = Column("sub_category", Integer, ForeignKey("c_equipment_subcategory.id"), nullable=True)
-    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+    _sub_category = Column(
+        "sub_category", Integer, ForeignKey("c_equipment_subcategory.id"), nullable=True
+    )
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
 
     category = relationship("EquipmentCategory", lazy="joined")
     sub_category = relationship("EquipmentSubCategory", lazy="joined")
     source = relationship("ContentSource", lazy="joined")
+
 
 class EquipmentSchema(GenericSchema):
     id: Optional[uuid.UUID] = None
@@ -544,12 +614,13 @@ class EquipmentSchema(GenericSchema):
     sub_category: Optional[EquipmentSubCategorySchema] = None
     source: Optional[ContentSourceSchema] = None
 
+
 class Property(GenericObject):
     __tablename__ = "properties"
     __exceptions__ = ["id"]
 
     id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
-    name = Column(String)    
+    name = Column(String)
     _type = Column("type", Integer, ForeignKey("c_property_type.id"))
     _text = Column("text", String, nullable=True)
 
@@ -558,12 +629,14 @@ class Property(GenericObject):
     @property
     def text(self):
         return render_markdown(self._text)
-    
+
+
 class PropertySchema(GenericSchema):
     id: Optional[uuid.UUID] = None
     name: str
     type: PropertyTypeSchema
     text: Optional[str] = None
+
 
 class EnhancedItem(GenericObject):
     __tablename__ = "enhanced_items"
@@ -579,7 +652,9 @@ class EnhancedItem(GenericObject):
     subtype_ft = OptionalStringColumn()
     _subtype = Column("subtype", ForeignKey("c_enhanced_subtype.id"), nullable=True)
     cost = OptionalIntegerColumn()
-    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
 
     type = relationship("EnhancedItemType", lazy="joined")
     rarity = relationship("Rarity", lazy="joined")
@@ -589,7 +664,8 @@ class EnhancedItem(GenericObject):
     @property
     def html_text(self):
         return render_markdown(self.text)
-    
+
+
 class EnhancedItemSchema(GenericSchema):
     id: Optional[uuid.UUID] = None
     name: str
@@ -603,3 +679,49 @@ class EnhancedItemSchema(GenericSchema):
     subtype: Optional[EnhancedItemSubTypeSchema] = None
     cost: Optional[int] = None
     source: Optional[ContentSourceSchema] = None
+
+
+class Power(GenericObject):
+    __tablename__ = "powers"
+    __exceptions__ = ["id", "type"]
+
+    id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
+    name = Column(String)
+    prerequisite = OptionalStringColumn()
+    _type = Column("type", Integer, ForeignKey("c_power_type.id"))
+    casttime = OptionalStringColumn()
+    range = OptionalStringColumn()
+    _source = Column(
+        "source", Integer, ForeignKey("c_content_source.id"), nullable=True
+    )
+    description = OptionalStringColumn()
+    concentration = Column(BOOLEAN, default=False)
+    _alignment = Column(
+        "alignment", Integer, ForeignKey("c_power_alignment.id"), nullable=True
+    )
+    level = OptionalIntegerColumn()
+    duration = OptionalStringColumn()
+
+    type = relationship("PowerType", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+    alignment = relationship("PowerAlignment", lazy="joined")
+
+    @property
+    def html_desc(self):
+        return render_markdown(self.description)
+
+
+class PowerSchema(GenericSchema):
+    id: Optional[uuid.UUID] = None
+    name: str
+    prerequisite: Optional[str] = None
+    type: PowerTypeSchema
+    casttime: Optional[str] = None
+    range: Optional[str] = None
+    source: Optional[ContentSourceSchema] = None
+    description: Optional[str] = None
+    html_desc: Optional[str] = None
+    concentration: Optional[bool] = False
+    alignment: Optional[PowerAlignmentSchema] = None
+    level: Optional[int] = 0
+    duration: Optional[str] = None

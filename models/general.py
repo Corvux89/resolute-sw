@@ -13,46 +13,49 @@ from fastapi.encoders import jsonable_encoder
 def custom_encoder(obj, **kwargs):
     if isinstance(obj, list):
         return [custom_encoder(item, **kwargs) for item in obj]
-    
+
     if hasattr(obj, "__dict__"):
         # Use __dict__ instead of dir() for better performance
         # and only get non-private attributes that aren't callable
         filtered_dict = {}
         obj_dict = obj.__dict__
         obj_class = obj.__class__
-        
+
         for k, v in obj_dict.items():
             if not k.startswith("_"):
                 try:
                     filtered_dict[k] = jsonable_encoder(v, **kwargs)
                 except Exception:
                     pass
-        
+
         # Also check for properties (computed attributes)
         for attr_name in dir(obj_class):
-            if (not attr_name.startswith("_") and 
-                isinstance(getattr(obj_class, attr_name, None), property) and
-                attr_name not in filtered_dict):
+            if (
+                not attr_name.startswith("_")
+                and isinstance(getattr(obj_class, attr_name, None), property)
+                and attr_name not in filtered_dict
+            ):
                 try:
                     attr_value = getattr(obj, attr_name)
                     filtered_dict[attr_name] = jsonable_encoder(attr_value, **kwargs)
                 except Exception:
                     pass
-        
+
         return filtered_dict
-    else:  
+    else:
         return jsonable_encoder(obj, **kwargs)
-    
+
+
 class MonsterBlockExtension(Extension):
     def extendMarkdown(self, md):
         md.preprocessors.register(MonsterBlockPreProcessor(md), "monster_block", 175)
 
+
 class HTTPError(BaseModel):
     detail: str
+
     class Config:
-        json_schema_extra = {
-            "eample": {"detail": "HTTPException Raised"}
-        }
+        json_schema_extra = {"eample": {"detail": "HTTPException Raised"}}
 
 
 class MonsterBlockPreProcessor(Preprocessor):
@@ -80,6 +83,7 @@ class MonsterBlockPreProcessor(Preprocessor):
         html += markdown.markdown("\n".join(content), extensions=["tables"])
         html += "</div>"
         return html
+
 
 class FeatureHyperlinkPattern(markdown.inlinepatterns.Pattern):
 
@@ -136,15 +140,36 @@ def render_markdown(text: str, add_extension: list = []) -> str:
 
     allowed_tags = frozenset(
         set(bleach.sanitizer.ALLOWED_TAGS)
-        | {"div", "span", "table", "thead", "tbody", "tr", "th", "td", "p", "h1", "h2", "h3", "h4", "h5", "h6", "br"}
+        | {
+            "div",
+            "span",
+            "table",
+            "thead",
+            "tbody",
+            "tr",
+            "th",
+            "td",
+            "p",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "br",
+        }
     )
-    allowed_attributes = {"*": ["class", "id", "data-*", "data-name", "data-text"], "a": ["href", "title"]}
+    allowed_attributes = {
+        "*": ["class", "id", "data-*", "data-name", "data-text"],
+        "a": ["href", "title"],
+    }
 
-    sterilized =  bleach.clean(
+    sterilized = bleach.clean(
         render, tags=allowed_tags, attributes=allowed_attributes, strip=True
     )
 
     return sterilized
+
 
 class IntAttributeMixin:
     def set_int_attribute(self, attr_name, value):

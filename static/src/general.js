@@ -1,4 +1,4 @@
-import { defaultCustomizationModal, defaultEquipmentModal, defaultFeatModal, defaultImprovementModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchCustomizationInputs, fetchEquipmentInputs, fetchFeatInputs, fetchImprovementInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, getMDEValue, refreshTableData, setupFilterableTable, setupMDE, setupTableFilters, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
+import { defaultCustomizationModal, defaultEquipmentModal, defaultFeatModal, defaultImprovementModal, defaultItemModal, defaultManeuverModal, defaultPowerModal, destroyTable, fetchArchetypInputs, fetchBackgroundInputs, fetchClassInputs, fetchCustomizationInputs, fetchEquipmentInputs, fetchFeatInputs, fetchImprovementInputs, fetchItemInputs, fetchManeuverInputs, fetchPowerInputs, fetchSpeciesInputs, getActiveFilters, refreshTableData, setupFilterableTable, setupMDE, ToastError, ToastSuccess, updateClearAllFiltersButton, updateFilters, updateSubTypeFields } from "./utils.js";
 let isDragging = false;
 let mouseDownPos = { x: 0, y: 0 };
 const DRAG_THRESHOLD = 5; // pixels
@@ -96,7 +96,7 @@ if ($("#content-edit-form").length) {
         const con = {
             id: $(this).data('key'),
             key: $(this).data('key'),
-            content: getMDEValue('content-body')
+            content: $('#content-body').val().toString()
         };
         $.ajax({
             url: `api/content`,
@@ -166,8 +166,6 @@ $(document).on('click', '#clear-all-filters', function () {
 });
 // Powers
 if ($("#power-table").length) {
-    const params = new URLSearchParams(window.location.search);
-    const tableName = "#power-table";
     const columns = [
         {
             title: "Name",
@@ -180,7 +178,7 @@ if ($("#power-table").length) {
         },
         {
             title: "Pre-Requisite?",
-            data: "pre_requisite"
+            data: "prerequisite"
         },
         {
             title: "Cast Time",
@@ -206,36 +204,14 @@ if ($("#power-table").length) {
         columns.splice(3, 0, {
             title: "Alignment",
             data: "alignment",
-            render: function (data) { return data.value; }
+            render: function (data) {
+                if (!data)
+                    return '';
+                return data.value;
+            }
         });
     }
-    destroyTable(tableName);
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: '/api/powers',
-            dataSrc: '',
-            error: function (xhr) {
-                ToastError(`Failed ${xhr.responseText?.toString()}`);
-            },
-            data: function (d) {
-                d["type"] = window.location.pathname.includes("tech_powers") ? "tech" : "force";
-            }
-        },
-        pageLength: 500,
-        columns: columns,
-        order: [[1, 'asc'], [0, 'asc']],
-        dom: 'rti',
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true,
-    });
-    if (params.has('name')) {
-        $("#filter-search").val(params.get('name'));
-        table.column(0).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton();
-    }
-    setupTableFilters(tableName, [0, 2]);
+    setupFilterableTable("#power-table", columns, [[1, 'asc'], [0, 'asc']], [0, 2]);
 }
 $(document).on('click', "#power-table tbody tr", function () {
     if ($(this).closest('btn').length)
@@ -304,13 +280,13 @@ $(document).on('click', '#power-submit', function () {
     const power = fetchPowerInputs();
     if (!power.id) {
         $.ajax({
-            url: `api/powers`,
+            url: `${window.location.origin}/api/powers`,
             type: "post",
             contentType: "application/json",
             data: JSON.stringify(power),
             success: function () {
                 ToastSuccess("Power Added");
-                $("#power-table").DataTable().ajax.reload();
+                refreshTableData("#power-table", `${window.location.origin}/api/powers?type=${power.type.value}`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -319,13 +295,13 @@ $(document).on('click', '#power-submit', function () {
     }
     else {
         $.ajax({
-            url: `api/powers`,
+            url: `${window.location.origin}/api/powers`,
             type: "patch",
             contentType: "application/json",
             data: JSON.stringify(power),
             success: function () {
                 ToastSuccess("Power Updated");
-                $("#power-table").DataTable().ajax.reload();
+                refreshTableData("#power-table", `${window.location.origin}/api/powers?type=${power.type.value}`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -338,12 +314,12 @@ $(document).on('click', '#power-delete-confirmed', function () {
     if (!power.id)
         return;
     $.ajax({
-        url: `/api/powers/${power.id}`,
+        url: `${window.location.origin}/api/powers/${power.id}`,
         type: "delete",
         contentType: "application/json",
         success: function () {
             ToastError("Power Deleted");
-            $("#power-table").DataTable().ajax.reload();
+            refreshTableData("#power-table", `${window.location.origin}/api/powers?type=${power.type.value}`);
         },
         error: function (e) {
             ToastError(`Failed: ${e.responseText}`);

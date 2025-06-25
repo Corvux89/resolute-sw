@@ -24,7 +24,7 @@ export interface Power {
     id?: string
     name?: string
     type?: GenericCategory
-    pre_requisite?: string
+    prerequisite?: string
     casttime?: string
     range?: string
     source?: ContentSource
