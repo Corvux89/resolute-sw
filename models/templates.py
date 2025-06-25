@@ -75,18 +75,32 @@ class ResoluteJinja(Jinja2Templates):
         # Options setup
         options = {}
         cache: ResoluteCache = request.app.cache
-        
-        options["power-type"] = build_select_option(cache.fetch(PowerType))
-        options["power-alignment"] = build_select_option(cache.fetch(PowerAlignment))
-        options["content-source"] = build_select_option(cache.fetch(ContentSource), "id", "name")
-        options["sizes"] = build_generic_option(["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"])
-        options["stats"] = build_generic_option(["Strength", 
-                                                 "Dexterity", 
-                                                 "Constitution", 
-                                                 "Intelligence", 
-                                                 "Wisdom", 
-                                                 "Charisma", 
-                                                 "Any"])
+        for attempt in range(2):
+            try:
+                options["power-type"] = build_select_option(cache.fetch(PowerType, db=request.app.db))
+                options["power-alignment"] = build_select_option(cache.fetch(PowerAlignment, db=request.app.db))
+                options["content-source"] = build_select_option(cache.fetch(ContentSource, db=request.app.db), "id", "name")
+                options["sizes"] = build_generic_option(["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"])
+                options["stats"] = build_generic_option(["Strength", 
+                                                        "Dexterity", 
+                                                        "Constitution", 
+                                                        "Intelligence", 
+                                                        "Wisdom", 
+                                                        "Charisma", 
+                                                        "Any"])
+                break
+            except Exception as e:
+                 request.app.db.rollback()
+
+                 if attempt == 1:
+                      options = {
+                        "power-type": [],
+                        "power-alignment": [],
+                        "content-source": [],
+                        "sizes": [],
+                        "stats": []
+                      }
+             
         
         if add_options := kwargs.get('options'):
             options.update(add_options)    
