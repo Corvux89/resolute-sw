@@ -226,6 +226,7 @@ async def multiclass_improvements(request: Request):
 async def splashclass_improvements(request: Request):
     return await get_improvement_by_type(request, "Splashclass Improvement", "Splashclass Improvements")
 
+# Items
 async def get_equipment_type_category(request: Request, category: str, title: str):
     options = {}
     options['equipment-category']=build_select_option(request.app.cache.fetch(EquipmentCategory))
@@ -259,3 +260,43 @@ async def armor(request: Request):
 async def adventuring(request: Request):
     return await get_equipment_type_category(request, "Adventuring", "Adventuring Gear")
 
+async def get_item_type(request: Request, category: str, title: str):
+    options = {}
+    options['enhanced-item-type'] = build_select_option(request.app.cache.fetch(EnhancedItemType))
+    options['enhanced-item-subtype'] = request.app.cache.fetch(EnhancedItemSubTypeSchema)
+    options['rarity'] = build_select_option(request.app.cache.fetch(Rarity))
+
+    items = request.app.cache.fetch(EnhancedItemSchema)
+
+    if category.lower() == 'other':
+        items = list(filter(lambda i: i['type'] and i['type']['id'] not in [3,7,5,4], items))
+    else:
+        items = list(filter(lambda e: e["type"] and e["type"]["value"] == category, items))
+
+    return await templates.TemplateResponse("/enhanced_items.html",
+                                      {
+                                          "request": request,
+                                          "table": items,
+                                          "title": title
+                                      },
+                                      options=options)
+
+@frontend_router.get('/consumables')
+async def consumables(request: Request):
+    return await get_item_type(request, "Consumable", "Consumables")
+
+@frontend_router.get('/item_modifications')
+async def item_modifications(request: Request):
+    return await get_item_type(request, "Item Modification", "Item Modifications")
+
+@frontend_router.get('/droid_customizations')
+async def droid_customizations(request: Request):
+    return await get_item_type(request, "Droid Customization", "Droid Customizations")
+
+@frontend_router.get('/cybernetic_augmentation')
+async def cybernetic_augmentations(request: Request):
+    return await get_item_type(request, "Cybernetic Augmentation", "Cybernetic Augmentations")
+
+@frontend_router.get('/enhanced_items')
+async def enhanced_items(request: Request):
+    return await get_item_type(request, "Other", "Enhanced Items")

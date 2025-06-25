@@ -54,6 +54,7 @@ OBJECT_MAP: Dict[Type, SchemaMap] = {
     Improvement: {'schema': ImprovementSchema},
     Property: {'schema': PropertySchema},
     Equipment: {'schema': EquipmentSchema},
+    EnhancedItem: {'schema': EnhancedItemSchema}
 }
 
 CATEGORY_MAP: Dict[Type, SchemaMap] = {
@@ -66,6 +67,9 @@ CATEGORY_MAP: Dict[Type, SchemaMap] = {
     EquipmentCategory: {'schema': EquipmentCategorySchema},
     EquipmentSubCategory: {'schema': EquipmentSubCategorySchema},
     PropertyType: {'schema': PropertyTypeSchema},
+    EnhancedItemType: {'schema': EnhancedItemTypeSchema},
+    EnhancedItemSubType: {'schema': EnhancedItemSubTypeSchema},
+    Rarity: {'schema': RaritySchema},
 }
 
 OBJECT_MAP.update(CATEGORY_MAP)

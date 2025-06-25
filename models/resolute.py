@@ -92,12 +92,31 @@ class EquipmentSubCategory(GenericCategory):
     parent = Column(Integer)
 
 class EquipmentSubCategorySchema(GenericCategorySchema):
-    parent: int
+    parent: Optional[int] = None
 
 class PropertyType(GenericCategory):
     __tablename__ = "c_property_type"
 
 class PropertyTypeSchema(GenericCategorySchema):
+    pass
+
+class EnhancedItemType(GenericCategory):
+    __tablename__ = "c_enhanced_type"
+
+class EnhancedItemTypeSchema(GenericCategorySchema):
+    pass
+
+class EnhancedItemSubType(GenericCategory):
+    __tablename__ = "c_enhanced_subtype"
+    parent = Column(Integer)
+
+class EnhancedItemSubTypeSchema(GenericCategorySchema):
+    parent: Optional[int] = None
+
+class Rarity(GenericCategory):
+    __tablename__ = "c_rarity"
+
+class RaritySchema(GenericCategorySchema):
     pass
 
 # --------------------------- #
@@ -546,3 +565,41 @@ class PropertySchema(GenericSchema):
     type: PropertyTypeSchema
     text: Optional[str] = None
 
+class EnhancedItem(GenericObject):
+    __tablename__ = "enhanced_items"
+    __exceptions__ = ["id", "type"]
+
+    id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
+    name = Column(String)
+    _type = Column("type", Integer, ForeignKey("c_enhanced_type.id"))
+    _rarity = Column("rarity", Integer, ForeignKey("c_rarity.id"), nullable=True)
+    attunement = Column(BOOLEAN, default=False)
+    text = OptionalStringColumn()
+    prerequisite = OptionalStringColumn()
+    subtype_ft = OptionalStringColumn()
+    _subtype = Column("subtype", ForeignKey("c_enhanced_subtype.id"), nullable=True)
+    cost = OptionalIntegerColumn()
+    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+
+    type = relationship("EnhancedItemType", lazy="joined")
+    rarity = relationship("Rarity", lazy="joined")
+    subtype = relationship("EnhancedItemSubType", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+
+    @property
+    def html_text(self):
+        return render_markdown(self.text)
+    
+class EnhancedItemSchema(GenericSchema):
+    id: Optional[uuid.UUID] = None
+    name: str
+    type: EnhancedItemTypeSchema
+    rarity: Optional[RaritySchema] = None
+    attunement: Optional[bool] = False
+    text: Optional[str] = None
+    html_text: Optional[str] = None
+    prerequisite: Optional[str] = None
+    subtype_ft: Optional[str] = None
+    subtype: Optional[EnhancedItemSubTypeSchema] = None
+    cost: Optional[int] = None
+    source: Optional[ContentSourceSchema] = None

@@ -864,89 +864,62 @@ $(document).on('click', '#equipment-delete-confirmed', function () {
 });
 // Enhanced Items
 if ($("#item-table").length) {
-    const params = new URLSearchParams(window.location.search);
-    const tableName = "#item-table";
-    destroyTable(tableName);
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: 'api/enhanced_items',
-            dataSrc: '',
-            error: function (xhr) {
-                ToastError(`Failed ${xhr.responseText?.toString()}`);
-            },
-            data: function (d) {
-                d["type"] = window.location.pathname.replace("/enhanced_", "").replace("_", " ");
+    const columns = [
+        {
+            title: "Name",
+            data: "name"
+        },
+        {
+            title: "Type",
+            data: "type",
+            render: function (data) {
+                if (!data)
+                    return '';
+                return data.value;
             }
         },
-        pageLength: 2000,
-        order: [[1, 'asc'], [0, 'asc']],
-        dom: 'rti',
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true,
-        columns: [
-            {
-                title: "Name",
-                data: "name"
-            },
-            {
-                title: "Type",
-                data: "type",
-                render: function (data) {
-                    if (!data)
-                        return '';
-                    return data.value;
-                }
-            },
-            {
-                title: "Subtype",
-                data: "subtype",
-                render: function (data, type, row) {
-                    if (row.subtype_ft)
-                        return row.subtype_ft;
-                    if (!data)
-                        return '';
-                    return data.value;
-                }
-            },
-            {
-                title: "Rarity",
-                data: "rarity",
-                render: function (data, type) {
-                    if (!data)
-                        return '';
-                    if (type == 'sort')
-                        return data.id;
-                    return data.value;
-                }
-            },
-            {
-                title: "Prerequisite?",
-                data: "prerequisite",
-                render: function (data, type) {
-                    return boolColumn(data, type);
-                }
-            },
-            {
-                title: "Attunement?",
-                data: "attunement",
-                render: function (data, type) {
-                    return boolColumn(data, type);
-                }
-            },
-            {
-                title: "Cost",
-                data: "cost"
+        {
+            title: "Subtype",
+            data: "subtype",
+            render: function (data, type, row) {
+                if (row.subtype_ft)
+                    return row.subtype_ft;
+                if (!data)
+                    return '';
+                return data.value;
             }
-        ]
-    });
-    if (params.has('name')) {
-        $("#filter-search").val(params.get('name'));
-        table.column(0).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton();
-    }
-    setupTableFilters(tableName, [0, 1, 6]);
+        },
+        {
+            title: "Rarity",
+            data: "rarity",
+            render: function (data, type) {
+                if (!data)
+                    return '';
+                if (type == 'sort')
+                    return data.id;
+                return data.value;
+            }
+        },
+        {
+            title: "Prerequisite?",
+            data: "prerequisite",
+            render: function (data, type) {
+                return boolColumn(data, type);
+            }
+        },
+        {
+            title: "Attunement?",
+            data: "attunement",
+            render: function (data, type) {
+                return boolColumn(data, type);
+            }
+        },
+        {
+            title: "Cost",
+            data: "cost"
+        }
+    ];
+    setupFilterableTable("#item-table", columns, [[1, 'asc'], [0, 'asc']], [0, 1, 6]);
 }
 $(document).on('click', "#item-table tbody tr", function () {
     if ($(this).closest('btn').length)
@@ -1024,15 +997,16 @@ $(document).on('click', '#item-table .edit-button', function () {
 });
 $(document).on('click', '#item-submit', function () {
     const item = fetchItemInputs();
+    console.log(item);
     if (!item.id) {
         $.ajax({
-            url: `api/enhanced_items`,
+            url: `${window.location.origin}/api/enhanced_items`,
             type: "post",
             contentType: "application/json",
             data: JSON.stringify(item),
             success: function () {
                 ToastSuccess("Enhanced Item Added");
-                $("#item-table").DataTable().ajax.reload();
+                refreshTableData("#item-table", `${window.location.origin}/api/enhanced_items?type=${item.type && [3, 7, 5, 4].includes(item.type.id) ? item.type.value : 'other'}`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1041,13 +1015,13 @@ $(document).on('click', '#item-submit', function () {
     }
     else {
         $.ajax({
-            url: `api/enhanced_items`,
+            url: `${window.location.origin}/api/enhanced_items`,
             type: "patch",
             contentType: "application/json",
             data: JSON.stringify(item),
             success: function () {
                 ToastSuccess("Enhanced Item Updated");
-                $("#item-table").DataTable().ajax.reload();
+                refreshTableData("#item-table", `${window.location.origin}/api/enhanced_items?type=${item.type && [3, 7, 5, 4].includes(item.type.id) ? item.type.value : 'other'}`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1060,12 +1034,12 @@ $(document).on('click', '#item-delete-confirmed', function () {
     if (!item.id)
         return;
     $.ajax({
-        url: `/api/enhanced_items/${item.id}`,
+        url: `${window.location.origin}/api/enhanced_items/${item.id}`,
         type: "delete",
         contentType: "application/json",
         success: function () {
             ToastError("Enhanced Item Deleted");
-            $("#item-table").DataTable().ajax.reload();
+            refreshTableData("#item-table", `${window.location.origin}/api/enhanced_items?type=${item.type && [3, 7, 5, 4].includes(item.type.id) ? item.type.value : 'other'}`);
         },
         error: function (e) {
             ToastError(`Failed: ${e.responseText}`);

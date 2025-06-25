@@ -565,7 +565,7 @@ export function fetchItemInputs() {
             value: rarity_option.html()
         },
         attunement: $("#item-attunement").prop('checked'),
-        text: getMDEValue("item-text"),
+        text: $("#item-text").val().toString(),
         prerequisite: $("#item-prerequisite").val().toString(),
         subtype_ft: $("#item-subtype-ft").val().toString(),
         subtype: subtype_option.val() ? {

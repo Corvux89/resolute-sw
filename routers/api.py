@@ -389,6 +389,50 @@ async def update_equipment(request: Request, equip: EquipmentSchema):
 async def delete_equipment(request: Request, obj_id: str):
     return await delete_object(request.app, Equipment, obj_id)
 
+@api_router.get('/enhanced_items', response_model=List[EnhancedItemSchema])
+async def get_enhanced_items(name: str = None, type: str = None, subtype: str = None):
+    try:
+        if name:
+            i = ResoluteCache.global_fetch(EnhancedItem, name=name)
+            items = [i] if i else []
+        else:
+            items = ResoluteCache.global_fetch(EnhancedItem)
+
+        if type:
+            if type.lower() == 'other':
+                items = list(filter(lambda i: i.type and i.type.id not in [3, 7, 5, 4], items))
+            else:
+                items = list(filter(lambda i: i.type and i.type.value.lower() == type.lower(), items))
+        
+        if subtype:
+            items = list(filter(lambda i: (i.subtype and i.subtype.value.lower() == subtype.lower()) or (i.subtype_ft and subtype.lower() in i.subtype_ft.lower()), items))
+    except Exception as e:
+        raise BadRequest(str(e))
+    
+    if not items:
+        raise NotFound("Enhanced Items not found")
+    
+    return items
+
+@admin_api_router.post('/enhanced_items', response_model=EnhancedItemSchema)
+async def new_enhanced_item(request: Request, item: EnhancedItemSchema):
+    i: EnhancedItem = await create_object(request.app, item, EnhancedItem)
+
+    if i.subtype and i.subtype.parent != i.type.id:
+        await delete_object(request.app, EnhancedItem, i.id)
+        raise BadRequest("Not a valid subcategory choice for this enhanced item type")
+    
+    return i
+
+@admin_api_router.patch('/enhanced_items', response_model=EnhancedItemSchema)
+async def update_enhanced_item(request: Request, item: EnhancedItemSchema):
+    i = await update_object(request.app, item, EnhancedItem)
+
+    return i
+
+@admin_api_router.delete('/enhanced_items/{obj_id}')
+async def delete_enhanced_item(request: Request, obj_id: str):
+    return await delete_object(request.app, EnhancedItem, obj_id)
 
 # --------------------------- #
 # Private Methods
