@@ -1599,47 +1599,20 @@ $(document).on('click', '#customization-delete-confirmed', function () {
 });
 // Improvements
 if ($("#improvement-table").length) {
-    const params = new URLSearchParams(window.location.search);
-    const tableName = "#improvement-table";
-    destroyTable(tableName);
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: 'api/improvements',
-            error: function (xhr) {
-                ToastError(`Failed ${xhr.responseText?.toString()}`);
-            },
-            dataSrc: '',
-            data: function (d) {
-                d["type"] = window.location.pathname.replace("/", "").replace("_", " ").slice(0, -1);
-            }
+    const columns = [
+        {
+            title: "Name",
+            data: "name"
         },
-        pageLength: 500,
-        order: [[0, 'asc']],
-        dom: 'rti',
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true,
-        columns: [
-            {
-                title: "Name",
-                data: "name"
-            },
-            {
-                title: "Prerequisite?",
-                data: "prerequisite",
-                render: function (data, type) {
-                    return boolColumn(data, type);
-                }
+        {
+            title: "Prerequisite?",
+            data: "prerequisite",
+            render: function (data, type) {
+                return boolColumn(data, type);
             }
-        ]
-    });
-    if (params.has('name')) {
-        $("#filter-search").val(params.get('name'));
-        table.column(0).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton();
-    }
-    setupTableFilters(tableName, [0]);
+        }
+    ];
+    setupFilterableTable("#improvement-table", columns, [[0, 'asc']], [0]);
 }
 $(document).on('click', "#improvement-table tbody tr", function () {
     if ($(this).closest('btn').length)
@@ -1716,13 +1689,13 @@ $(document).on('click', '#improvement-submit', function () {
     const improvement = fetchImprovementInputs();
     if (!improvement.id) {
         $.ajax({
-            url: `api/improvements`,
+            url: `${window.location.origin}/api/improvements`,
             type: "post",
             contentType: "application/json",
             data: JSON.stringify(improvement),
             success: function () {
                 ToastSuccess("Improvement Added");
-                $("#improvement-table").DataTable().ajax.reload();
+                refreshTableData("#improvement-table", `${window.location.origin}/api/improvements?type=${improvement.type.value}`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1731,13 +1704,13 @@ $(document).on('click', '#improvement-submit', function () {
     }
     else {
         $.ajax({
-            url: `api/improvements`,
+            url: `${window.location.origin}/api/improvements`,
             type: "patch",
             contentType: "application/json",
             data: JSON.stringify(improvement),
             success: function () {
                 ToastSuccess("Improvement Updated");
-                $("#improvement-table").DataTable().ajax.reload();
+                refreshTableData("#improvement-table", `${window.location.origin}/api/improvements?type=${improvement.type.value}`);
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1750,12 +1723,12 @@ $(document).on('click', '#improvement-delete-confirmed', function () {
     if (!improvement.id)
         return;
     $.ajax({
-        url: `/api/improvements/${improvement.id}`,
+        url: `${window.location.origin}/api/improvements/${improvement.id}`,
         type: "delete",
         contentType: "application/json",
         success: function () {
             ToastError("Improvement Deleted");
-            $("#improvement-table").DataTable().ajax.reload();
+            refreshTableData("#improvement-table", `${window.location.origin}/api/improvements?type=${improvement.type.value}`);
         },
         error: function (e) {
             ToastError(`Failed: ${e.responseText}`);

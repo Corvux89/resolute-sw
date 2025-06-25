@@ -75,6 +75,12 @@ class CustomizationType(GenericCategory):
 class CustomizationTypeSchema(GenericCategorySchema):
     pass
 
+class ImprovementType(GenericCategory):
+    __tablename__ = "c_improvement_type"
+
+class ImprovementTypeSchema(GenericCategorySchema):
+    pass
+
 # --------------------------- #
 # Objects
 # --------------------------- #
@@ -432,3 +438,31 @@ class CustomizationSchema(GenericSchema):
     html_text: Optional[str] = None
     type: CustomizationTypeSchema
     source: Optional[ContentSourceSchema] = None
+
+class Improvement(GenericObject):
+    __tablename__ = "improvements"
+    __exceptions__ = ["id", "type"]
+
+    id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
+    name = Column(String)
+    text = OptionalStringColumn()
+    prerequisite = OptionalStringColumn()
+    _type = Column("type", Integer, ForeignKey("c_improvement_type.id"))
+    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+
+    type = relationship("ImprovementType", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+
+    @property
+    def html_text(self):
+        return render_markdown(self.text)
+    
+class ImprovementSchema(GenericSchema):
+    id: Optional[uuid.UUID] = None
+    name: str
+    text: Optional[str] = None
+    html_text: Optional[str] = None
+    prerequisite: Optional[str] = None
+    type: ImprovementTypeSchema
+    source: Optional[ContentSourceSchema] = None
+

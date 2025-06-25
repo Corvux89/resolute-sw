@@ -276,7 +276,7 @@ async def get_customizations(name: str = None, type: str = None):
             customizations = ResoluteCache.global_fetch(Customization)
 
         if type:
-            customizations = list(filter(lambda c: c.type and type.lower() in c.type.value.lower(), customizations))
+            customizations = list(filter(lambda c: c.type and type.lower() == c.type.value.lower(), customizations))
     except Exception as e:
         raise BadRequest(str(e))
     
@@ -300,6 +300,41 @@ async def update_customization(request: Request, custom: CustomizationSchema):
 @admin_api_router.delete('/customizations/{obj_id}')
 async def delete_customization(request: Request, obj_id: str):
     return await delete_object(request.app, Customization, obj_id)
+
+@api_router.get('/improvements', response_model=List[ImprovementSchema])
+async def get_improvements(name: str = None, type: str = None):
+    try:
+        if name:
+            i = ResoluteCache.global_fetch(Improvement, name=name)
+            improvements = [i] if i else []
+        else:
+            improvements = ResoluteCache.global_fetch(Improvement)
+
+        if type:
+            improvements = list(filter(lambda i: i.type and type.lower() == i.type.value.lower(), improvements))
+    except Exception as e:
+        raise BadRequest(str(e))
+    
+    if not improvements:
+        raise NotFound("Improvements not found")
+    
+    return improvements
+
+@admin_api_router.post('/improvements', response_model=ImprovementSchema)
+async def new_improvement(request: Request, imp: ImprovementSchema):
+    improvement = await create_object(request.app, imp, Improvement)
+
+    return improvement
+
+@admin_api_router.patch('/improvements', response_model=ImprovementSchema)
+async def update_improvement(request: Request, imp: ImprovementSchema):
+    improvement = await update_object(request.app, imp, Improvement)
+
+    return improvement
+
+@admin_api_router.delete('/improvements/{obj_id}')
+async def delete_improvement(request: Request, obj_id: str):
+    return await delete_object(request.app, Improvement, obj_id)
 
 
 # --------------------------- #

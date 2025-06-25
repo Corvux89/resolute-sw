@@ -161,7 +161,6 @@ async def maneuvers(request: Request):
                                             options=options)
 
 async def get_customizations_by_type(request: Request, customization_type: str, title: str):
-    """Generic function to get customizations filtered by type"""
     options = {}
     types = build_select_option(request.app.cache.fetch(CustomizationType))
     options['customization-type'] = types
@@ -199,4 +198,30 @@ async def weapon_focus(request: Request):
 async def weapon_supremacies(request: Request):
     return await get_customizations_by_type(request, "Weapon Supremacy", "Weapon Supremacies")
 
+async def get_improvement_by_type(request: Request, improvement_type: str, title: str):
+    options = {}
+    types = build_select_option(request.app.cache.fetch(ImprovementType))
+    options['class-improvement-type'] = types
 
+    improvements = request.app.cache.fetch(ImprovementSchema)
+    improvement_list = list(filter(lambda c: c["type"] and c["type"]["value"] == improvement_type, improvements))
+
+    return await templates.TemplateResponse("/class_improvements.html",
+                                            {
+                                                "request": request,
+                                                "table": improvement_list,
+                                                "title": title
+                                            },
+                                            options=options)
+
+@frontend_router.get('/class_improvements')
+async def class_improvements(request: Request):
+    return await get_improvement_by_type(request, "Class Improvement", "Class Improvements")
+
+@frontend_router.get('/multiclass_improvements')
+async def multiclass_improvements(request: Request):
+    return await get_improvement_by_type(request, "Multiclass Improvement", "Multiclass Improvements")
+
+@frontend_router.get('/splashclass_improvements')
+async def splashclass_improvements(request: Request):
+    return await get_improvement_by_type(request, "Splashclass Improvement", "Splashclass Improvements")

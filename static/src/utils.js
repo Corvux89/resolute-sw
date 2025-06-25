@@ -721,7 +721,7 @@ export function fetchImprovementInputs() {
         id: $("#improvement-edit-form").data('id'),
         name: $("#improvement-name").val().toString(),
         type: $("#improvement-edit-form").data('type'),
-        text: getMDEValue("improvement-text"),
+        text: $("#improvement-text").val().toString(),
         source: {
             id: Number(source_option.val()),
             name: source_option.html()
