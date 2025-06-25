@@ -372,8 +372,12 @@ async def get_equipment(name: str = None, category: str = None, sub_category: st
 
 @admin_api_router.post('/equipment', response_model=EquipmentSchema)
 async def new_equipment(request: Request, equip: EquipmentSchema):
-    equipment = await create_object(request.app, equip, Equipment)
+    equipment: Equipment = await create_object(request.app, equip, Equipment)
 
+    if equipment.category and equipment.sub_category and equipment.sub_category.parent != equipment.category.id:
+        await delete_object(request.app, Equipment, equipment.id)
+        raise BadRequest("Not a valid subcategory choice for this equipment category")
+    
     return equipment
 
 @admin_api_router.patch('/equipment', response_model=EquipmentSchema)
