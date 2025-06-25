@@ -89,9 +89,9 @@ class DiscordBot(ABC):
     proxy_auth: Optional[str]
     client_session: Optional[aiohttp.ClientSession] = None
 
-    _channels: ObjectCache = {}
-    _roles: ObjectCache = {}
-    _members: ObjectCache = {}
+    _channels: ObjectCache = {"objects": None, "timestamp": 0}
+    _roles: ObjectCache = {"objects": None, "timestamp": 0}
+    _members: ObjectCache = {"objects": None, "timestamp": 0}
 
     def __init__(self, client_id, client_secret, redirect_uri, **kwargs):
         self.client_id = client_id
@@ -280,7 +280,7 @@ class DiscordBot(ABC):
         if not self._roles["objects"] or (
             current_time - self._roles.get('timestamp', 0) > CACHE_TIMEOUT
         ):
-            roles = [Role(*r) for r in await self.bot_request(f"/guilds/{DISCORD_GUILD_ID}/roles")]
+            roles = [Role(**r) for r in await self.bot_request(f"/guilds/{DISCORD_GUILD_ID}/roles")]
             self._roles["objects"] = roles
             self._roles["timestamp"] = current_time
 
