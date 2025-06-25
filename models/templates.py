@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, Optional
 
-from fastapi import Request
+from fastapi import Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from starlette.responses import Response
 
@@ -25,8 +25,8 @@ class ResoluteJinja(Jinja2Templates):
         super().__init__(**kwargs)
         # Set up Jinja2 environment globals
         self.env.globals.update({
-            'current_user': None,  # Will be overridden per request
-            'request': None        # Will be overridden per request
+            'current_user': None,  
+            'request': None        
         })
         
         # Add custom filter to convert None to null
@@ -48,29 +48,28 @@ class ResoluteJinja(Jinja2Templates):
         """
         Override TemplateResponse to automatically inject current_user and request
         """
-        # Get request from context
-        request: Request = context.get("request")
         
-        # Try to get current user from Discord authentication
+        request: Request = context.get("request")
         current_user = None
+
         if request and hasattr(request.app, 'discord'):
             try:
                 current_user = await request.app.discord.user(request)
-            except:
+            except (HTTPException, Exception):
                 current_user = None
         
-        # Update context with current_user and request
+        
         context.update({
             "current_user": current_user,
             "request": request
         })
         
-        # Update Jinja2 environment globals for this request
+        
         admin = False
         try:
             await is_admin(request)
             admin = True
-        except Forbidden:
+        except (Forbidden, Exception):
             admin = False
 
         # Options setup
