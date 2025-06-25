@@ -54,6 +54,7 @@ function boolColumn(data, type){
 }
 
 function propertyColumn(data, type, category){
+    if (!data) return ''
     if (type === "filter") {
             return data.split(", ").map((c) =>
                 c.replace(/[\d]/g, "").split("(")[0].trim()
@@ -71,8 +72,8 @@ function propertyColumn(data, type, category){
 
         const properties = data.split(", ").map((c) => c.trim());
 
-        const referenceTable = $("#reference-table");
-        const propertiesData = JSON.parse(referenceTable.data("properties") || "[]");
+        const referenceTable = $("filterable-table");
+        const propertiesData = referenceTable.data('properties') || []
 
         return properties
             .map((property) => {
@@ -717,7 +718,7 @@ $(document).on('click', '#archetype-delete-confirmed', function(){
 
 // Equipment
 if ($("#equipment-table").length){
-    const params = new URLSearchParams(window.location.search);    const tableName = "#equipment-table";
+    const tableName = "#equipment-table";
     const filterExclusions = [0];
 
     destroyTable(tableName);
@@ -836,35 +837,7 @@ if ($("#equipment-table").length){
         )
     }
 
-
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: 'api/equipment',
-            error: function(xhr){
-                ToastError(`Failed ${xhr.responseText?.toString()}`)
-            },
-            dataSrc: '',
-            data: function(d){
-                
-                d["type"] = window.location.pathname.includes("weapons") ? "weapon": window.location.pathname.includes("armor") ? "armor" : "adventuring"
-            }
-        },
-        pageLength: 500,
-        columns: columns,
-        order: [[1,'asc'], [0, 'asc']],
-        dom: 'rti',
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true,
-    })
-
-    if (params.has('name')){
-        $("#filter-search").val(params.get('name'))
-        table.column(0).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton()
-    }
-    setupTableFilters(tableName, filterExclusions)
+    setupFilterableTable("#equipment-table", columns, [[1, 'asc'], [0, 'asc']], filterExclusions)
 }
 
 $(document).on('click', "#equipment-table tbody tr", function(){
@@ -945,15 +918,19 @@ $(document).on('click', '#equipment-table .edit-button', function(){
 $(document).on('click', '#equipment-submit', function(){
     const equipment = fetchEquipmentInputs()
 
+    console.log(equipment)
+    console.log(equipment.category)
+    console.log([3,4].includes(equipment.category.id))
+
     if (!equipment.id){
         $.ajax({
-            url: `api/equipment`,
+            url: `${window.location.origin}/api/equipment`,
             type: "post",
             contentType: "application/json",
             data: JSON.stringify(equipment),
             success: function() {
                 ToastSuccess("Equipment Added")
-                $("#equipment-table").DataTable().ajax.reload()
+                refreshTableData("#equipment-table", `${window.location.origin}/api/equipment?category=${equipment.category && [3,4].includes(equipment.category.id) ? equipment.category.value : 'adventuring'}`)
             },
             error: function(e) {
                 ToastError(`Failed: ${e.responseText}`)
@@ -961,13 +938,13 @@ $(document).on('click', '#equipment-submit', function(){
         });
     } else {
         $.ajax({
-            url: `api/equipment`,
+            url: `${window.location.origin}/api/equipment`,
             type: "patch",
             contentType: "application/json",
             data: JSON.stringify(equipment),
             success: function() {
                 ToastSuccess("Equipment Updated")
-                $("#equipment-table").DataTable().ajax.reload()
+                refreshTableData("#equipment-table", `${window.location.origin}/api/equipment?category=${equipment.category && [3,4].includes(equipment.category.id) ? equipment.category.value : 'adventuring'}`)
             },
             error: function(e) {
                 ToastError(`Failed: ${e.responseText}`)
@@ -982,12 +959,12 @@ $(document).on('click', '#equipment-delete-confirmed', function(){
     if (!equipment.id) return
 
     $.ajax({
-        url: `/api/equipment/${equipment.id}`,
+        url: `${window.location.origin}/api/equipment/${equipment.id}`,
         type: "delete",
         contentType: "application/json",
         success: function(){
             ToastError("Equipment Deleted")
-            $("#equipment-table").DataTable().ajax.reload()
+            refreshTableData("#equipment-table", `${window.location.origin}/api/equipment?category=${equipment.category && [3,4].includes(equipment.category.id) ? equipment.category.value : 'adventuring'}`)
         },
         error: function(e){
             ToastError(`Failed: ${e.responseText}`)
@@ -1425,6 +1402,7 @@ $('#background-edit-form').on('show.bs.modal', function(){
     setupMDE("background-ideal")
     setupMDE("background-flaw")
     setupMDE("background-bond")
+    setupMDE("background-flavor-description")
 
     const background = fetchBackgroundInputs()
 

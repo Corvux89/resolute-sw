@@ -225,3 +225,37 @@ async def multiclass_improvements(request: Request):
 @frontend_router.get('/splashclass_improvements')
 async def splashclass_improvements(request: Request):
     return await get_improvement_by_type(request, "Splashclass Improvement", "Splashclass Improvements")
+
+async def get_equipment_type_category(request: Request, category: str, title: str):
+    options = {}
+    options['equipment-category']=build_select_option(request.app.cache.fetch(EquipmentCategory))
+    options['equipment-subcategory']=build_select_option(request.app.cache.fetch(EquipmentSubCategory))
+
+    equipment = request.app.cache.fetch(EquipmentSchema)
+
+    if category.lower() == 'adventuring':
+        equipment = list(filter(lambda e: e["category"] and e["category"]["id"] not in [3,4], equipment))
+    else:
+        equipment = list(filter(lambda e: e["category"] and e["category"]["value"] == category, equipment))
+
+    return await templates.TemplateResponse("/equipment.html",
+                                            {
+                                                "request": request,
+                                                "table": equipment,
+                                                "properties": request.app.cache.fetch(PropertySchema),
+                                                "title": title
+                                            },
+                                            options=options)
+
+@frontend_router.get('/weapons')
+async def weapons(request: Request):
+    return await get_equipment_type_category(request, "Weapon", "Weapons")
+
+@frontend_router.get('/armor')
+async def armor(request: Request):
+    return await get_equipment_type_category(request, "Armor", "Armor")
+
+@frontend_router.get('/adventuring')
+async def adventuring(request: Request):
+    return await get_equipment_type_category(request, "Adventuring", "Adventuring Gear")
+

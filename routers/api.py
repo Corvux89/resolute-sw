@@ -1,5 +1,6 @@
-from typing import List, Type, Union
+from typing import List, Literal, Type, Union
 import uuid
+import logging
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2AuthorizationCodeBearer
@@ -11,6 +12,8 @@ from models.cache import ResoluteCache
 from models.exceptions import BadRequest, NotFound
 from models.general import HTTPError
 from models.resolute import *
+
+logger = logging.getLogger(__name__)
 
 # Doing this mostly for Swagger
 oauth = OAuth2AuthorizationCodeBearer(AUTH_URL,
@@ -43,9 +46,14 @@ admin_api_router = APIRouter(tags=["Admin API"],
                                 },
                             dependencies=[Depends(is_admin)]
                             )
+# Administrative
+@admin_api_router.post('/refresh_cache')
+async def refresh_cache(request: Request):
+    request.app.cache.initialize(request.app, True)
+    logger.info("Cache reloaded via API")
+    return "Complete!"
 
-
-
+# Server Content
 @api_router.get('/content', response_model=WebContentFullSchema)
 async def get_web_content(key: str):
     content = ResoluteCache.global_fetch(WebContent, key)
@@ -335,6 +343,47 @@ async def update_improvement(request: Request, imp: ImprovementSchema):
 @admin_api_router.delete('/improvements/{obj_id}')
 async def delete_improvement(request: Request, obj_id: str):
     return await delete_object(request.app, Improvement, obj_id)
+
+@api_router.get('/equipment', response_model=List[EquipmentSchema])
+async def get_equipment(name: str = None, category: str = None, sub_category: str = None, ):
+    try:
+        if name:
+            e = ResoluteCache.global_fetch(Equipment, name=name)
+            equipment = [e] if e else []
+        else:
+            equipment = ResoluteCache.global_fetch(Equipment)
+
+        if category:
+            if category.lower() == 'adventuring':
+                equipment = list(filter(lambda e: e.category and e.category.id not in [3, 4], equipment))
+            else:
+                equipment = list(filter(lambda e: e.category and category.lower() == e.category.value.lower(), equipment))
+
+        if sub_category:
+            equipment = list(filter(lambda e: e.sub_category and sub_category.lower() == e.sub_category.value.lower(), equipment))
+
+    except Exception as e:
+        raise BadRequest(str(e))
+    
+    if not equipment:
+        raise NotFound("Equipment not found")
+    
+    return equipment
+
+@admin_api_router.post('/equipment', response_model=EquipmentSchema)
+async def new_equipment(request: Request, equip: EquipmentSchema):
+    equipment = await create_object(request.app, equip, Equipment)
+
+    return equipment
+
+@admin_api_router.patch('/equipment', response_model=EquipmentSchema)
+async def update_equipment(request: Request, equip: EquipmentSchema):
+    equipment = await update_object(request.app, equip, Equipment)
+    return equipment
+
+@admin_api_router.delete('/equipment/{obj_id}')
+async def delete_equipment(request: Request, obj_id: str):
+    return await delete_object(request.app, Equipment, obj_id)
 
 
 # --------------------------- #

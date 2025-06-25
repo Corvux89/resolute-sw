@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, ForeignKey, Integer, String, UUID
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import BIGINT, ARRAY
+from sqlalchemy.dialects.postgresql import BIGINT, ARRAY, BOOLEAN
 
 from models.general import FeatureHyperlinkExtension, IntAttributeMixin, render_markdown
 
@@ -79,6 +79,25 @@ class ImprovementType(GenericCategory):
     __tablename__ = "c_improvement_type"
 
 class ImprovementTypeSchema(GenericCategorySchema):
+    pass
+
+class EquipmentCategory(GenericCategory):
+    __tablename__ = "c_equipment_category"
+
+class EquipmentCategorySchema(GenericCategorySchema):
+    pass
+
+class EquipmentSubCategory(GenericCategory):
+    __tablename__ = "c_equipment_subcategory"
+    parent = Column(Integer)
+
+class EquipmentSubCategorySchema(GenericCategorySchema):
+    parent: int
+
+class PropertyType(GenericCategory):
+    __tablename__ = "c_property_type"
+
+class PropertyTypeSchema(GenericCategorySchema):
     pass
 
 # --------------------------- #
@@ -465,4 +484,65 @@ class ImprovementSchema(GenericSchema):
     prerequisite: Optional[str] = None
     type: ImprovementTypeSchema
     source: Optional[ContentSourceSchema] = None
+
+class Equipment(GenericObject):
+    __tablename__ = "equipment"
+    __exceptions__ = ["id", "category"]
+
+    id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
+    name = Column(String)
+    description = OptionalStringColumn()
+    cost = OptionalIntegerColumn()
+    weight = OptionalIntegerColumn()
+    dmg_number_of_die = OptionalIntegerColumn()
+    dmg_die_type = OptionalIntegerColumn()
+    dmg_type = OptionalStringColumn()
+    properties = OptionalStringColumn()
+    ac = OptionalStringColumn()
+    stealth_dis = Column(BOOLEAN, nullable=True)
+    _category = Column("category", ForeignKey("c_equipment_category.id"))
+    _sub_category = Column("sub_category", Integer, ForeignKey("c_equipment_subcategory.id"), nullable=True)
+    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+
+    category = relationship("EquipmentCategory", lazy="joined")
+    sub_category = relationship("EquipmentSubCategory", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+
+class EquipmentSchema(GenericSchema):
+    id: Optional[uuid.UUID] = None
+    name: str
+    description: Optional[str] = None
+    cost: Optional[int] = None
+    weight: Optional[int] = None
+    dmg_number_of_die: Optional[int] = None
+    dmg_die_type: Optional[int] = None
+    dmg_die: Optional[str] = None
+    dmg_type: Optional[str] = None
+    properties: Optional[str] = None
+    ac: Optional[str] = None
+    stealth_dis: Optional[bool] = None
+    category: EquipmentCategorySchema
+    sub_category: Optional[EquipmentSubCategorySchema] = None
+    source: Optional[ContentSourceSchema] = None
+
+class Property(GenericObject):
+    __tablename__ = "properties"
+    __exceptions__ = ["id"]
+
+    id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
+    name = Column(String)    
+    _type = Column("type", Integer, ForeignKey("c_property_type.id"))
+    _text = Column("text", String, nullable=True)
+
+    type = relationship("PropertyType", lazy="joined")
+
+    @property
+    def text(self):
+        return render_markdown(self._text)
+    
+class PropertySchema(GenericSchema):
+    id: Optional[uuid.UUID] = None
+    name: str
+    type: PropertyTypeSchema
+    text: Optional[str] = None
 

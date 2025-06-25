@@ -39,29 +39,33 @@ def normalize_id(id):
     return id
 
 class SchemaMap(TypedDict):
-    db_object: Type
     schema: Optional[Type] = None
 
 OBJECT_MAP: Dict[Type, SchemaMap] = {
-    ResoluteGuild: {'db_object': ResoluteGuild},
-    WebContent: {'db_object': WebContent, 'schema': WebContentFullSchema},
-    Species: {'db_object': Species, 'schema': SpeciesSchema},
-    PrimaryClass: {'db_object': PrimaryClass, 'schema': PrimaryClassSchema},
-    Archetype: {'db_object': Archetype, 'schema': ArchetypeSchema},
-    Feature: {'db_object': Feature, 'schema': FeatureSchema},
-    Background: {'db_object': Background, 'schema': BackgroundSchema},
-    Maneuver: {'db_object': Maneuver, 'schema': ManeuverSchema},
-    Customization: {'db_object': Customization, 'schema': CustomizationSchema},
-    Improvement: {'db_object': Improvement, 'schema': ImprovementSchema},
+    ResoluteGuild: {},
+    WebContent: {'schema': WebContentFullSchema},
+    Species: {'schema': SpeciesSchema},
+    PrimaryClass: {'schema': PrimaryClassSchema},
+    Archetype: {'schema': ArchetypeSchema},
+    Feature: {'schema': FeatureSchema},
+    Background: {'schema': BackgroundSchema},
+    Maneuver: {'schema': ManeuverSchema},
+    Customization: {'schema': CustomizationSchema},
+    Improvement: {'schema': ImprovementSchema},
+    Property: {'schema': PropertySchema},
+    Equipment: {'schema': EquipmentSchema},
 }
 
 CATEGORY_MAP: Dict[Type, SchemaMap] = {
-    ContentSource: {'db_object': ContentSource, 'schema': ContentSourceSchema},
-    PowerAlignment: {'db_object': PowerAlignment, 'schema': PowerAlignmentSchema},
-    PowerType: {'db_object': PowerType, 'schema': PowerTypeSchema},
-    ManeuverType: {'db_object': ManeuverType, 'schema': ManeuverTypeSchema},
-    CustomizationType: {'db_object': CustomizationType, 'schema': CustomizationTypeSchema},
-    ImprovementType: {'db_object': ImprovementType, 'schema': ImprovementTypeSchema},
+    ContentSource: {'schema': ContentSourceSchema},
+    PowerAlignment: {'schema': PowerAlignmentSchema},
+    PowerType: {'schema': PowerTypeSchema},
+    ManeuverType: {'schema': ManeuverTypeSchema},
+    CustomizationType: {'schema': CustomizationTypeSchema},
+    ImprovementType: {'schema': ImprovementTypeSchema},
+    EquipmentCategory: {'schema': EquipmentCategorySchema},
+    EquipmentSubCategory: {'schema': EquipmentSubCategorySchema},
+    PropertyType: {'schema': PropertyTypeSchema},
 }
 
 OBJECT_MAP.update(CATEGORY_MAP)
