@@ -69,6 +69,12 @@ class ManeuverType(GenericCategory):
 class ManeuverTypeSchema(GenericCategorySchema):
     pass
 
+class CustomizationType(GenericCategory):
+    __tablename__ = "c_customization_type"
+
+class CustomizationTypeSchema(GenericCategorySchema):
+    pass
+
 # --------------------------- #
 # Objects
 # --------------------------- #
@@ -400,4 +406,29 @@ class ManeuverSchema(GenericSchema):
     prerequisite: Optional[str] = None
     description: Optional[str] = None
     type: Optional[ManeuverTypeSchema] = None
+    source: Optional[ContentSourceSchema] = None
+
+class Customization(GenericObject):
+    __tablename__ = "customizations"
+    __exceptions__ = ["id", "type"]
+
+    id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
+    name = Column(String)
+    text = OptionalStringColumn()
+    _type = Column("type", Integer, ForeignKey("c_customization_type.id"))
+    _source = Column("source", Integer, ForeignKey("c_content_source.id"), nullable=True)
+
+    type = relationship("CustomizationType", lazy="joined")
+    source = relationship("ContentSource", lazy="joined")
+
+    @property
+    def html_text(self):
+        return render_markdown(self.text)
+    
+class CustomizationSchema(GenericSchema):
+    id: Optional[uuid.UUID] = None
+    name: str
+    text: Optional[str] = None
+    html_text: Optional[str] = None
+    type: CustomizationTypeSchema
     source: Optional[ContentSourceSchema] = None

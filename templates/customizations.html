@@ -7,7 +7,7 @@
 
 <h1>{{ title }}</h1>
 
-<filterable-table table-id="customization-table" button-text="New Item" key="cat"></filterable-table>
+<filterable-table table-id="customization-table" button-text="New Item" key="cat" data-source='{{table|tojson|e}}'></filterable-table>
 
 {% if is_admin %}
 <custom-modal title="New Customization" custom-id="cat-edit-form">

@@ -38,7 +38,7 @@ async def is_beta_tester(request: Request) -> None:
                 pass  
             
             # Check if user has beta testing role
-            if (beta_role := discord.fetch_roles(name="Beta Testing")) and beta_role.id in member.roles:
+            if (beta_role := await discord.fetch_roles(name="Beta Testing")) and beta_role.id in member.roles:
                 return 
             
             raise Forbidden()

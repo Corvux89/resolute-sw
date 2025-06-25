@@ -778,8 +778,8 @@ export function fetchCustomizationInputs(): Customization {
     const customization: Customization = {
         id: $("#customization-edit-form").data('id'),
         name: $("#customization-name").val().toString(),
-        type: $("customization-edit-form").data('type'),
-        text: getMDEValue("customization-text"),
+        type: $("#customization-edit-form").data('type'),
+        text: $("#customization-text").val().toString(),
         source: {
             id: Number(source_option.val()),
             name: source_option.html()

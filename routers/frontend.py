@@ -1,5 +1,3 @@
-
-
 from urllib.parse import unquote
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
@@ -161,3 +159,44 @@ async def maneuvers(request: Request):
                                                 "table": maneuver_list
                                             },
                                             options=options)
+
+async def get_customizations_by_type(request: Request, customization_type: str, title: str):
+    """Generic function to get customizations filtered by type"""
+    options = {}
+    types = build_select_option(request.app.cache.fetch(CustomizationType))
+    options['customization-type'] = types
+
+    customizations = request.app.cache.fetch(CustomizationSchema)
+    customization_list = list(filter(lambda c: c["type"] and c["type"]["value"] == customization_type, customizations))
+
+    return await templates.TemplateResponse("/customizations.html",
+                                            {
+                                                "request": request,
+                                                "table": customization_list,
+                                                "title": title
+                                            },
+                                            options=options)
+
+
+
+@frontend_router.get('/fighting_styles')
+async def fighting_styles(request: Request):
+    return await get_customizations_by_type(request, "Fighting Style", "Fighting Styles")
+
+@frontend_router.get('/fighting_masteries')
+async def fighting_masteries(request: Request):
+    return await get_customizations_by_type(request, "Fighting Mastery", "Fighting Masteries")
+
+@frontend_router.get('/lightsaber_forms')
+async def lightsaber_forms(request: Request):
+    return await get_customizations_by_type(request, "Lightsaber Form", "Lightsaber Forms")
+
+@frontend_router.get('/weapon_focus')
+async def weapon_focus(request: Request):
+    return await get_customizations_by_type(request, "Weapon Focus", "Weapon Focuses")
+
+@frontend_router.get('/weapon_supremacies')
+async def weapon_supremacies(request: Request):
+    return await get_customizations_by_type(request, "Weapon Supremacy", "Weapon Supremacies")
+
+

@@ -1637,42 +1637,14 @@ $(document).on('click', '#maneuver-delete-confirmed', function(){
 
 // Customizations
 if ($("#customization-table").length){
-    const params = new URLSearchParams(window.location.search);    const tableName = "#customization-table";
+    const columns = [
+        {
+            title: "Name",
+            data: "name"
+        }
+    ]
 
-    destroyTable(tableName);
-
-    const table = $(tableName).DataTable({
-        ajax: {
-            url: 'api/customizations',
-            error: function(xhr){
-                ToastError(`Failed ${xhr.responseText?.toString()}`)
-            },
-            dataSrc: '',
-            data: function(d){
-                d["type"] = window.location.pathname.replace("/", "").replace("_", " ").slice(0, -5)
-            }
-        },
-        pageLength: 500,
-        order: [[0, 'asc']],
-        dom: 'rti',
-        scrollCollapse: true,
-        scrollY: "75vh",
-        //@ts-expect-error idk why this errors but it does
-        responsive: true,
-        columns: [
-            {
-                title: "Name",
-                data: "name"
-            }
-        ]
-    })
-
-    if (params.has('name')){
-        $("#filter-search").val(params.get('name'))
-        table.column(0).search(params.get('name') || '').draw();
-        updateClearAllFiltersButton()
-    }
-    setupTableFilters(tableName, [0])
+    setupFilterableTable("#customization-table", columns, [[0, 'asc']], [0])
 }
 
 $(document).on('click', "#customization-table tbody tr", function(){
@@ -1736,6 +1708,7 @@ $(document).on('click', '#customization-next', function(){
 
     customization.type = {"id": Number(customization_type_option.val()), "value": customization_type_option.html()}
 
+    console.log(customization)
 
     defaultCustomizationModal(customization)
 })
@@ -1752,16 +1725,17 @@ $(document).on('click', '#customization-table .edit-button', function(){
 
 $(document).on('click', '#customization-submit', function(){
     const customization = fetchCustomizationInputs()
+    console.log(customization)
 
     if (!customization.id){
         $.ajax({
-            url: `api/customizations`,
+            url: `${window.location.origin}/api/customizations`,
             type: "post",
             contentType: "application/json",
             data: JSON.stringify(customization),
             success: function() {
                 ToastSuccess("customization Added")
-                $("#customization-table").DataTable().ajax.reload()
+                refreshTableData("#customization-table", `${window.location.origin}/api/customizations?type=${customization.type.value}`)
             },
             error: function(e) {
                 ToastError(`Failed: ${e.responseText}`)
@@ -1769,13 +1743,13 @@ $(document).on('click', '#customization-submit', function(){
         });
     } else {
         $.ajax({
-            url: `api/customizations`,
+            url: `${window.location.origin}/api/customizations`,
             type: "patch",
             contentType: "application/json",
             data: JSON.stringify(customization),
             success: function() {
                 ToastSuccess("Customization Updated")
-                $("#customization-table").DataTable().ajax.reload()
+                refreshTableData("#customization-table", `${window.location.origin}/api/customizations?type=${customization.type.value}`)
             },
             error: function(e) {
                 ToastError(`Failed: ${e.responseText}`)
@@ -1790,12 +1764,12 @@ $(document).on('click', '#customization-delete-confirmed', function(){
     if (!customization.id) return
 
     $.ajax({
-        url: `/api/customizations/${customization.id}`,
+        url: `${window.location.origin}/api/customizations/${customization.id}`,
         type: "delete",
         contentType: "application/json",
         success: function(){
             ToastError("Customization Deleted")
-            $("#customization-table").DataTable().ajax.reload()
+            refreshTableData("#customization-table", `${window.location.origin}/api/customizations?type=${customization.type.value}`)
         },
         error: function(e){
             ToastError(`Failed: ${e.responseText}`)

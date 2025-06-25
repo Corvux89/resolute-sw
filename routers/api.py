@@ -265,7 +265,41 @@ async def udpate_maneuver(request: Request, man: ManeuverSchema):
 @admin_api_router.delete('/maneuvers/{obj_id}')
 async def delete_maneuver(request: Request, obj_id: str):
     await delete_object(request.app, Maneuver, obj_id)
+
+@api_router.get('/customizations', response_model=List[CustomizationSchema])
+async def get_customizations(name: str = None, type: str = None):
+    try:
+        if name:
+            c = ResoluteCache.global_fetch(Customization, name=name)
+            customizations = [c] if c else []
+        else:
+            customizations = ResoluteCache.global_fetch(Customization)
+
+        if type:
+            customizations = list(filter(lambda c: c.type and type.lower() in c.type.value.lower(), customizations))
+    except Exception as e:
+        raise BadRequest(str(e))
     
+    if not customizations:
+        raise NotFound("Customizations not found")
+    
+    return customizations
+
+@admin_api_router.post('/customizations', response_model=CustomizationSchema)
+async def new_customization(request: Request, custom: CustomizationSchema):
+    customization = await create_object(request.app, custom, Customization)
+
+    return customization
+
+@admin_api_router.patch('/customizations', response_model=CustomizationSchema)
+async def update_customization(request: Request, custom: CustomizationSchema):
+    customization = await update_object(request.app, custom, Customization)
+
+    return customization
+
+@admin_api_router.delete('/customizations/{obj_id}')
+async def delete_customization(request: Request, obj_id: str):
+    return await delete_object(request.app, Customization, obj_id)
 
 
 # --------------------------- #

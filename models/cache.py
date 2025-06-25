@@ -50,7 +50,8 @@ OBJECT_MAP: Dict[Type, SchemaMap] = {
     Archetype: {'db_object': Archetype, 'schema': ArchetypeSchema},
     Feature: {'db_object': Feature, 'schema': FeatureSchema},
     Background: {'db_object': Background, 'schema': BackgroundSchema},
-    Maneuver: {'db_object': Maneuver, 'schema': ManeuverSchema}
+    Maneuver: {'db_object': Maneuver, 'schema': ManeuverSchema},
+    Customization: {'db_object': Customization, 'schema': CustomizationSchema}
 }
 
 CATEGORY_MAP: Dict[Type, SchemaMap] = {
@@ -58,6 +59,7 @@ CATEGORY_MAP: Dict[Type, SchemaMap] = {
     PowerAlignment: {'db_object': PowerAlignment, 'schema': PowerAlignmentSchema},
     PowerType: {'db_object': PowerType, 'schema': PowerTypeSchema},
     ManeuverType: {'db_object': ManeuverType, 'schema': ManeuverTypeSchema},
+    CustomizationType: {'db_object': CustomizationType, 'schema': CustomizationTypeSchema},
 }
 
 OBJECT_MAP.update(CATEGORY_MAP)
