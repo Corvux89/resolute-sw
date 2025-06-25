@@ -368,3 +368,7 @@ div.dt-scroll-body thead tr th {
 .background-detail-page h3, .background-detail-page p{
     margin-left: 0;
 }
+
+.container-fluidish{
+    width: 98%;
+}

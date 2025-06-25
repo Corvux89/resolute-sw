@@ -358,7 +358,7 @@ class FilterableTable extends HTMLElement {
     }
     render() {
         this.innerHTML = `
-            <div class="container m-2 position-relative">
+            <div class="container-fluidish m-2 position-relative justify-content-center">
                 ${document.body.dataset.admin == "True" ? `
                     <button type="button" id="new-${this.key}-btn" data-bs-toggle="modal" data-bs-target="#${this.key}-edit-form" class="btn btn-link position-absolute top-0 end-0 m-2 p-0" title="${this.buttonText}">
                         <i class="fa fa-plus"></i>
