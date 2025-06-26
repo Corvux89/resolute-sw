@@ -56,8 +56,8 @@ export function updateClearAllFiltersButton(): void {
 }
 
 export function updateSubTypeFields(): void{
-    const numberOfOptions = $("#equipment-subcategory").find("option").length;
-    if (numberOfOptions == 1){
+    const numberOfOptions = $("#item-subtype").find("option").length;
+    if (numberOfOptions <= 1){
         $("#item-subtype-col").addClass("d-none")
         $("#item-subtype-ft-col").removeClass("d-none")
     } else {
@@ -74,10 +74,10 @@ export function updateSubTypeFields(): void{
 
 export function updateSubCategoryFields(): void{
     const numberOfOptions = $("#equipment-subcategory").find("option").length;
-    if (numberOfOptions == 1){
+    if (numberOfOptions <= 1){
         $("#equipment-subcategory-col").addClass("d-none")
     } else {
-        $("#item-subcategory-col").removeClass("d-none")
+        $("#equipment-subcategory-col").removeClass("d-none")
     }
 }
 

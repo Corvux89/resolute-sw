@@ -787,9 +787,6 @@ $(document).on('click', '#equipment-table .edit-button', function () {
 });
 $(document).on('click', '#equipment-submit', function () {
     const equipment = fetchEquipmentInputs();
-    console.log(equipment);
-    console.log(equipment.category);
-    console.log([3, 4].includes(equipment.category.id));
     if (!equipment.id) {
         $.ajax({
             url: `${window.location.origin}/api/equipment`,
@@ -895,7 +892,11 @@ if ($("#item-table").length) {
             data: "cost"
         }
     ];
-    setupFilterableTable("#item-table", columns, [[1, 'asc'], [0, 'asc']], [0, 1, 6]);
+    let filterExclusions = [0, 1, 6];
+    if (window.location.pathname.includes('enhanced_items')) {
+        filterExclusions = [0, 6];
+    }
+    setupFilterableTable("#item-table", columns, [[1, 'asc'], [0, 'asc']], filterExclusions);
 }
 $(document).on('click', "#item-table tbody tr", function () {
     if ($(this).closest('btn').length)
@@ -973,7 +974,6 @@ $(document).on('click', '#item-table .edit-button', function () {
 });
 $(document).on('click', '#item-submit', function () {
     const item = fetchItemInputs();
-    console.log(item);
     if (!item.id) {
         $.ajax({
             url: `${window.location.origin}/api/enhanced_items`,
@@ -1465,7 +1465,6 @@ $(document).on('click', '#customization-next', function () {
         customization = {};
     }
     customization.type = { "id": Number(customization_type_option.val()), "value": customization_type_option.html() };
-    console.log(customization);
     defaultCustomizationModal(customization);
 });
 $(document).on('click', '#customization-table .edit-button', function () {
@@ -1478,7 +1477,6 @@ $(document).on('click', '#customization-table .edit-button', function () {
 });
 $(document).on('click', '#customization-submit', function () {
     const customization = fetchCustomizationInputs();
-    console.log(customization);
     if (!customization.id) {
         $.ajax({
             url: `${window.location.origin}/api/customizations`,

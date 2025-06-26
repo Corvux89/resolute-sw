@@ -1,10 +1,9 @@
-from urllib.parse import unquote
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 
 from helpers.auth_helpers import is_beta_tester
 from helpers.search_helpers import perform_search
-from models.exceptions import BadRequest, NotFound
+from models.exceptions import NotFound
 from models.resolute import *
 from models.templates import ResoluteJinja, build_select_option
 
@@ -63,10 +62,10 @@ async def errata(request: Request):
 
 # Characters
 @frontend_router.get("/species/")
-@frontend_router.get("/species/{species_name:path}")
-async def species(request: Request, species_name: str = None):
-    if species_name:
-        species = request.app.cache.fetch(Species, value=unquote(species_name))
+@frontend_router.get("/species/{name:path}")
+async def species(request: Request, name: str = None):
+    if name:
+        species = request.app.cache.fetch(Species, value=name)
 
         if not Species:
             raise NotFound("Species not found")
@@ -86,10 +85,10 @@ async def species(request: Request, species_name: str = None):
 
 
 @frontend_router.get("/classes")
-@frontend_router.get("/classes/{class_name:path}")
-async def classes(request: Request, class_name: str = None):
-    if class_name:
-        prim_class = request.app.cache.fetch(PrimaryClass, value=unquote(class_name))
+@frontend_router.get("/classes/{name:path}")
+async def classes(request: Request, name: str = None):
+    if name:
+        prim_class = request.app.cache.fetch(PrimaryClass, value=name)
 
         if not prim_class:
             raise NotFound("Class not found")
@@ -108,14 +107,14 @@ async def classes(request: Request, class_name: str = None):
 
 
 @frontend_router.get("/archetypes")
-@frontend_router.get("/archetypes/{arch_name:path}")
-async def archetypes(request: Request, arch_name: str = None):
+@frontend_router.get("/archetypes/{name:path}")
+async def archetypes(request: Request, name: str = None):
     options = {}
     class_options = build_select_option(request.app.cache.fetch(PrimaryClass))
     options["classes"] = class_options
 
-    if arch_name:
-        archetype = request.app.cache.fetch(Archetype, value=arch_name)
+    if name:
+        archetype = request.app.cache.fetch(Archetype, value=name)
 
         if not archetype:
             raise NotFound("Archetype not found")
@@ -138,10 +137,10 @@ async def archetypes(request: Request, arch_name: str = None):
 
 
 @frontend_router.get("/backgrounds")
-@frontend_router.get("/backgrounds/{back_name:path}")
-async def backgrounds(request: Request, back_name: str = None):
-    if back_name:
-        background = request.app.cache.fetch(Background, name=back_name)
+@frontend_router.get("/backgrounds/{name:path}")
+async def backgrounds(request: Request, name: str = None):
+    if name:
+        background = request.app.cache.fetch(Background, name=name)
 
         if not background:
             raise NotFound("Background not found")
@@ -284,9 +283,7 @@ async def get_equipment_type_category(request: Request, category: str, title: st
     options["equipment-category"] = build_select_option(
         request.app.cache.fetch(EquipmentCategory)
     )
-    options["equipment-subcategory"] = build_select_option(
-        request.app.cache.fetch(EquipmentSubCategory)
-    )
+    options["equipment-subcategory"] = request.app.cache.fetch(EquipmentSubCategorySchema)
 
     equipment = request.app.cache.fetch(EquipmentSchema)
 

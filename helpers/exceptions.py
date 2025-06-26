@@ -36,7 +36,7 @@ async def general_exception_handler(request: Request, exc: Exception):
         "error.html",
         {
             "request": request,
-            "error": "An unexpected error occurred",
+            "error": str(exc),
             "status_code": 500
         },
         status_code=500
