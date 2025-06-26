@@ -4,6 +4,7 @@ from typing import Type, TypedDict, Dict, Optional
 from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import scoped_session, Session
+from sqlalchemy.orm.exc import ObjectDeletedError
 
 from constants import DISCORD_GUILD_ID
 from models import *
@@ -127,32 +128,41 @@ class ResoluteCache(ABC):
 
     def fetch(self, cls: Type, id=None, **kwargs):
         obj = None
-        if id:
-            norm_id = normalize_id(id)
-            obj = next((i for i in self.cache.get(cls) if i.id == norm_id), None)
+        try:
+            if id:
+                norm_id = normalize_id(id)
+                obj = next((i for i in self.cache.get(cls) if i.id == norm_id), None)
 
-            if not obj and (db := kwargs.get("db", None)):
-                obj = db.query(cls).filter(cls.id == norm_id).first()
+                if not obj and (db := kwargs.get("db", None)):
+                    obj = db.query(cls).filter(cls.id == norm_id).first()
 
-            return obj
+                return obj
 
-        if name := kwargs.get("name"):
-            return next(
-                (i for i in self.cache.get(cls) if name.lower() == i.name.lower()), None
-            )
+            if name := kwargs.get("name"):
+                return next(
+                    (i for i in self.cache.get(cls) if name.lower() == i.name.lower()), None
+                )
 
-        if value := kwargs.get("value"):
-            return next(
-                (i for i in self.cache.get(cls) if value.lower() == i.value.lower()),
-                None,
-            )
+            if value := kwargs.get("value"):
+                return next(
+                    (i for i in self.cache.get(cls) if value.lower() == i.value.lower()),
+                    None,
+                )
 
-        if key := kwargs.get("key"):
-            return next(
-                (i for i in self.cache.get(cls) if key.lower() == i.key.lower()), None
-            )
+            if key := kwargs.get("key"):
+                return next(
+                    (i for i in self.cache.get(cls) if key.lower() == i.key.lower()), None
+                )
 
-        return self.cache.get(cls)
+            return self.cache.get(cls)
+        except ObjectDeletedError:
+            if db := kwargs.get("db") and not kwargs.get('final', False):
+                self._refresh_cache(db, cls)
+                kwargs.setdefault("final", True)
+                return self.fetch(cls, id, **kwargs)
+            else:
+                return None
+
 
     def get_model(self, cls, schema: BaseModel):
         objects = self.fetch(cls)

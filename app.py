@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from contextlib import asynccontextmanager
@@ -5,7 +6,7 @@ from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import sessionmaker
 from constants import (
@@ -45,6 +46,19 @@ async def lifespan(app: FastAPI):
 
     app.discord.initialize()
     yield
+
+async def refresh_cache_periodically(app: FastAPI):
+    """Background task to refresh cache every 5 minutes"""
+    while True:
+        try:
+            await asyncio.sleep(300)  # 5 minutes in seconds
+            await app.cache.initialize(app, True)  # Assuming your cache has a refresh method
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            # Log the error but continue the loop
+            print(f"Cache refresh error: {e}")
+            continue
 
 
 def csp_nonce(request: Request):
