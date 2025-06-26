@@ -177,3 +177,7 @@ class IntAttributeMixin:
             setattr(self, attr_name, value)
         except (ValueError, TypeError):
             setattr(self, attr_name, None)
+
+class SearchResult(BaseModel):
+    url: str
+    title: str

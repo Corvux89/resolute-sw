@@ -3,6 +3,7 @@ from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 
 from helpers.auth_helpers import is_beta_tester
+from helpers.search_helpers import perform_search
 from models.exceptions import NotFound
 from models.resolute import *
 from models.templates import ResoluteJinja, build_select_option
@@ -15,6 +16,18 @@ frontend_router = APIRouter(
 )
 
 templates = ResoluteJinja(directory="templates")
+
+@frontend_router.get('/search')
+async def search(request: Request, q: str):
+    results = await perform_search(request, q)
+
+    return await templates.TemplateResponse("search_results.html",
+                                      {
+                                          "request": request,
+                                          "query": q,
+                                          "results": results
+                                      })
+
 
 
 # Server Content

@@ -649,7 +649,7 @@ async def update_object(
 
         model_columns = {column.name for column in model_class.__table__.columns}
         raw_data = update_object.model_dump()
-
+        
         for k, v in raw_data.items():
             if k in model_columns and k not in model_class.__exceptions__:
                 if isinstance(v, dict) and "id" in v:
@@ -657,7 +657,7 @@ async def update_object(
                 else:
                     setattr(object, k, v)
         db.commit()
-        app.cache.update(db, model_class)
+        # app.cache.update(db, model_class)
 
         return object
     except Exception as e:

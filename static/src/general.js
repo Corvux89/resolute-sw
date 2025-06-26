@@ -301,7 +301,7 @@ $(document).on('click', '#power-submit', function () {
             data: JSON.stringify(power),
             success: function () {
                 ToastSuccess("Power Updated");
-                refreshTableData("#power-table", `${window.location.origin}/api/powers?type=${power.type.value}`);
+                // refreshTableData("#power-table", `${window.location.origin}/api/powers?type=${power.type.value}`)
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -813,7 +813,7 @@ $(document).on('click', '#equipment-submit', function () {
             data: JSON.stringify(equipment),
             success: function () {
                 ToastSuccess("Equipment Updated");
-                refreshTableData("#equipment-table", `${window.location.origin}/api/equipment?category=${equipment.category && [3, 4].includes(equipment.category.id) ? equipment.category.value : 'adventuring'}`);
+                // refreshTableData("#equipment-table", `${window.location.origin}/api/equipment?category=${equipment.category && [3,4].includes(equipment.category.id) ? equipment.category.value : 'adventuring'}`)
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -997,7 +997,7 @@ $(document).on('click', '#item-submit', function () {
             data: JSON.stringify(item),
             success: function () {
                 ToastSuccess("Enhanced Item Updated");
-                refreshTableData("#item-table", `${window.location.origin}/api/enhanced_items?type=${item.type && [3, 7, 5, 4].includes(item.type.id) ? item.type.value : 'other'}`);
+                // refreshTableData("#item-table", `${window.location.origin}/api/enhanced_items?type=${item.type && [3,7,5,4].includes(item.type.id) ? item.type.value : 'other'}`)
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1146,7 +1146,7 @@ $(document).on('click', '#feat-submit', function () {
             data: JSON.stringify(feat),
             success: function () {
                 ToastSuccess("Feature Updated");
-                refreshTableData("#feat-table", `${window.location.origin}/api/features`);
+                // refreshTableData("#feat-table", `${window.location.origin}/api/features`)
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1378,7 +1378,7 @@ $(document).on('click', '#maneuver-submit', function () {
             data: JSON.stringify(maneuver),
             success: function () {
                 ToastSuccess("Maneuver Updated");
-                refreshTableData("#maneuver-table", `${window.location.origin}/api/maneuvers`);
+                // refreshTableData("#maneuver-table", `${window.location.origin}/api/maneuvers`)
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1502,7 +1502,7 @@ $(document).on('click', '#customization-submit', function () {
             data: JSON.stringify(customization),
             success: function () {
                 ToastSuccess("Customization Updated");
-                refreshTableData("#customization-table", `${window.location.origin}/api/customizations?type=${customization.type.value}`);
+                // refreshTableData("#customization-table", `${window.location.origin}/api/customizations?type=${customization.type.value}`)
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
@@ -1640,7 +1640,7 @@ $(document).on('click', '#improvement-submit', function () {
             data: JSON.stringify(improvement),
             success: function () {
                 ToastSuccess("Improvement Updated");
-                refreshTableData("#improvement-table", `${window.location.origin}/api/improvements?type=${improvement.type.value}`);
+                // refreshTableData("#improvement-table", `${window.location.origin}/api/improvements?type=${improvement.type.value}`)
             },
             error: function (e) {
                 ToastError(`Failed: ${e.responseText}`);
