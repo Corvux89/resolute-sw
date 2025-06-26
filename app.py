@@ -4,9 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import sessionmaker
@@ -21,7 +19,6 @@ from constants import (
 from helpers.exceptions import setup_exception_handlers
 from models.auth import DiscordBot
 from models.cache import ResoluteCache
-from models.exceptions import RateLimited
 from models.templates import ResoluteJinja
 from routers import api_router, admin_api_router, auth_router, frontend_router
 

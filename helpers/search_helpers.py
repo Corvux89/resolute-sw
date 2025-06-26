@@ -197,7 +197,7 @@ async def perform_search(request: Request, query: str):
 
     for c in customizations:
         route = None
-        if c.type and c.type.vlaue == "Fighting Style":
+        if c.type and c.type.value == "Fighting Style":
             route = request.url_for("fighting_styles")
         elif c.type and c.type.vlaue == "Fighting Mastery":
             route = request.url_for("fighting_masteries")
