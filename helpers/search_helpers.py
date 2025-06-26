@@ -205,7 +205,7 @@ async def perform_search(request: Request, query: str):
             route = request.url_for("weapon_focus")
         elif c.type and c.type.value == "Weapon Supremacy":
             route = request.url_for("weapon_supremacies")
-        query_params = urlencode({"name": m.name})
+        query_params = urlencode({"name": c.name})
         if route:
             results.append(
                 SearchResult(title=f"{c.type.value} - {c.name}", url=f"{route}?{query_params}")
