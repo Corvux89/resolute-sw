@@ -618,7 +618,7 @@ async def create_object(app: FastAPI, new_object: BaseModel, model_class: Type) 
         db.add(object)
         db.flush()
         db.commit()
-        app.cache.update(db, model_class)
+        app.cache.add_record(model_class, object)
         return object
     except Exception as e:
         db.rollback()
@@ -657,7 +657,7 @@ async def update_object(
                 else:
                     setattr(object, k, v)
         db.commit()
-        # app.cache.update(db, model_class)
+        app.cache.update_record(model_class, object)
 
         return object
     except Exception as e:
@@ -683,7 +683,7 @@ async def delete_object(
 
         db.delete(object)
         db.commit()
-        app.cache.update(db, model_class)
+        app.cache.remove_record(model_class, object_id)
 
         return {"message": f"{model_class.__name__} deleted successfully"}
     except Exception as e:

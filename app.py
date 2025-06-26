@@ -18,6 +18,7 @@ from constants import (
     SECRET_KEY,
 )
 
+from helpers.exceptions import setup_exception_handlers
 from models.auth import DiscordBot
 from models.cache import ResoluteCache
 from models.exceptions import RateLimited
@@ -81,18 +82,12 @@ app.add_middleware(
 )
 
 
-@app.exception_handler(RateLimited)
-async def rate_limit_error_handler(_, e: RateLimited):
-    return JSONResponse(
-        {"error": "RateLimited", "retry": e.retry_after, "message": e.message},
-        status_code=429,
-    )
-
-
+app.include_router(frontend_router, prefix="")
 app.include_router(api_router, prefix="/api")
 app.include_router(admin_api_router, prefix="/api")
 app.include_router(auth_router, prefix="/auth")
-app.include_router(frontend_router, prefix="")
+setup_exception_handlers(app)
+
 
 templates = ResoluteJinja(directory="templates")
 

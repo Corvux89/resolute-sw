@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 
 from helpers.auth_helpers import is_beta_tester
 from helpers.search_helpers import perform_search
-from models.exceptions import NotFound
+from models.exceptions import BadRequest, NotFound
 from models.resolute import *
 from models.templates import ResoluteJinja, build_select_option
 
@@ -63,7 +63,7 @@ async def errata(request: Request):
 
 # Characters
 @frontend_router.get("/species/")
-@frontend_router.get("/species/{species_name}")
+@frontend_router.get("/species/{species_name:path}")
 async def species(request: Request, species_name: str = None):
     if species_name:
         species = request.app.cache.fetch(Species, value=unquote(species_name))
@@ -86,7 +86,7 @@ async def species(request: Request, species_name: str = None):
 
 
 @frontend_router.get("/classes")
-@frontend_router.get("/classes/{class_name}")
+@frontend_router.get("/classes/{class_name:path}")
 async def classes(request: Request, class_name: str = None):
     if class_name:
         prim_class = request.app.cache.fetch(PrimaryClass, value=unquote(class_name))
@@ -108,7 +108,7 @@ async def classes(request: Request, class_name: str = None):
 
 
 @frontend_router.get("/archetypes")
-@frontend_router.get("/archetypes/{arch_name}")
+@frontend_router.get("/archetypes/{arch_name:path}")
 async def archetypes(request: Request, arch_name: str = None):
     options = {}
     class_options = build_select_option(request.app.cache.fetch(PrimaryClass))
@@ -138,7 +138,7 @@ async def archetypes(request: Request, arch_name: str = None):
 
 
 @frontend_router.get("/backgrounds")
-@frontend_router.get("/backgrounds/{back_name}")
+@frontend_router.get("/backgrounds/{back_name:path}")
 async def backgrounds(request: Request, back_name: str = None):
     if back_name:
         background = request.app.cache.fetch(Background, name=back_name)

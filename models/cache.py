@@ -213,3 +213,73 @@ class ResoluteCache(ABC):
         """Update a model class in the global cache"""
         if _global_cache_instance:
             _global_cache_instance.update(session, model_cls)
+
+    def add_record(self, cls: Type, record):
+        """Add a single record to the cache"""
+        if cls not in self.cache:
+            self.cache[cls] = []
+        
+        if cls is ResoluteGuild:
+            self.cache[cls] = record
+        else:
+            # Check if record already exists (avoid duplicates)
+            existing = next((r for r in self.cache[cls] if r.id == record.id), None)
+            if not existing:
+                self.cache[cls].append(record)
+            else:
+                # Update existing record
+                index = self.cache[cls].index(existing)
+                self.cache[cls][index] = record
+        
+        # Update schema cache if applicable
+        if cls in OBJECT_MAP and "schema" in OBJECT_MAP[cls]:
+            schema = OBJECT_MAP[cls]["schema"]
+            self.cache[schema] = self.get_model(cls, schema)
+
+    def update_record(self, cls: Type, record):
+        """Update a single record in the cache"""
+        if cls not in self.cache:
+            return False
+        
+        # Handle special case for ResoluteGuild
+        if cls is ResoluteGuild:
+            if self.cache[cls] and self.cache[cls].id == record.id:
+                self.cache[cls] = record
+                return True
+            return False
+        
+        # Find and update the record
+        for i, cached_record in enumerate(self.cache[cls]):
+            if cached_record.id == record.id:
+                self.cache[cls][i] = record
+                # Update schema cache if applicable
+                if cls in OBJECT_MAP and "schema" in OBJECT_MAP[cls]:
+                    schema = OBJECT_MAP[cls]["schema"]
+                    self.cache[schema] = self.get_model(cls, schema)
+                return True
+        return False
+
+    def remove_record(self, cls: Type, record_id):
+        """Remove a single record from the cache by ID"""
+        if cls not in self.cache:
+            return False
+        
+        norm_id = normalize_id(record_id)
+        
+        # Handle special case for ResoluteGuild
+        if cls is ResoluteGuild:
+            if self.cache[cls] and self.cache[cls].id == norm_id:
+                self.cache[cls] = None
+                return True
+            return False
+        
+        # Find and remove the record
+        for i, cached_record in enumerate(self.cache[cls]):
+            if cached_record.id == norm_id:
+                self.cache[cls].pop(i)
+                # Update schema cache if applicable
+                if cls in OBJECT_MAP and "schema" in OBJECT_MAP[cls]:
+                    schema = OBJECT_MAP[cls]["schema"]
+                    self.cache[schema] = self.get_model(cls, schema)
+                return True
+        return False
