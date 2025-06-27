@@ -102,8 +102,8 @@ function propertyColumn(data, type, category){
 
 $(document).on("click", ".info-link", function(e) {
     e.stopPropagation()
-    const name = $(this).data("name"); // Get the name from the data attribute
-    const text = $(this).data("text"); // Get the text from the data attribute
+    const name = $(this).data("name"); 
+    const text = $(this).data("text"); 
 
     // Populate the modal title and body
     $("#info-modal .modal-title").text(name);
@@ -144,36 +144,39 @@ if ($("#content-edit-form").length){
 $(document).on('click', '.filter-option', function(e){
     e.preventDefault();
     const colIdx = $(this).data('col');
-    const tableID = $("#filter-dropdown").data('table')
+    const filterType = $(this).data('filter-type'); 
+    const tableID = $("#include-filter-dropdown").data('table') || $("#exclude-filter-dropdown").data('table');
     const table = $(tableID).DataTable();
-    // Highlight selected
+    
     $(this).toggleClass('active');
 
     updateFilters(colIdx)
 
-    // Remove all badges for this column
-    $(`[id^=filter-badge-${colIdx}-]`).remove();
+    $(`[id^=filter-badge-${colIdx}-${filterType}-]`).remove();
 
-    const activeValues = getActiveFilters(colIdx)
+    const activeValues = getActiveFilters(colIdx, filterType as 'include' | 'exclude')
 
-    // Add badges for all active values
     activeValues.forEach(val => {
-        const badgeId = `filter-badge-${colIdx}-${String(val).replace(/\W/g, '')}`;
-        const $option = $(`#submenu-${colIdx} .filter-option.active`).filter(function() {
+        const badgeId = `filter-badge-${colIdx}-${filterType}-${String(val).replace(/\W/g, '')}`;
+        const submenuId = filterType === 'include' ? `include-submenu-${colIdx}` : `exclude-submenu-${colIdx}`;
+        const $option = $(`#${submenuId} .filter-option.active`).filter(function() {
             return $.fn.dataTable.util.escapeRegex(String($(this).data('value'))) === val;
         });
 
         if ($(`#${badgeId}`).length === 0) {
+            const badgeClass = filterType === 'include' ? 'bg-primary' : 'bg-danger';
+            const filterLabel = filterType === 'include' ? 'Include' : 'Exclude';
             $('#active-filters').append(
-                `<span class="badge badge-pointer bg-primary me-1"
+                `<span class="badge badge-pointer ${badgeClass} me-1"
                     id="${badgeId}"
                     data-col="${colIdx}"
                     data-value="${$option.data('value')}"
+                    data-filter-type="${filterType}"
                     data-dismiss="badge">
-                    ${table.settings().init().columns[colIdx].title}: ${$option.data('value')}
+                    ${filterLabel}: ${table.settings().init().columns[colIdx].title}: ${$option.data('value')}
                 </span>`
-                );
-            }
+            );
+        }
     });  
 
     updateClearAllFiltersButton()
@@ -182,8 +185,10 @@ $(document).on('click', '.filter-option', function(e){
 $(document).on('click', '[data-dismiss="badge"]', function() {
     const colIdx = $(this).data('col');
     const value = $(this).data('value');
+    const filterType = $(this).data('filter-type'); // 'include' or 'exclude'
+    const submenuId = filterType === 'include' ? `include-submenu-${colIdx}` : `exclude-submenu-${colIdx}`;
     
-    $(`#submenu-${colIdx} .filter-option`).each(function() {
+    $(`#${submenuId} .filter-option`).each(function() {
         if ($(this).data('value') == value) {
             $(this).removeClass('active');
         }
@@ -200,7 +205,7 @@ $(document).on('click', '#clear-all-filters', function() {
     $('.filter-option.active').removeClass('active');
     $('#active-filters').empty();
     $("#filter-search").val('')
-    const tableID = $("#filter-dropdown").data('table')
+    const tableID = $("#include-filter-dropdown").data('table') || $("#exclude-filter-dropdown").data('table');
     const table = $(tableID).DataTable();
     table.columns().search('')
     table.search('')
