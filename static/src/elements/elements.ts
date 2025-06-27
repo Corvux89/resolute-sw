@@ -441,14 +441,21 @@ class FilterableTable extends HTMLElement {
                 </div>
                 <div class="row mb-2">
                     <div class="col-auto">
-                        <button class="btn rounded-3 dropdown-toggle text-white" type="button" id="filterButton" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                            <i class="fa-solid fa-filter"></i>
-                            <span>Filter</span>
+                        <button class="btn btn-primary rounded-3 dropdown-toggle text-white me-2" type="button" id="include-filter-button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Include</span>
                         </button>
-                        <ul class="dropdown-menu" aria-labelledby="filterButton" id="filter-dropdown" data-table="#${this.tableId}">
+                        <ul class="dropdown-menu" aria-labelledby="include-filter-button" id="include-filter-dropdown" data-table="#${this.tableId}" data-filter-type="include">
+                        </ul>
+                        
+                        <button class="btn btn-danger rounded-3 dropdown-toggle text-white" type="button" id="exclude-filter-button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <i class="fa-solid fa-minus"></i>
+                            <span>Exclude</span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="exclude-filter-button" id="exclude-filter-dropdown" data-table="#${this.tableId}" data-filter-type="exclude">
                         </ul>
                     </div>
-                    <div class="col-auto">
+                    <div class="col-auto mb-2">
                         <div id="active-filters"></div>
                     </div>
                     <div class="col-auto ms-auto">

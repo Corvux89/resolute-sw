@@ -29,7 +29,6 @@ export function setupMDE(element, default_text, clear_text = false) {
         maxHeight: "20vh",
         toolbar: ["undo", "redo", "|", "bold", "italic", "heading", "|", "code", "quote", "unordered-list", "ordered-list", "|", "link"]
     });
-    // Sync EasyMDE content back to the textarea whenever it changes
     window[element].codemirror.on("change", function () {
         const textareaElement = document.getElementById(element);
         if (textareaElement) {
@@ -76,7 +75,6 @@ function capitalizeFirstLetter(val) {
 }
 export function setupTableFilters(table_name, exceptions, initialFilters) {
     const table = $(table_name).DataTable();
-    // Check if table uses AJAX or static data
     let data;
     const ajaxData = table.ajax.json();
     if (ajaxData) {
@@ -88,8 +86,10 @@ export function setupTableFilters(table_name, exceptions, initialFilters) {
         data = table.rows().data().toArray();
     }
     const columns = table.settings().init().columns;
-    const $filterMenu = $("#filter-dropdown");
-    $filterMenu.empty();
+    const $includeFilterMenu = $("#include-filter-dropdown");
+    const $excludeFilterMenu = $("#exclude-filter-dropdown");
+    $includeFilterMenu.empty();
+    $excludeFilterMenu.empty();
     columns.forEach((col, colIdx) => {
         if (!col.data || (exceptions && exceptions.includes(colIdx)))
             return;
@@ -123,27 +123,44 @@ export function setupTableFilters(table_name, exceptions, initialFilters) {
         values.sort((a, b) => a.localeCompare(b, undefined, { numberic: true, sensitivity: 'base' }));
         if (values.length == 0)
             return;
-        const subMenuID = `submenu-${colIdx}`;
-        const subMenu = `
+        const includeSubMenuID = `include-submenu-${colIdx}`;
+        const excludeSubMenuID = `exclude-submenu-${colIdx}`;
+        const includeSubMenu = `
                 <li class="drowdown-submenu">
                     <div class="dropdown-item">${col.title} &raquo;</div>
-                    <ul class="dropdown-menu dropdown-submenu" id=${subMenuID}>
-                        ${values.map(val => `<li><div class="dropdown-item filter-option" data-col="${colIdx}" data-value="${val}">${val}</div></li>`).join('')}
+                    <ul class="dropdown-menu dropdown-submenu" id=${includeSubMenuID}>
+                        ${values.map(val => `<li><div class="dropdown-item filter-option" data-col="${colIdx}" data-value="${val}" data-filter-type="include">${val}</div></li>`).join('')}
                     </ul>
                 </li>
                 `;
-        $filterMenu.append(subMenu);
+        const excludeSubMenu = `
+                <li class="drowdown-submenu">
+                    <div class="dropdown-item">${col.title} &raquo;</div>
+                    <ul class="dropdown-menu dropdown-submenu" id=${excludeSubMenuID}>
+                        ${values.map(val => `<li><div class="dropdown-item filter-option" data-col="${colIdx}" data-value="${val}" data-filter-type="exclude">${val}</div></li>`).join('')}
+                    </ul>
+                </li>
+                `;
+        $includeFilterMenu.append(includeSubMenu);
+        $excludeFilterMenu.append(excludeSubMenu);
         // Reapply active state for dropdown items based on initial filters
         if (initialFilters) {
             Object.entries(initialFilters).forEach(([colIdx, filterValue]) => {
                 if (!filterValue)
                     return;
-                const submenuID = `submenu-${colIdx}`;
-                const $submenuItem = $(`#${submenuID} .filter-option`).filter(function () {
+                const includeSubmenuID = `include-submenu-${colIdx}`;
+                const excludeSubmenuID = `exclude-submenu-${colIdx}`;
+                const $includeSubmenuItem = $(`#${includeSubmenuID} .filter-option`).filter(function () {
                     return $(this).data('value').toString().toLowerCase() === filterValue.toLowerCase();
                 });
-                if ($submenuItem.length) {
-                    $submenuItem.trigger('click');
+                const $excludeSubmenuItem = $(`#${excludeSubmenuID} .filter-option`).filter(function () {
+                    return $(this).data('value').toString().toLowerCase() === filterValue.toLowerCase();
+                });
+                if ($includeSubmenuItem.length) {
+                    $includeSubmenuItem.trigger('click');
+                }
+                if ($excludeSubmenuItem.length) {
+                    $excludeSubmenuItem.trigger('click');
                 }
             });
         }
@@ -204,31 +221,37 @@ export function renderDropdownOptions(dropdownId, options, allowNone = false) {
         dropdown.append(`<option value="${option.value}">${option.label}</option>`);
     });
 }
-export function getActiveFilters(colIdx) {
-    const activeValues = $(`#submenu-${colIdx} .filter-option.active`).map(function () {
+export function getActiveFilters(colIdx, filterType = 'include') {
+    const submenuId = filterType === 'include' ? `include-submenu-${colIdx}` : `exclude-submenu-${colIdx}`;
+    const activeValues = $(`#${submenuId} .filter-option.active`).map(function () {
         return $.fn.dataTable.util.escapeRegex(String($(this).data('value')));
     }).get();
     return activeValues;
 }
 export function updateFilters(colIdx) {
-    const activeValues = getActiveFilters(colIdx);
-    const tableID = $("#filter-dropdown").data('table');
+    const includeValues = getActiveFilters(colIdx, 'include');
+    const excludeValues = getActiveFilters(colIdx, 'exclude');
+    const tableID = $("#include-filter-dropdown").data('table') || $("#exclude-filter-dropdown").data('table');
     const table = $(tableID).DataTable();
-    if (activeValues.length > 0) {
-        table.column(colIdx).search(activeValues.join('|'), true, false).draw();
+    if (includeValues.length > 0 || excludeValues.length > 0) {
+        let searchPattern = '';
+        if (includeValues.length > 0 && excludeValues.length > 0) {
+            const includePattern = `(${includeValues.join('|')})`;
+            const excludePattern = `^(?!.*(${excludeValues.join('|')})).*${includePattern}.*`;
+            searchPattern = excludePattern;
+        }
+        else if (includeValues.length > 0) {
+            searchPattern = includeValues.join('|');
+        }
+        else if (excludeValues.length > 0) {
+            searchPattern = `^(?!.*(${excludeValues.join('|')})).*`;
+        }
+        table.column(colIdx).search(searchPattern, true, false).draw();
     }
     else {
         table.column(colIdx).search('').draw();
     }
 }
-/**
- * Refreshes DataTable data by querying an API endpoint
- * @param tableName - The selector for the DataTable (e.g., "#power-table")
- * @param apiUrl - The API endpoint to fetch fresh data from
- * @param requestData - Optional data to send with the API request
- * @param onSuccess - Optional callback function to execute after successful refresh
- * @param onError - Optional callback function to execute if refresh fails
- */
 export function refreshTableData(tableName, apiUrl, requestData, onSuccess, onError) {
     const table = $(tableName).DataTable();
     $.ajax({
@@ -237,11 +260,9 @@ export function refreshTableData(tableName, apiUrl, requestData, onSuccess, onEr
         data: requestData,
         success: function (data) {
             try {
-                // Clear existing data and add new data
                 table.clear();
                 table.rows.add(data);
                 table.draw();
-                // Update filterable table component if it exists
                 const $filterableTable = $('filterable-table');
                 if ($filterableTable.length) {
                     const element = $filterableTable[0];
@@ -249,7 +270,6 @@ export function refreshTableData(tableName, apiUrl, requestData, onSuccess, onEr
                         element.setData(data);
                     }
                 }
-                // Execute success callback if provided
                 if (onSuccess && typeof onSuccess === 'function') {
                     onSuccess(data);
                 }
