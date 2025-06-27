@@ -157,7 +157,7 @@ class ResoluteCache(ABC):
             return self.cache.get(cls)
         except ObjectDeletedError:
             if db := kwargs.get("db") and not kwargs.get('final', False):
-                self._refresh_cache(db, cls)
+                self.update(db, cls)
                 kwargs.setdefault("final", True)
                 return self.fetch(cls, id, **kwargs)
             else:
