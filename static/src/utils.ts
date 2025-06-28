@@ -166,22 +166,13 @@ export function setupTableFilters(table_name: string, exceptions?: number[], ini
             Object.entries(initialFilters).forEach(([colIdx, filterValue]) => {
                 if (!filterValue) return
                 const includeSubmenuID = `include-submenu-${colIdx}`;
-                const excludeSubmenuID = `exclude-submenu-${colIdx}`;
                 
                 const $includeSubmenuItem = $(`#${includeSubmenuID} .filter-option`).filter(function () {
                     return $(this).data('value').toString().toLowerCase() === filterValue.toLowerCase();
                 });
 
-                const $excludeSubmenuItem = $(`#${excludeSubmenuID} .filter-option`).filter(function () {
-                    return $(this).data('value').toString().toLowerCase() === filterValue.toLowerCase();
-                });
-
                 if ($includeSubmenuItem.length) {
                     $includeSubmenuItem.trigger('click');
-                }
-                
-                if ($excludeSubmenuItem.length) {
-                    $excludeSubmenuItem.trigger('click');
                 }
             });
         }

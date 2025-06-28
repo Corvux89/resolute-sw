@@ -725,3 +725,23 @@ class PowerSchema(GenericSchema):
     alignment: Optional[PowerAlignmentSchema] = None
     level: Optional[int] = 0
     duration: Optional[str] = None
+
+class Character(GenericObject):
+    __tablename__ = "characters"
+
+    id = Column(Integer, primary_key=True)
+    species = Column(Integer, ForeignKey("c_character_species.id"))
+    guild_id = Column(BIGINT)
+    active = Column(BOOLEAN)
+
+class CharacterClass(GenericObject):
+    __tablename__ = "character_class"
+
+    id = Column(Integer, primary_key=True)
+    _character_id = Column("character_id", Integer, ForeignKey("characters.id"))
+    _primary_class = Column("primary_class", Integer, ForeignKey("c_character_class.id"))
+    _archetype = Column("archetype", Integer, ForeignKey("c_character_archetype.id"))
+    active = Column(BOOLEAN)
+
+
+    character = relationship("Character", lazy="joined")

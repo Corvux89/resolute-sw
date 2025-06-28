@@ -55,3 +55,20 @@ async def is_beta_tester(request: Request) -> None:
         raise HTTPException(status_code=302, headers={"Location": login_url})
     except Exception as e:
         raise Forbidden(str(e))
+    
+async def is_resolute_member(request: Request) -> None:
+    discord: DiscordBot = request.app.discord
+    try:
+        if user := await discord.user(request):
+            member = await discord.fetch_members(user.id)
+            if member:
+                return
+            raise Forbidden()
+    except Unauthorized:
+        # Pass the current URL as state parameter for redirect after login
+        current_url = str(request.url)
+        login_url = discord.get_oauth_login_url(state=current_url)
+        # Use HTTPException with redirect status code for dependencies
+        raise HTTPException(status_code=302, headers={"Location": login_url})
+    except Exception as e:
+        raise Forbidden(str(e))  

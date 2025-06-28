@@ -20,6 +20,8 @@ from constants import (
 from helpers.exceptions import setup_exception_handlers
 from models.auth import DiscordBot
 from models.cache import ResoluteCache
+from models.exceptions import NotFound
+from models.resolute import WebContent
 from models.templates import ResoluteJinja
 from routers import api_router, admin_api_router, auth_router, frontend_router
 
@@ -106,9 +108,14 @@ templates = ResoluteJinja(directory="templates")
 # Public routes (no authentication required)
 @app.get("/", tags=["Frontend"])
 async def homepage(request: Request):
+    content = request.app.cache.fetch(WebContent, "home")
+    if not content:
+        raise NotFound("Content not found")
+    
     return await templates.TemplateResponse(
-        "home.html",
+        "/shell.html",
         {
             "request": request,
+            "content": content,
         },
     )

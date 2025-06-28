@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2AuthorizationCodeBearer
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from constants import AUTH_URL
@@ -118,6 +119,21 @@ async def update_species(request: Request, species: SpeciesSchema):
 
 @admin_api_router.delete("/species/{obj_id}")
 async def delete_species(request: Request, obj_id: int):
+    db: Session = request.db
+
+    if (
+        db.query(Character)
+        .filter(
+            and_(
+                Character.species == obj_id,
+                Character.active == True
+            )
+        )
+        .count()
+        >0
+        ):
+        raise BadRequest("Current active characters have this species set")
+
     return await delete_object(request.app, Species, obj_id)
 
 
@@ -154,6 +170,22 @@ async def update_class(request: Request, primary_class: PrimaryClassSchema):
 
 @admin_api_router.delete("/classes/{obj_id}")
 async def delete_class(request: Request, obj_id: int):
+    db: Session = request.db
+    if (
+        db.query(CharacterClass)
+        .join(Character, Character.id == CharacterClass._character_id)
+        .filter(
+            and_(
+                CharacterClass.active == True,
+                Character.active == True,
+                CharacterClass._primary_class == obj_id
+            )
+        )
+        .count()
+        >0
+    ):
+        raise BadRequest("current active charcter(s) have this class.")
+
     return await delete_object(request.app, PrimaryClass, obj_id)
 
 
@@ -209,6 +241,21 @@ async def update_archetype(request: Request, arch: ArchetypeSchema):
 
 @admin_api_router.delete("/archetypes/{obj_id}")
 async def delete_archetype(request: Request, obj_id: int):
+    db: Session = request.db
+    if (
+        db.query(CharacterClass)
+        .join(Character, Character.id == CharacterClass._character_id)
+        .filter(
+            and_(
+                CharacterClass.active == True,
+                Character.active == True,
+                CharacterClass._archetype == obj_id
+            )
+        )
+        .count()
+        >0
+    ):
+        raise BadRequest("current active charcter(s) have this archetype.")
     return await delete_object(request.app, Archetype, obj_id)
 
 
