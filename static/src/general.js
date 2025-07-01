@@ -648,6 +648,7 @@ if ($("#equipment-table").length) {
             data: "cost"
         }, {
             title: "Damage",
+            data: null,
             render: function (data, type, row) {
                 try {
                     if (!("dmg_number_of_die" in row) || !row.dmg_number_of_die || row.dmg_number_of_die == 0)
@@ -655,7 +656,7 @@ if ($("#equipment-table").length) {
                     const properties = row.properties.split(', ').map(c => c.replace(/[\s\d]/g, ''));
                     if (properties.includes('special'))
                         return 'Special';
-                    return `${row.dmg_number_of_die}d${row.dmg_die_type || ""} [${row.dmg_type || ""}]`;
+                    return `${row.dmg_number_of_die || '1'}d${row.dmg_die_type || ""} [${row.dmg_type || ""}]`;
                 }
                 catch {
                     return '';
@@ -673,7 +674,12 @@ if ($("#equipment-table").length) {
         }, {
             title: "Damage Type",
             visible: false,
-            data: "dmg_type"
+            data: "dmg_type",
+            render: function (data) {
+                if (!data)
+                    return '';
+                return data;
+            }
         });
     }
     else if (window.location.pathname.includes('armor')) {

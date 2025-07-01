@@ -40,15 +40,18 @@ json_encoder = {datetime: lambda v: v.isoformat(), uuid.UUID: lambda v: v.hex}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    engine = create_engine(DB_URI)
-    app.db_session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    app.engine = create_engine(DB_URI)
+    app.db_session = sessionmaker(autocommit=False, autoflush=False, bind=app.engine)
     app.db = app.db_session()
 
     app.cache = ResoluteCache(app)
 
     app.discord.initialize()
+    
     yield
-    engine.dispose()
+
+    app.db.close()
+    app.engine.dispose()
 
 async def refresh_cache_periodically(app: FastAPI):
     """Background task to refresh cache every 5 minutes"""

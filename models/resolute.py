@@ -605,7 +605,6 @@ class EquipmentSchema(GenericSchema):
     weight: Optional[int] = None
     dmg_number_of_die: Optional[int] = None
     dmg_die_type: Optional[int] = None
-    dmg_die: Optional[str] = None
     dmg_type: Optional[str] = None
     properties: Optional[str] = None
     ac: Optional[str] = None

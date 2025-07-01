@@ -93,54 +93,71 @@ export function setupTableFilters(table_name, exceptions, initialFilters) {
     columns.forEach((col, colIdx) => {
         if (!col.data || (exceptions && exceptions.includes(colIdx)))
             return;
-        const values = Array.from(new Set(data.map(row => {
+        const valuePairs = data.map(row => {
             const raw = row[col.data.toString()];
             try {
+                let pairs = [];
                 if (col.render) {
                     // @ts-expect-error This works...idk why typescript has issues with it
-                    const render = col.render(raw, 'filter', row);
-                    if (Array.isArray(render)) {
-                        return render.map((item) => {
+                    const filterRender = col.render(raw, 'filter', row);
+                    // @ts-expect-error This works...idk why typescript has issues with it
+                    const sortRender = col.render(raw, 'sort', row);
+                    if (Array.isArray(filterRender)) {
+                        // Create separate pairs for each array item
+                        filterRender.forEach((item, index) => {
                             const tempDiv = document.createElement('div');
                             tempDiv.innerHTML = capitalizeFirstLetter(item).trim();
-                            return (tempDiv.textContent || "").trim();
+                            const displayValue = (tempDiv.textContent || "").trim();
+                            // Use the same index for sort value if it's also an array, otherwise use the whole sort value
+                            const sortValue = Array.isArray(sortRender)
+                                ? (sortRender[index]?.toString() || "")
+                                : (sortRender?.toString() || "");
+                            pairs.push({ display: displayValue, sort: sortValue });
                         });
                     }
                     else {
                         const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = render?.toString().trim() || "";
-                        return (tempDiv.textContent || "").trim();
+                        tempDiv.innerHTML = filterRender?.toString().trim() || "";
+                        const displayValue = (tempDiv.textContent || "").trim();
+                        const sortValue = sortRender?.toString() || "";
+                        pairs.push({ display: displayValue, sort: sortValue });
                     }
                 }
-                if (raw == null || raw == undefined)
-                    return;
-                return typeof raw === "string" ? raw.split(",")[0].toString().trim() : raw.toString().trim();
+                else {
+                    const displayValue = typeof raw === "string" ? raw.split(",")[0].toString().trim() : raw?.toString().trim() || "";
+                    pairs.push({ display: displayValue, sort: displayValue });
+                }
+                return pairs;
             }
             catch {
-                return;
+                return [];
             }
-        }).flat().filter(v => v != null && v !== ""))); // Flatten the array and filter out null/empty values
-        values.sort((a, b) => a.localeCompare(b, undefined, { numberic: true, sensitivity: 'base' }));
-        if (values.length == 0)
+        }).flat().filter(v => v != null);
+        // Remove duplicates based on display value only
+        const uniquePairs = valuePairs.filter((pair, index, self) => index === self.findIndex(p => p.display === pair.display && p.display !== ""));
+        const sortedValues = uniquePairs
+            .sort((a, b) => a.sort.localeCompare(b.sort, undefined, { numeric: true, sensitivity: 'base' }))
+            .map(v => v.display);
+        if (sortedValues.length == 0)
             return;
         const includeSubMenuID = `include-submenu-${colIdx}`;
         const excludeSubMenuID = `exclude-submenu-${colIdx}`;
         const includeSubMenu = `
-                <li class="drowdown-submenu">
-                    <div class="dropdown-item">${col.title} &raquo;</div>
-                    <ul class="dropdown-menu dropdown-submenu" id=${includeSubMenuID}>
-                        ${values.map(val => `<li><div class="dropdown-item filter-option" data-col="${colIdx}" data-value="${val}" data-filter-type="include">${val}</div></li>`).join('')}
-                    </ul>
-                </li>
-                `;
+        <li class="drowdown-submenu">
+            <div class="dropdown-item">${col.title} &raquo;</div>
+            <ul class="dropdown-menu dropdown-submenu" id=${includeSubMenuID}>
+                ${sortedValues.map(val => `<li><div class="dropdown-item filter-option" data-col="${colIdx}" data-value="${val}" data-filter-type="include">${val}</div></li>`).join('')}
+            </ul>
+        </li>
+        `;
         const excludeSubMenu = `
-                <li class="drowdown-submenu">
-                    <div class="dropdown-item">${col.title} &raquo;</div>
-                    <ul class="dropdown-menu dropdown-submenu" id=${excludeSubMenuID}>
-                        ${values.map(val => `<li><div class="dropdown-item filter-option" data-col="${colIdx}" data-value="${val}" data-filter-type="exclude">${val}</div></li>`).join('')}
-                    </ul>
-                </li>
-                `;
+        <li class="drowdown-submenu">
+            <div class="dropdown-item">${col.title} &raquo;</div>
+            <ul class="dropdown-menu dropdown-submenu" id=${excludeSubMenuID}>
+                ${sortedValues.map(val => `<li><div class="dropdown-item filter-option" data-col="${colIdx}" data-value="${val}" data-filter-type="exclude">${val}</div></li>`).join('')}
+            </ul>
+        </li>
+        `;
         $includeFilterMenu.append(includeSubMenu);
         $excludeFilterMenu.append(excludeSubMenu);
         // Reapply active state for dropdown items based on initial filters
