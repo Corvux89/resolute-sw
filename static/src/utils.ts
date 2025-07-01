@@ -608,6 +608,7 @@ export function defaultItemModal(item: EnhancedItem): void {
     $("#item-name").val(item.name)
     $("#item-cost").val(item.cost)
     $("#item-subtype-ft").val(item.subtype_ft)
+    $("#item-set").val(item.item_set)
 
     const allSubtypes = $("#item-edit-form").data("subtypes");
 
@@ -659,7 +660,8 @@ export function fetchItemInputs(): EnhancedItem{
         source: {
             id: Number(source_option.val()),
             name: source_option.html()
-        }
+        },
+        item_set: $("#item-set").val().toString()
     }
 
     return item

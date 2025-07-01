@@ -133,7 +133,7 @@ async def perform_search(request: Request, query: str):
         elif i.type and i.type.value == "Droid Customization":
             route = request.url_for("droid_customications")
         elif i.type and i.type.value == "Cybernetic Augmentation":
-            route = request.url_for("cybernetic_augmentation")
+            route = request.url_for("cybernetic_augmentations")
         else:
             route = request.url_for("enhanced_items")
 
@@ -143,16 +143,16 @@ async def perform_search(request: Request, query: str):
             SearchResult(title=f"{i.type.value if i.type else 'Enhanced Item'} - {i.name}", url=f"{route}?{query_params}")
         )
 
-    # Features
-    features = cache.fetch(Feature)
+    # Feats
+    feats = cache.fetch(Feat)
 
-    features = list(filter(
+    feats = list(filter(
         lambda f: query.lower() in f.name.lower(),
-        features
+        feats
     ))
 
-    for f in features:
-        route = request.url_for("features")
+    for f in feats:
+        route = request.url_for("feats")
         query_params = urlencode({"name": f.name})
         results.append(
             SearchResult(title=f"Feature - {f.name}", url=f"{route}?{query_params}")
@@ -199,7 +199,7 @@ async def perform_search(request: Request, query: str):
         route = None
         if c.type and c.type.value == "Fighting Style":
             route = request.url_for("fighting_styles")
-        elif c.type and c.type.vlaue == "Fighting Mastery":
+        elif c.type and c.type.value == "Fighting Mastery":
             route = request.url_for("fighting_masteries")
         elif c.type and c.type.value == "Weapon Focus":
             route = request.url_for("weapon_focus")

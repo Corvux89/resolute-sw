@@ -51,7 +51,7 @@ OBJECT_MAP: Dict[Type, SchemaMap] = {
     Species: {"schema": SpeciesSchema},
     PrimaryClass: {"schema": PrimaryClassSchema},
     Archetype: {"schema": ArchetypeSchema},
-    Feature: {"schema": FeatureSchema},
+    Feat: {"schema": FeatSchema},
     Background: {"schema": BackgroundSchema},
     Maneuver: {"schema": ManeuverSchema},
     Customization: {"schema": CustomizationSchema},

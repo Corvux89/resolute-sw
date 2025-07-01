@@ -48,6 +48,7 @@ async def lifespan(app: FastAPI):
 
     app.discord.initialize()
     yield
+    engine.dispose()
 
 async def refresh_cache_periodically(app: FastAPI):
     """Background task to refresh cache every 5 minutes"""

@@ -49,11 +49,6 @@ async def house_rules(request: Request):
     return await get_web_content(request, "house_rules")
 
 
-@frontend_router.get("/content_rulings")
-async def content_rulings(request: Request):
-    return await get_web_content(request, "content_rulings")
-
-
 @frontend_router.get("/errata")
 async def errata(request: Request):
     return await get_web_content(request, "errata")
@@ -160,9 +155,9 @@ async def backgrounds(request: Request, name: str = None):
     )
 
 
-@frontend_router.get("/features")
-async def features(request: Request):
-    feature_list = request.app.cache.fetch(FeatureSchema)
+@frontend_router.get("/feats")
+async def feats(request: Request):
+    feature_list = request.app.cache.fetch(FeatSchema)
 
     return await templates.TemplateResponse(
         "/feats.html", {"request": request, "table": feature_list}

@@ -6,7 +6,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import BIGINT, ARRAY, BOOLEAN
 
-from models.general import FeatureHyperlinkExtension, IntAttributeMixin, render_markdown
+from models.general import FeatHyperlinkExtension, IntAttributeMixin, render_markdown
 
 base = declarative_base()
 
@@ -406,7 +406,7 @@ class Background(GenericObject):
 
     @property
     def html_feats(self):
-        return render_markdown(self.feats, [FeatureHyperlinkExtension()])
+        return render_markdown(self.feats, [FeatHyperlinkExtension()])
 
     @property
     def html_bond(self):
@@ -453,7 +453,7 @@ class BackgroundSchema(GenericSchema):
     source: Optional[ContentSourceSchema] = None
 
 
-class Feature(GenericObject):
+class Feat(GenericObject):
     __tablename__ = "feats"
     __exceptions__ = ["id"]
 
@@ -473,7 +473,7 @@ class Feature(GenericObject):
         return render_markdown(self.text)
 
 
-class FeatureSchema(GenericSchema):
+class FeatSchema(GenericSchema):
     id: Optional[uuid.UUID] = None
     name: str
     prerequisite: Optional[str] = None
@@ -651,6 +651,7 @@ class EnhancedItem(GenericObject):
     prerequisite = OptionalStringColumn()
     subtype_ft = OptionalStringColumn()
     _subtype = Column("subtype", ForeignKey("c_enhanced_subtype.id"), nullable=True)
+    item_set = OptionalStringColumn()
     cost = OptionalIntegerColumn()
     _source = Column(
         "source", Integer, ForeignKey("c_content_source.id"), nullable=True
@@ -677,6 +678,7 @@ class EnhancedItemSchema(GenericSchema):
     prerequisite: Optional[str] = None
     subtype_ft: Optional[str] = None
     subtype: Optional[EnhancedItemSubTypeSchema] = None
+    item_set: Optional[str] = None
     cost: Optional[int] = None
     source: Optional[ContentSourceSchema] = None
 

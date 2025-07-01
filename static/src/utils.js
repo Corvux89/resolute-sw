@@ -541,6 +541,7 @@ export function defaultItemModal(item) {
     $("#item-name").val(item.name);
     $("#item-cost").val(item.cost);
     $("#item-subtype-ft").val(item.subtype_ft);
+    $("#item-set").val(item.item_set);
     const allSubtypes = $("#item-edit-form").data("subtypes");
     if (!allSubtypes) {
         console.error("Missing subtypes");
@@ -584,7 +585,8 @@ export function fetchItemInputs() {
         source: {
             id: Number(source_option.val()),
             name: source_option.html()
-        }
+        },
+        item_set: $("#item-set").val().toString()
     };
     return item;
 }

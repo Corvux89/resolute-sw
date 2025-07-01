@@ -5,6 +5,12 @@
 {% endif %}
 
 <div class="container species-detail-page">
+       <div class="row m-2 mb-4">
+        <div class="col-auto">
+            <a class="btn btn-primary" type="button" href="{{ url_for("species") }}">Back to Species List</a>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12 mb-3">
             <h4 class="text-primary species-detail-title">&#9654; {{ species.value|upper }}

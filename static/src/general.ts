@@ -998,6 +998,11 @@ if ($("#item-table").length){
         {
             title: "Cost",
             data: "cost"
+        },
+        {
+            title: "Item Set",
+            data: "item_set",
+            visible: false
         }
     ]
 

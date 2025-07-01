@@ -125,7 +125,8 @@ export interface EnhancedItem {
     text?: string
     prerequisite?: string
     subtype_ft?: string
-    subtype?: GenericChild,
+    subtype?: GenericChild
+    item_set?: string
     cost?: number
     source?: ContentSource
     html_text?: string

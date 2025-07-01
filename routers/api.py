@@ -295,14 +295,14 @@ async def delete_background(request: Request, obj_id: str):
     return await delete_object(request.app, Background, obj_id)
 
 
-@api_router.get("/features", response_model=List[FeatureSchema])
+@api_router.get("/features", response_model=List[FeatSchema])
 async def get_features(name: str = None):
     try:
         if name:
-            f = ResoluteCache.global_fetch(Feature, name=name)
+            f = ResoluteCache.global_fetch(Feat, name=name)
             features = [f] if f else []
         else:
-            features = ResoluteCache.global_fetch(Feature)
+            features = ResoluteCache.global_fetch(Feat)
     except Exception as e:
         raise BadRequest(str(e))
 
@@ -312,23 +312,23 @@ async def get_features(name: str = None):
     return features
 
 
-@admin_api_router.post("/features", response_model=FeatureSchema)
-async def new_feature(request: Request, feat: FeatureSchema):
-    feature = await create_object(request.app, feat, Feature)
+@admin_api_router.post("/features", response_model=FeatSchema)
+async def new_feature(request: Request, feat: FeatSchema):
+    feature = await create_object(request.app, feat, Feat)
 
     return feature
 
 
-@admin_api_router.patch("/features", response_model=FeatureSchema)
-async def update_feature(request: Request, feat: FeatureSchema):
-    feature = await update_object(request.app, feat, Feature)
+@admin_api_router.patch("/features", response_model=FeatSchema)
+async def update_feature(request: Request, feat: FeatSchema):
+    feature = await update_object(request.app, feat, Feat)
 
     return feature
 
 
 @admin_api_router.delete("/features/{obj_id}")
 async def delete_feature(request: Request, obj_id: str):
-    return await delete_object(request.app, Feature, obj_id)
+    return await delete_object(request.app, Feat, obj_id)
 
 
 @api_router.get("/maneuvers", response_model=List[ManeuverSchema])

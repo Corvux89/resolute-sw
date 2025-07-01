@@ -85,22 +85,22 @@ class MonsterBlockPreProcessor(Preprocessor):
         return html
 
 
-class FeatureHyperlinkPattern(markdown.inlinepatterns.Pattern):
+class FeatHyperlinkPattern(markdown.inlinepatterns.Pattern):
 
     def __init__(self, *args, **kwargs):
         super().__init__(r"\[\[(.*?)\]\]", *args, **kwargs)
 
     def handleMatch(self, m):
-        from models.resolute import Feature
+        from models.resolute import Feat
         from models.cache import ResoluteCache
 
         raw_text = m.group(0)  # Get the full match
         text = raw_text.strip("[]")  # Extract text manually
 
-        feat: Feature = next(
+        feat: Feat = next(
             (
                 f
-                for f in ResoluteCache.global_fetch(Feature)
+                for f in ResoluteCache.global_fetch(Feat)
                 if f.name.lower() == text.lower()
             ),
             None,
@@ -119,12 +119,12 @@ class FeatureHyperlinkPattern(markdown.inlinepatterns.Pattern):
             return markdown.util.AtomicString(text)
 
 
-class FeatureHyperlinkExtension(Extension):
+class FeatHyperlinkExtension(Extension):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def extendMarkdown(self, md):
-        md.inlinePatterns.register(FeatureHyperlinkPattern(), "hyperlink", 175)
+        md.inlinePatterns.register(FeatHyperlinkPattern(), "hyperlink", 175)
 
 
 def render_markdown(text: str, add_extension: list = []) -> str:

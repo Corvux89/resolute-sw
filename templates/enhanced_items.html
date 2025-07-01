@@ -33,8 +33,14 @@
             <div class="col-6 mb-2">
                 <text-input label-text="Name" custom-id="item-name" required></text-input>
             </div>
-            <div class="col-6 mb-2">
+            <div class="col-3 mb-2">
                 <number-input custom-id="item-cost" label-text="Cost"></number-input>
+            </div>
+            <div class="col-3 mb-2">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="item-attunement" name="item-attunement">
+                    <label class="form-check-label" for="item-attunement">Requires Attunement?</label>
+                </div>
             </div>
         </div>
         <div class="row mb-2">
@@ -57,11 +63,8 @@
             <div class="col-6 mb-2">
                 <text-input label-text="Prerequisite?" custom-id="item-prerequisite" required></text-input>
             </div>
-            <div class="col-3 mb-2">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="item-attunement" name="item-attunement">
-                    <label class="form-check-label" for="item-attunement">Requires Attunement?</label>
-                </div>
+            <div class="col-6 mb-2">
+                <text-input label-text="Item Set" custom-id="item-set" required></text-input>
             </div>
         </div>
         <div class="row mb-2">
