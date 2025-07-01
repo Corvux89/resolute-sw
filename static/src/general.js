@@ -46,6 +46,13 @@ function boolColumn(data, type) {
         return `<i class="fa fa-times text-danger"></i>`; // Red "x"
     }
 }
+function currencyColumn(data, type) {
+    if (!data)
+        return '';
+    if (type == "filter")
+        return data;
+    return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 function propertyColumn(data, type, category) {
     if (!data)
         return '';
@@ -645,7 +652,10 @@ if ($("#equipment-table").length) {
             }
         }, {
             title: "Cost",
-            data: "cost"
+            data: "cost",
+            render: function (data, type) {
+                return currencyColumn(data, type);
+            }
         }, {
             title: "Damage",
             data: null,
@@ -701,7 +711,10 @@ if ($("#equipment-table").length) {
             }
         }, {
             title: "Cost",
-            data: "cost"
+            data: "cost",
+            render: function (data, type) {
+                return currencyColumn(data, type);
+            }
         }, {
             title: "AC",
             data: "ac"
@@ -728,7 +741,10 @@ if ($("#equipment-table").length) {
             }
         }, {
             title: "Cost",
-            data: "cost"
+            data: "cost",
+            render: function (data, type) {
+                return currencyColumn(data, type);
+            }
         });
     }
     setupFilterableTable("#equipment-table", columns, [[1, 'asc'], [0, 'asc']], filterExclusions);
@@ -899,7 +915,10 @@ if ($("#item-table").length) {
         },
         {
             title: "Cost",
-            data: "cost"
+            data: "cost",
+            render: function (data, type) {
+                return currencyColumn(data, type);
+            }
         },
         {
             title: "Item Set",

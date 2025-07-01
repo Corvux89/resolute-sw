@@ -53,6 +53,12 @@ function boolColumn(data, type){
     }
 }
 
+function currencyColumn(data, type){
+    if (!data) return ''
+    if (type == "filter") return data
+    return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+}
+
 function propertyColumn(data, type, category){
     if (!data) return ''
     if (type === "filter") {
@@ -731,7 +737,10 @@ if ($("#equipment-table").length){
             },
             {
                 title: "Cost",
-                data: "cost"      
+                data: "cost",
+                render: function(data, type){
+                    return currencyColumn(data, type)
+                }      
             },
             {
                 title: "Damage",
@@ -788,7 +797,10 @@ if ($("#equipment-table").length){
             },
             {
                 title: "Cost",
-                data: "cost"      
+                data: "cost",
+                render: function(data, type){
+                    return currencyColumn(data, type)
+                }      
             },
             {
                 title: "AC",
@@ -817,7 +829,10 @@ if ($("#equipment-table").length){
             },
             {
                 title: "Cost",
-                data: "cost"      
+                data: "cost",
+                render: function(data, type){
+                    return currencyColumn(data, type)
+                }      
             },
         )
     }
@@ -1002,7 +1017,10 @@ if ($("#item-table").length){
         },
         {
             title: "Cost",
-            data: "cost"
+            data: "cost",
+            render: function(data, type){
+                return currencyColumn(data, type)
+            }
         },
         {
             title: "Item Set",
