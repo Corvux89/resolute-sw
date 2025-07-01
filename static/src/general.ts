@@ -229,7 +229,10 @@ if ($("#power-table").length){
             {
                 title: "Level",
                 data: "level",
-                render: function (data){ return data==0 ? "At-Will" : data }
+                render: function (data, type){ 
+                    if (type == 'sort') return data
+                    return data==0 ? "At-Will" : data 
+                }
             },
             {
                 title: "Pre-Requisite?",
