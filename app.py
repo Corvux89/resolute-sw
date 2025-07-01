@@ -111,7 +111,7 @@ templates = ResoluteJinja(directory="templates")
 
 # Public routes (no authentication required)
 @app.get("/", tags=["Frontend"])
-async def homepage(request: Request):
+async def home(request: Request):
     content = request.app.cache.fetch(WebContent, "home")
     if not content:
         raise NotFound("Content not found")
