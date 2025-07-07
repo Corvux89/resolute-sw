@@ -131,7 +131,7 @@ async def perform_search(request: Request, query: str):
         elif i.type and i.type.value == "Item Modification":
             route = request.url_for("item_modifications")
         elif i.type and i.type.value == "Droid Customization":
-            route = request.url_for("droid_customications")
+            route = request.url_for("droid_customizations")
         elif i.type and i.type.value == "Cybernetic Augmentation":
             route = request.url_for("cybernetic_augmentations")
         else:
