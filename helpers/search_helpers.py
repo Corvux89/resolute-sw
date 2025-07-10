@@ -167,7 +167,7 @@ async def perform_search(request: Request, query: str):
     ))
 
     for b in backgrounds:
-        route = request.url_for("backgrounds", name=b.value)
+        route = request.url_for("backgrounds", name=b.name)
         results.append(
             SearchResult(title=f"Background - {b.name}", url=f"{route}")
         )
