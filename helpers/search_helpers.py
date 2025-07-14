@@ -108,7 +108,7 @@ async def perform_search(request: Request, query: str):
     for e in equipment:
         if e.category and e.category.value == "Weapon":
             route = request.url_for("weapons")
-        elif e.category and e.category.id == "Armor":
+        elif e.category and e.category.value == "Armor":
             route = request.url_for("armor")
         else:
             route = request.url_for("adventuring")
