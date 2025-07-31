@@ -19,6 +19,7 @@ httpx = "*"
 aiohttp = "*"
 aiocache = "*"
 sqlalchemy = "*"
+itsdangerous = "*"
 
 [dev-packages]
 pipenv = "*"
