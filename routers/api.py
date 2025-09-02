@@ -119,7 +119,7 @@ async def update_species(request: Request, species: SpeciesSchema):
 
 @admin_api_router.delete("/species/{obj_id}")
 async def delete_species(request: Request, obj_id: int):
-    db: Session = request.db
+    db: Session = request.app.db
 
     if (
         db.query(Character)
@@ -170,7 +170,7 @@ async def update_class(request: Request, primary_class: PrimaryClassSchema):
 
 @admin_api_router.delete("/classes/{obj_id}")
 async def delete_class(request: Request, obj_id: int):
-    db: Session = request.db
+    db: Session = request.app.db
     if (
         db.query(CharacterClass)
         .join(Character, Character.id == CharacterClass._character_id)
@@ -241,7 +241,7 @@ async def update_archetype(request: Request, arch: ArchetypeSchema):
 
 @admin_api_router.delete("/archetypes/{obj_id}")
 async def delete_archetype(request: Request, obj_id: int):
-    db: Session = request.db
+    db: Session = request.app.db
     if (
         db.query(CharacterClass)
         .join(Character, Character.id == CharacterClass._character_id)
